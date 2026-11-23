@@ -147,16 +147,31 @@
 
 <ng-template #sequencePreview let-key let-label="label" let-id="id">
   @let values = sequenceValues(key);
-  <button type="button" class="mini-preview sequence-preview" [class.arp-preview]="key === 'pattern'"
+  @let hover = sequenceHover();
+  @let hovered = hover?.key === key;
+  <button #trigger type="button" class="mini-preview sequence-preview" [class.arp-preview]="key === 'pattern'"
     [attr.data-parameter-key]="key === 'pattern' ? null : key" [attr.id]="id ?? null" [attr.aria-label]="label" aria-haspopup="dialog"
-    [title]="values ? values.join(', ') || 'Off' : 'Mixed'" (click)="openSequence(key)" (wheel)="scrollSequence(key, $event)">
+    title="" [attr.aria-description]="values ? values.join(', ') || 'Off' : 'Mixed'"
+    (pointerenter)="hoverSequence(key, $event)" (pointermove)="hoverSequence(key, $event)" (pointerleave)="sequenceHover.set(null)"
+    (click)="sequenceHover.set(null); openSequence(key)" (wheel)="scrollSequence(key, $event)">
     @if (values?.length) {
       <vc-numeric-sequence-preview [values]="values!" [range]="sequenceRange(key)"
-        [display]="key === 'melodyPatternOffsets' ? 'steps' : 'line'" />
+        [display]="key === 'melodyPatternOffsets' ? 'steps' : 'line'" [highlightedIndex]="hovered ? hover?.index ?? null : null" />
     } @else {
       <span class="mixed">{{ values ? 'Off' : 'Mixed' }}</span>
     }
   </button>
+  <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="trigger" [cdkConnectedOverlayOpen]="hovered"
+    [cdkConnectedOverlayPositions]="sequenceTooltipPositions" [cdkConnectedOverlayViewportMargin]="8" [cdkConnectedOverlayPush]="true"
+    (detach)="sequenceHover()?.key === key && sequenceHover.set(null)">
+    <div class="sequence-tooltip" role="tooltip">
+      @for (value of values; track $index) {
+        <span [class.highlighted]="$index === hover?.index">{{ value }}</span>@if (!$last) {<span>, </span>}
+      } @empty {
+        {{ values ? 'Off' : 'Mixed' }}
+      }
+    </div>
+  </ng-template>
 </ng-template>
 
 <ng-template #quickInheritance let-control>

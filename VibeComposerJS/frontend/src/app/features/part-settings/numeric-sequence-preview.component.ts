@@ -17,6 +17,9 @@ import { sequenceY, type NumericSequenceRange } from './numeric-sequence-dialog.
         <span class="step-dot" [style.left.%]="point.x" [style.top.%]="point.y"></span>
       }
     }
+    @if (highlightedPoint(); as point) {
+      <span class="step-highlight" [style.left.%]="point.x" [style.top.%]="point.y"></span>
+    }
   `,
   styles: `
     :host { display: block; position: relative; width: 100%; height: 100%; }
@@ -24,6 +27,7 @@ import { sequenceY, type NumericSequenceRange } from './numeric-sequence-dialog.
     polyline { fill: none; stroke: var(--text-primary); vector-effect: non-scaling-stroke; }
     polyline { stroke-width: 1.5; }
     .step-dot { position: absolute; width: 4px; height: 4px; background: var(--accent-primary); transform: translate(-50%, -50%); }
+    .step-highlight { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: hsl(from var(--accent-primary) calc(h + 180) s l); transform: translate(-50%, -50%); pointer-events: none; }
   `,
 })
 export class NumericSequencePreviewComponent {
@@ -31,6 +35,7 @@ export class NumericSequencePreviewComponent {
   readonly range = input.required<NumericSequenceRange>();
   readonly normalized = input(true);
   readonly display = input<'line' | 'steps'>('line');
+  readonly highlightedIndex = input<number | null>(null);
 
   readonly coordinates = computed(() => {
     const values = this.values();
@@ -47,4 +52,5 @@ export class NumericSequencePreviewComponent {
     if (points.length === 1) return `25,${points[0].y} 75,${points[0].y}`;
     return points.map(({ x, y }) => `${x},${y}`).join(' ');
   });
+  readonly highlightedPoint = computed(() => this.coordinates()[this.highlightedIndex() ?? -1]);
 }

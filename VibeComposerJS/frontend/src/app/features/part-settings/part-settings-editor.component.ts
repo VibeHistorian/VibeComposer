@@ -7,6 +7,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { combinedControlKeys } from '../../core/ui/ui-preferences';
 import { DEFAULT_MELODY_GLOBAL } from '../../core/music/melody-global-settings';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
+import { CdkConnectedOverlay, type ConnectedPosition } from '@angular/cdk/overlay';
 import { PatternSequencerComponent } from './pattern-sequencer.component';
 import { DurationsDialogComponent } from './durations-dialog.component';
 import { NumericSequenceDialogComponent } from './numeric-sequence-dialog.component';
@@ -15,7 +16,7 @@ import { partSequenceEditor, partSequencePatch, partSequenceRange, partSequenceR
 import { durationPreview } from '../../core/music/durations';
 import { validateDurationDraft } from '../../core/music/duration-validation';
 import type { CommonPartSettings, ChordRhythm, PatternJoinMode } from '../../core/music/part-settings.model';
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import type { PartSettingsScope } from '../../core/project/part-settings-scope';
 import { PART_CONTROLS, MANUAL_PARAMETER_TARGETS, type PartControl, type PartSettingValue, partValuesEqual } from '../../core/music/part-settings';
 import { chordRhythmMask } from '../../core/music/rhythm-pattern';
@@ -33,7 +34,7 @@ import { sectionGenerationHarmony } from '../../core/music/project-harmony';
 
 @Component({
   selector: 'vc-part-settings-editor',
-  imports: [MenuSelectComponent, ParameterShortcutDirective, NgTemplateOutlet, DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, SelectComponent, NumericSequencePreviewComponent],
+  imports: [MenuSelectComponent, ParameterShortcutDirective, NgTemplateOutlet, DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, SelectComponent, NumericSequencePreviewComponent, CdkConnectedOverlay],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.data-control-role]': 'role()', '[style.--variation-role-color]': '"var(--role-" + role() + ")"', '[class.quick-layout]': '!showGroupTitles()', '[class.placement-editing]': 'preferences.editingQuickSettings()' },
   templateUrl: './part-settings-editor.component.html',
@@ -144,17 +145,32 @@ export class PartSettingsEditorComponent {
     return key === 'pattern' ? this.arpeggioPreview() : this.values()[key] as readonly number[] | null;
   }
   readonly sequenceRange = partSequenceRange;
+  readonly sequenceHover = signal<{ key: PartSequenceKey; index: number | null } | null>(null, {
+    equal: (a, b) => a?.key === b?.key && a?.index === b?.index,
+  });
+  readonly sequenceTooltipPositions: ConnectedPosition[] = [
+    { originX: 'center', originY: 'top', overlayX: 'center', overlayY: 'bottom', offsetY: -6 },
+    { originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top', offsetY: 6 },
+  ];
+  hoverSequence(key: PartSequenceKey, event: MouseEvent): void {
+    this.sequenceHover.set({ key, index: this.sequenceColumn(event, this.sequenceValues(key)?.length ?? 0) });
+  }
+  private sequenceColumn(event: MouseEvent, length: number): number | null {
+    const preview = (event.currentTarget as HTMLElement).querySelector('vc-numeric-sequence-preview');
+    const bounds = preview?.getBoundingClientRect();
+    if (!bounds?.width || !length) return null;
+    const column = Math.floor((event.clientX - bounds.left) / bounds.width * length);
+    return Math.max(0, Math.min(length - 1, column));
+  }
   scrollSequence(key: PartSequenceKey, event: WheelEvent): void {
     if (this.preferences.editingQuickSettings() || !event.deltaY || !this.preferences.matchesShortcut('controlWheel', event)) return;
     const values = this.sequenceValues(key);
     if (!values?.length) return;
-    const preview = (event.currentTarget as HTMLElement).querySelector('vc-numeric-sequence-preview');
-    const bounds = preview?.getBoundingClientRect();
-    if (!bounds?.width) return;
+    const index = this.sequenceColumn(event, values.length);
+    if (index === null) return;
+    if (this.sequenceHover()?.key === key) this.sequenceHover.set({ key, index });
     event.preventDefault();
     event.stopPropagation();
-    const column = Math.floor((event.clientX - bounds.left) / bounds.width * values.length);
-    const index = Math.max(0, Math.min(values.length - 1, column));
     const { minimum, maximum } = partSequenceRange(key);
     const value = values[index] - Math.sign(event.deltaY);
     if (value < minimum || value > maximum) return;

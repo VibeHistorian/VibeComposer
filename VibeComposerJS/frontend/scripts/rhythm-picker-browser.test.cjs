@@ -363,16 +363,29 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => sequenceCompact.checked, 'compact sequence history on');
         document.querySelector('[aria-label="Close settings"]').click();
         await waitFor(() => !document.querySelector('vc-settings-dialog'), 'sequence history settings closed');
+        const wordsTrigger = () => document.querySelector('[aria-label="Edit melody words"]');
+        const wordColumnX = column => {
+          const bounds = wordsTrigger().querySelector('vc-numeric-sequence-preview').getBoundingClientRect();
+          return bounds.left + (column + .5) * bounds.width / 3;
+        };
+        wordsTrigger().dispatchEvent(new PointerEvent('pointerenter', { clientX: wordColumnX(1) }));
+        const wordTooltip = await waitFor(() => document.querySelector('.sequence-tooltip'), 'immediate word tooltip');
+        const wordHighlight = await waitFor(() => wordsTrigger().querySelector('.step-highlight'), 'hovered word highlight');
+        if (wordTooltip.querySelector('.highlighted')?.textContent !== '-1'
+          || Math.abs(parseFloat(wordHighlight.style.left) - 50) >= 1) throw new Error('word tooltip and dot should indicate the middle step');
         const nudgeWord = (column, deltaY) => {
-          const preview = document.querySelector('[aria-label="Edit melody words"] vc-numeric-sequence-preview');
-          const bounds = preview.getBoundingClientRect();
-          preview.dispatchEvent(new WheelEvent('wheel', {
-            clientX: bounds.left + (column + .5) * bounds.width / 3, deltaY, bubbles: true, cancelable: true,
+          wordsTrigger().dispatchEvent(new WheelEvent('wheel', {
+            clientX: wordColumnX(column), deltaY, bubbles: true, cancelable: true,
           }));
         };
         nudgeWord(1, -100);
         nudgeWord(2, 100);
         await waitFor(() => readTrack('melody').generatorSettings.melodyPatternOffsets?.join(',') === '1,0,1', 'word wheel edits under pointer');
+        await waitFor(() => wordTooltip.isConnected && wordTooltip.textContent.trim().replaceAll(' ', '') === '1,0,1'
+          && wordTooltip.querySelector('.highlighted')?.textContent === '1'
+          && parseFloat(wordsTrigger().querySelector('.step-highlight')?.style.left) > 80, 'word tooltip and dot update in place');
+        wordsTrigger().dispatchEvent(new PointerEvent('pointerleave'));
+        await waitFor(() => !wordTooltip.isConnected && !wordsTrigger().querySelector('.step-highlight'), 'word hover clears');
         document.querySelector('.project-tools button[aria-label="Undo"]').click();
         await waitFor(() => readTrack('melody').generatorSettings.melodyPatternOffsets?.join(',') === '1,-1,2', 'word wheel undo');
         const restoreCompact = await openHistorySettings();
