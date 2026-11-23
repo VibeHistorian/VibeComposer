@@ -141,7 +141,7 @@ export class PartSettingsEditorComponent {
       return;
     }
     this.dialogs.open(PatternSequencerComponent, { ariaLabel: this.role() === 'drums' ? 'Drum pattern sequencer' : 'Pattern sequencer',
-      data: { scope: this.scope(), role: this.role(), velocities, melodyHits: this.melodyHits() } });
+      data: { scope: this.scope(), role: this.role(), melodyHits: this.melodyHits() } });
   }
   private openDurations(flipped?: boolean): void {
     this.dialogs.open(DurationsDialogComponent, { ariaLabel: `Custom ${this.role()} durations`,

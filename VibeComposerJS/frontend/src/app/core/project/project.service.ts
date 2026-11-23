@@ -362,7 +362,8 @@ export class ProjectService {
   /** Only single-control edits can join a burst; scope and field identify the control. */
   private controlHistoryKey(target: readonly string[], patch: object): string | undefined {
     const keys = Object.keys(patch);
-    return keys.length === 1 ? JSON.stringify([...target, keys[0]]) : undefined;
+    // Each velocity stroke is a complete grid edit with its own undo step.
+    return keys.length === 1 && keys[0] !== 'customVelocities' ? JSON.stringify([...target, keys[0]]) : undefined;
   }
 
   exportProjectJson(): string {

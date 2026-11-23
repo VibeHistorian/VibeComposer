@@ -286,21 +286,27 @@ test('production Angular controls initialize selects from settings and support r
         velocitySwitches[0].click();
         (await waitFor(() => document.querySelector('button[aria-label="Edit pattern velocities"]'))).click();
         const velocityGrids = await waitFor(() => {
-          const result = [...document.querySelectorAll('.velocity-pattern-grid')];
+          const result = [...document.querySelectorAll('.custom-pattern-grid.velocity-editing')];
           return result.length === 1 ? result : null;
         }, 'velocity grids enabled');
-        result.velocityCounts = velocityGrids.map(grid => grid.querySelectorAll('input').length);
-        const velocity = velocityGrids[0].querySelector('input');
-        velocity.value = '22'; velocity.dispatchEvent(new Event('input', { bubbles: true }));
-        await waitFor(() => velocityGrids[0].querySelector('output').textContent.trim() === '22', 'velocity preview');
+        result.velocityCounts = velocityGrids.map(grid => grid.querySelectorAll('.step').length);
+        const velocity = velocityGrids[0].querySelector('.step');
+        velocityGrids[0].setPointerCapture = () => {};
+        const velocityBounds = velocity.getBoundingClientRect();
+        const velocityPointer = type => velocity.dispatchEvent(new PointerEvent(type, {
+          pointerId: 1, pointerType: 'mouse', button: 1, buttons: type === 'pointerup' ? 0 : 4,
+          clientY: velocityBounds.bottom - velocityBounds.height * 22 / 127, bubbles: true, cancelable: true,
+        }));
+        velocityPointer('pointerdown');
+        await waitFor(() => velocity.getAttribute('aria-valuenow') === '22', 'velocity preview');
         result.velocityBeforeCommit = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'chords').generatorSettings.customVelocities;
         result.storedBeforeCommit = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'chords').generatorSettings.customVelocities?.[0] ?? 79;
-        velocity.dispatchEvent(new Event('change', { bubbles: true }));
+        velocityPointer('pointerup');
         await waitFor(() => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'chords').generatorSettings.customVelocities?.[0] === 22, 'inspector velocity commit persisted');
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        const secondVelocity = velocityGrids[0].querySelectorAll('input')[1];
+        const secondVelocity = velocityGrids[0].querySelectorAll('.step')[1];
         wheel(secondVelocity, -100, true);
-        await waitFor(() => secondVelocity.value === '80', 'velocity wheel update');
+        await waitFor(() => secondVelocity.getAttribute('aria-valuenow') === '80', 'velocity wheel update');
         await waitFor(() => readTrack('chords').generatorSettings.customVelocities?.[1]===80, 'custom velocities saved');
         result.customVelocities = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'chords').generatorSettings.customVelocities;
         result.randomBoundsHidden = !document.querySelector('input[aria-label="Min velocity"]');
@@ -311,7 +317,7 @@ test('production Angular controls initialize selects from settings and support r
         result.retainedVelocities = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'chords').generatorSettings.customVelocities;
         document.querySelector('#part-inspector button[aria-label="Custom velocities"]').click();
         (await waitFor(() => document.querySelector('button[aria-label="Edit pattern velocities"]'))).click();
-        await waitFor(() => document.querySelector('.velocity-pattern-grid input')?.value === '22', 'velocity grids restored');
+        await waitFor(() => document.querySelector('.velocity-editing .step')?.getAttribute('aria-valuenow') === '22', 'velocity grids restored');
         await waitFor(() => readTrack('chords').generatorSettings.useCustomVelocities===true, 'custom velocities enabled saved');
         result.velocitiesEnabled = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'chords').generatorSettings.useCustomVelocities;
         document.querySelector('button[aria-label="Close pattern sequencer"]').click();
@@ -460,8 +466,8 @@ test('production Angular controls initialize selects from settings and support r
         const drumVelocities = [...document.querySelectorAll('button[aria-label="Custom velocities"]')];
         drumVelocities[0].click();
         (await waitFor(() => document.querySelector('button[aria-label="Edit pattern velocities"]'))).click();
-        await waitFor(() => document.querySelectorAll('.velocity-pattern-grid').length === 1, 'drum inspector velocity grid');
-        result.drumVelocityCounts = [...document.querySelectorAll('.velocity-pattern-grid')].map(grid => grid.querySelectorAll('input').length);
+        await waitFor(() => document.querySelectorAll('.velocity-editing').length === 1, 'drum inspector velocity grid');
+        result.drumVelocityCounts = [...document.querySelectorAll('.velocity-editing')].map(grid => grid.querySelectorAll('.step').length);
         document.querySelector('button[aria-label="Close pattern sequencer"]').click();
         await waitFor(() => !document.querySelector('vc-pattern-sequencer'));
         result.drumChannelLocked = document.querySelector('.track-group.drums .track-channel').getAttribute('aria-disabled') === 'true';

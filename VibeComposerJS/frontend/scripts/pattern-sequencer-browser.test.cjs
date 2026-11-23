@@ -45,11 +45,11 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       check(document.querySelector('[aria-label="Toggle loop"]').getAttribute('aria-pressed') === 'true', 'loop enabled by default');
       const launcher=document.querySelector('button[aria-label="Edit rhythm pattern"]');
       check(launcher.getBoundingClientRect().width<=112 && launcher.getBoundingClientRect().height<=18, 'tiny preview');
-      check(!document.querySelector('.custom-pattern-grid, .velocity-pattern-grid'),'no inline editors');
+      check(!document.querySelector('.custom-pattern-grid'),'no inline editors');
       launcher.click();
       await wait(()=>document.querySelectorAll('vc-pattern-sequencer .track').length===3,'all drum rows');
       const popup=document.querySelector('vc-pattern-sequencer');
-      check(!popup.querySelector('.velocity-pattern-grid'),'velocities hidden');
+      check(!popup.querySelector('.velocity-editing'),'velocities hidden');
       const storedDrums=read().tracks.filter(t=>t.role==='drums');
       const percussion=popup.querySelectorAll('.pattern-row .identity > span');
       check([...percussion].every(span=>!span.textContent.includes('NaN')), 'valid percussion names');
@@ -111,16 +111,89 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       check(JSON.stringify(read().tracks.find(t=>t.id===ids[0]))===before,'other track retained');
       const settings=read().tracks.find(t=>t.id===ids[1]).generatorSettings;
       check(settings.rhythm==='custom' && settings.customPattern.length===32,'bake rhythm');
-      popup.querySelector('header button[aria-pressed]').click();
-      await wait(()=>popup.querySelectorAll('.velocity-pattern-grid').length===3,'velocity toggle');
-      checkPositions('.velocity-slot', [0,8,16,24]);
-      const velocity=row(ids[1]).querySelector('input[type="range"]');
-      velocity.value='22'; velocity.dispatchEvent(new Event('input',{bubbles:true}));
-      await wait(()=>row(ids[1]).querySelector('output').textContent==='22','velocity draft');
-      check(read().tracks.find(t=>t.id===ids[1]).generatorSettings.customVelocities?.[0]!==22,'no commit during drag');
-      velocity.dispatchEvent(new Event('change',{bubbles:true}));
-      await wait(()=>read().tracks.find(t=>t.id===ids[1]).generatorSettings.customVelocities?.[0]===22,'velocity commit');
-      check(read().tracks.find(t=>t.id===ids[1]).generatorSettings.useCustomVelocities===true,'enable custom velocities');
+      const editedRow = row(ids[1]);
+      const lane = editedRow.querySelector('.custom-pattern-grid');
+      const checkbox = editedRow.querySelector('input[type="checkbox"]');
+      const storedSettings = () => read().tracks.find(t=>t.id===ids[1]).generatorSettings;
+      const cell = index => lane.querySelector('[data-step="'+index+'"]');
+      const initialBounds = cell(0).getBoundingClientRect();
+      check(checkbox.closest('label').textContent.trim()==='V'
+        && checkbox.getBoundingClientRect().left > editedRow.querySelector('input[type="number"]').getBoundingClientRect().right, 'inline V checkbox after steps');
+      checkbox.click();
+      await wait(()=>lane.classList.contains('velocity-editing') && storedSettings().useCustomVelocities, 'velocity toggle');
+      const expandedBounds = cell(0).getBoundingClientRect();
+      check(expandedBounds.height === initialBounds.height * 2 && expandedBounds.width === initialBounds.width, 'same cells double in height');
+      check(!editedRow.querySelector('input[type="range"]') && popup.querySelectorAll('.velocity-editing').length===1,'one integrated velocity grid');
+      checkPositions('.step', [0,8,16,24]);
+
+      // Synthetic pointer events do not own browser pointer capture.
+      lane.setPointerCapture = () => {};
+      const pointer = (type, index, value, options = {}) => {
+        const target = cell(index);
+        const bounds = target.getBoundingClientRect();
+        const button = options.button ?? 0;
+        (type === 'pointerdown' ? target : lane).dispatchEvent(new PointerEvent(type, {
+          pointerId: 1, pointerType: 'mouse', button: type === 'pointermove' ? -1 : button,
+          buttons: type === 'pointerup' || options.ctrlKey ? 0 : button === 1 ? 4 : 1,
+          shiftKey: options.shiftKey, ctrlKey: options.ctrlKey,
+          clientX: bounds.left + bounds.width / 2, clientY: options.clientY ?? bounds.bottom - bounds.height * value / 127,
+          bubbles: true, cancelable: true,
+        }));
+      };
+      const active = index => cell(index).classList.contains('active');
+      const paintHits = async (from, to, on) => {
+        const options = { shiftKey: true };
+        pointer('pointerdown', from, 64, options);
+        pointer('pointermove', to, 64, options);
+        pointer('pointerup', to, 64, options);
+        await wait(()=>Array.from({length: to - from + 1}, (_, i) => active(from + i) === on).every(Boolean), 'Shift paints hits');
+      };
+      if (active(0)) await paintHits(0, 0, false);
+      await paintHits(0, 3, true);
+      await paintHits(1, 2, false);
+      await wait(()=>storedSettings().customPattern.slice(0, 4).join() === '1,0,0,1', 'hit strokes persisted');
+      const patternBeforeVelocity = storedSettings().customPattern.join();
+      pointer('pointerdown', 1, 100);
+      pointer('pointerup', 1, 100);
+      check(!active(1) && !cell(1).hasAttribute('aria-valuenow'), 'plain click leaves a rest disabled');
+      pointer('pointermove', 0, 56, { ctrlKey: true });
+      await wait(()=>cell(0).getAttribute('aria-valuenow')==='56','Ctrl hover previews velocity');
+      document.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', bubbles: true }));
+      await wait(()=>storedSettings().customVelocities?.[0]===56,'releasing Ctrl commits the stroke');
+      const dragBounds = cell(0).getBoundingClientRect();
+      const startY = dragBounds.bottom - dragBounds.height * 100 / 127;
+      pointer('pointerdown', 0, 100);
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      check(cell(0).getAttribute('aria-valuenow')==='56', 'left press starts at the stored velocity');
+      pointer('pointermove', 3, 0, { clientY: startY });
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      check(cell(0).getAttribute('aria-valuenow')==='56' && cell(3).getAttribute('aria-valuenow')==='79', 'horizontal left drag leaves both values intact');
+      pointer('pointermove', 3, 0, { clientY: startY + 100 });
+      await wait(()=>cell(0).getAttribute('aria-valuenow')==='0', 'left drag clamps below the cell');
+      pointer('pointermove', 3, 0, { clientY: startY - 60 });
+      await wait(()=>cell(0).getAttribute('aria-valuenow')==='107', 'left drag continues above the cell');
+      check(cell(3).getAttribute('aria-valuenow')==='79' && storedSettings().customVelocities?.[0]===56, 'left drag previews the starting cell only');
+      pointer('pointerup', 3, 0, { clientY: startY - 60 });
+      await wait(()=>storedSettings().customVelocities?.[0]===107,'left drag commits');
+      pointer('pointerdown', 0, 22, { button: 1 });
+      pointer('pointermove', 3, 110, { button: 1 });
+      await wait(()=>cell(0).getAttribute('aria-valuenow')==='22' && cell(3).getAttribute('aria-valuenow')==='110','velocity stroke preview');
+      check(getComputedStyle(cell(0)).backgroundImage.startsWith('linear-gradient') &&
+        Math.abs(parseFloat(cell(0).style.getPropertyValue('--velocity-fill')) - 22 * 100 / 127) < .01, 'velocity fill matches MIDI value');
+      check(storedSettings().customVelocities?.[0]!==22,'no commit during drag');
+      pointer('pointerup', 3, 110, { button: 1 });
+      await wait(()=>storedSettings().customVelocities?.[0]===22,'velocity commit');
+      check(storedSettings().customVelocities.slice(0, 4).join() === '22,79,79,110', 'stroke leaves rest velocities intact');
+      check(storedSettings().customPattern.join() === patternBeforeVelocity, 'velocity stroke leaves rhythm intact');
+      const addedBounds = cell(1).getBoundingClientRect();
+      const addedY = addedBounds.bottom - addedBounds.height * 40 / 127;
+      pointer('pointerdown', 1, 40, { shiftKey: true });
+      await wait(()=>active(1) && cell(1).getAttribute('aria-valuenow')==='40', 'Shift-add previews a hit at the click height');
+      pointer('pointermove', 1, 0, { shiftKey: true, clientY: addedY - 12 });
+      await wait(()=>cell(1).getAttribute('aria-valuenow')==='50', 'Shift drag fine-adjusts the new hit');
+      check(storedSettings().customPattern[1]===0 && storedSettings().customVelocities[1]===79, 'new hit and velocity stay in preview');
+      pointer('pointerup', 1, 0, { shiftKey: true, clientY: addedY - 12 });
+      await wait(()=>storedSettings().customPattern[1]===1 && storedSettings().customVelocities[1]===50, 'new hit and velocity commit together');
       row(ids[1]).querySelector('input[type="number"]').value='4';
       row(ids[1]).querySelector('input[type="number"]').dispatchEvent(new Event('change',{bubbles:true}));
       await wait(()=>row(ids[1]).querySelectorAll('.step').length===4,'shrink');
@@ -130,7 +203,10 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       document.querySelector('.project-tools button[aria-label="Undo"]').click();
       await wait(()=>read().tracks.find(t=>t.id===ids[1]).generatorSettings.hitsPerPattern===8,'undo hits');
       document.querySelector('.project-tools button[aria-label="Undo"]').click();
-      await wait(()=>read().tracks.find(t=>t.id===ids[1]).generatorSettings.customVelocities?.[0]!==22,'one undo velocity');
+      await wait(()=>storedSettings().customPattern[1]===0 && storedSettings().customVelocities[1]===79,'one undo restores both the rest and its velocity');
+      document.querySelector('.project-tools button[aria-label="Undo"]').click();
+      await wait(()=>storedSettings().customVelocities?.[0]===107,'one undo velocity');
+      check(storedSettings().customVelocities?.[3] !== 110 && storedSettings().customPattern.join() === patternBeforeVelocity, 'one undo restores full stroke only');
       document.querySelector('.track-group.melody .track-select').click();
       const melodyControl=await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="melody"] [data-control-key="rhythm"]'),'melody rhythm selector');
       check(melodyControl.querySelector(':is(vc-select, vc-menu-select)').getAttribute("value")==='melody1','normal melody rhythm default');

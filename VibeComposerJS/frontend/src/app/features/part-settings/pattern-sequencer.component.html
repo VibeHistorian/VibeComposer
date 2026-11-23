@@ -3,9 +3,6 @@
   @if (data.role === 'drums') {
     <vc-select #multiplier="vcSelect" [options]="[{ value: '', label: '× Hits…' }, { value: '0.5', label: '× ½' }, { value: '0.75', label: '× ¾' }, { value: '1.5', label: '× 1½' }, { value: '2', label: '× 2' }]" aria-label="Multiply Hits" title="Multiply hits for the selected drum track or group" [disabled]="!canMultiplyHits()" (valueChange)="multiplyHits($event); multiplier.restoreValue()"></vc-select>
   }
-  @if (data.role !== 'melody') {
-    <button type="button" [attr.aria-pressed]="showVelocities()" (click)="cancel(); showVelocities.set(!showVelocities())">Velocities</button>
-  }
   <button type="button" aria-label="Close pattern sequencer" (click)="dialog.close()">×</button>
 </header>
 <vc-live-recording [disabled]="!recordingOptions().length" (began)="beginRecording()" (cursor)="recordCursor($event)" (span)="recordSpan($event)" (ended)="endRecording()" />
@@ -20,33 +17,50 @@
         <div class="pattern-row">
           <div class="identity"><strong>{{ row.name }}</strong><span>{{ row.instrument }}</span>
             @if (row.supported) { <input type="number" [min]="minimumHits" max="32" [value]="row.hits" [attr.aria-label]="row.name + ' steps'" (change)="changeHits(row.id, $event)" /> }
+            @if (row.velocitySupported) {
+              <label class="velocity-toggle" title="Custom velocities">
+                <input type="checkbox" [checked]="row.velocityEditing" [attr.aria-label]="row.name + ' custom velocities'" (change)="changeVelocityMode(row.id, $event)" /> V
+              </label>
+            }
+            @if (row.velocityEditing && !row.supported) { <span class="rhythm-source">Follows melody blocks</span> }
             @if ('sectionId' in data.scope) { <button type="button" class="inherit" [attr.aria-label]="'Inherit ' + row.name + ' pattern'" (click)="inherit(row.id, 'customPattern')">Inherit rhythm</button> }
           </div>
-          @if (row.supported) {
-            <div class="cells custom-pattern-grid" [style.--row-steps]="row.pattern.length" (pointermove)="move($event)" (pointerup)="finish($event)" (pointercancel)="cancel()" (lostpointercapture)="cancel()" (keydown.escape)="cancel(); $event.stopPropagation()">
-              @for (slot of row.pattern; track $index) {
-                <button type="button" class="step custom-pattern-slot" [style.--step-index]="$index" [class.active]="slot > 0" [class.recording-step]="recordingBeat() !== null && row.id === (recordingTrack() || recordingOptions()[0]?.value) && $index === recordingCell(recordingBeat()!, 4, row.hits)" [class.beat]="$index * 4 % row.hits === 0" [attr.data-step]="$index" [attr.data-rhythm-slot]="$index" [attr.aria-pressed]="slot > 0" [attr.aria-label]="row.name + ' subdivision ' + ($index + 1)"
-                  (pointerdown)="start($event, row.id, $index)" (click)="$event.detail === 0 && toggle(row.id, $index)"></button>
+          @if (row.supported || row.velocityEditing) {
+            <div class="cells custom-pattern-grid" [class.velocity-editing]="row.velocityEditing" [style.--row-steps]="row.slots.length"
+              (pointermove)="move($event, row.id)" (pointerup)="finish($event)" (pointerleave)="finishHover()"
+              (pointercancel)="cancelGesture()" (lostpointercapture)="cancelGesture()">
+              @for (slot of row.slots; track $index) {
+                @let velocityCell = row.velocityEditing && slot > 0;
+                @let velocity = row.velocities[$index];
+                <button type="button" class="step custom-pattern-slot" [style.--step-index]="$index" [class.active]="slot > 0"
+                  [style.--velocity-fill.%]="velocityCell ? velocity * 100 / 127 : null"
+                  [class.recording-step]="recordingBeat() !== null && row.id === (recordingTrack() || recordingOptions()[0]?.value) && $index === recordingCell(recordingBeat()!, 4, row.hits)"
+                  [class.beat]="$index * 4 % row.hits === 0" [attr.data-step]="$index" [attr.data-rhythm-slot]="$index"
+                  [attr.role]="velocityCell ? 'slider' : null"
+                  [attr.aria-pressed]="velocityCell ? null : slot > 0"
+                  [attr.aria-label]="row.name + (velocityCell ? ' velocity subdivision ' : ' subdivision ') + ($index + 1)"
+                  [attr.aria-valuemin]="velocityCell ? 0 : null" [attr.aria-valuemax]="velocityCell ? 127 : null"
+                  [attr.aria-valuenow]="velocityCell ? velocity : null" [attr.aria-orientation]="velocityCell ? 'vertical' : null"
+                  [attr.aria-valuetext]="velocityCell && velocity === 0 ? '0, silent' : null"
+                  (pointerdown)="start($event, row.id, $index)" (click)="$event.detail === 0 && toggle(row.id, $index, $event.shiftKey)"
+                  (wheel)="wheelVelocity(row.id, $index, $event)" (keydown)="velocityKey($event, row.id, $index)"
+                  (auxclick)="row.velocityEditing && $event.preventDefault()"
+                  (contextmenu)="row.velocityEditing && $event.preventDefault(); resetVelocity(row.id, $index)">
+                  @if (velocityCell) { <span class="velocity-value">{{ velocity }}</span> }
+                </button>
               }
             </div>
           } @else { <span class="unavailable">{{ row.values['rhythm'] === 'bass1' ? 'bass1 rhythm'
             : data.role === 'melody' ? (row.values['rhythm'] === 'durations' ? 'Custom durations' : 'Generated rhythm') : 'Follows melody blocks' }}</span> }
         </div>
-        @if (showVelocities() && row.velocitySupported) {
-          <div class="velocity-row">
-            <label class="identity"><input type="checkbox" [checked]="row.values['useCustomVelocities'] === true" (change)="patch(row.id, { useCustomVelocities: $any($event.target).checked })" /> Custom velocity</label>
-            <div class="cells velocity-pattern-grid" [style.--row-steps]="row.velocities.length">
-              @for (velocity of row.velocities; track $index) {
-                <label class="velocity-slot" [style.--step-index]="$index" [class.rest]="row.pattern[$index] === 0">
-                  <input type="range" min="0" max="127" step="1" [value]="velocity" [attr.aria-label]="row.name + ' velocity subdivision ' + ($index + 1)" [attr.aria-valuetext]="velocity === 0 ? '0, silent' : velocity" (input)="previewVelocity(row.id, $index, $event)" (change)="commitVelocity(row.id, $index, $event)" (wheel)="wheelVelocity(row.id, $index, $event)" (pointercancel)="cancel()" (blur)="cancel()" (keydown.escape)="cancel(); $event.stopPropagation()" />
-                  <output>{{ velocity }}</output>
-                </label>
-              }
-            </div>
-          </div>
-        }
       </section>
     } @empty { <p>No tracks in this group.</p> }
   </div>
 </div>
-<footer>Click or drag steps · Edits save immediately · Escape to close</footer>
+<footer>
+  @if (velocityEditing()) {
+    Shift+click or drag for hits · Left drag adjusts one velocity · Middle drag or Ctrl+move draws velocities · Scroll to nudge · Right-click to reset
+  } @else {
+    Click or drag steps · Edits save immediately · Escape to close
+  }
+</footer>

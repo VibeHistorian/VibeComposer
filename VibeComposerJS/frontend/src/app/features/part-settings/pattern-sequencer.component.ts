@@ -14,7 +14,21 @@ import { isMelodyGrid, MIN_MELODY_GRID_ATTACKS } from '../../core/music/melody-g
 import { DEFAULT_CUSTOM_VELOCITIES } from '../../core/music/velocity-pattern';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 
-export interface PatternSequencerData { scope: PartSettingsScope; role: ArrangedPart; velocities: boolean; melodyHits: number }
+export interface PatternSequencerData { scope: PartSettingsScope; role: ArrangedPart; melodyHits: number }
+
+interface GridStroke {
+  id: string;
+  last: number;
+  project: ReturnType<ProjectService['project']>;
+}
+
+interface VelocityAdjustment { index: number; value: number; startY: number }
+
+type GridGesture = GridStroke & (
+  | { kind: 'hits'; pointer: number; sounded: number; adjustment?: VelocityAdjustment }
+  | { kind: 'velocity-adjust'; pointer: number; adjustment: VelocityAdjustment }
+  | { kind: 'velocity'; pointer: number | null; value: number }
+);
 
 @Component({
   imports: [LiveRecordingComponent, SelectComponent],
@@ -22,6 +36,11 @@ export interface PatternSequencerData { scope: PartSettingsScope; role: Arranged
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pattern-sequencer.component.html',
   styleUrl: './pattern-sequencer.component.css',
+  host: {
+    '(document:keyup.control)': 'finishHover()',
+    '(keydown.escape)': 'cancelGesture($event)',
+    '(window:blur)': 'cancelGesture()',
+  },
 })
 export class PatternSequencerComponent {
   readonly data = inject<PatternSequencerData>(DIALOG_DATA);
@@ -66,12 +85,10 @@ export class PatternSequencerComponent {
     this.recordingBeat.set(null); this.recordingProject = null; this.cancel();
     if (valid && this.recordedHits && draft?.pattern) this.storePattern(draft.id, draft.pattern);
   }
-  readonly showVelocities = signal(this.data.velocities);
   readonly error = signal<string | null>(null);
   readonly minimumHits = this.data.role === 'melody' ? MIN_MELODY_GRID_ATTACKS : 1;
   readonly draft = signal<{ id: string; pattern?: number[]; velocities?: number[] } | null>(null);
-  private gesture: { pointer: number; id: string; last: number; sounded: number; project: ReturnType<ProjectService['project']> } | null = null;
-  private velocityProject: ReturnType<ProjectService['project']> | null = null;
+  private gesture: GridGesture | null = null;
   readonly rows = computed(() => {
     const project = this.projects.project();
     const scope = this.data.scope;
@@ -89,12 +106,16 @@ export class PatternSequencerComponent {
         patternFlip: values['patternFlip'] === true, euclideanPulses: Number(values['euclideanPulses'] ?? 4),
         customPattern: values['customPattern'] as readonly number[] | undefined }) : [];
       const velocities = draft?.id === track.id && draft.velocities ? draft.velocities
-        : [...(values['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES)];
+        : values['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES;
+      const velocitySupported = track.role !== 'melody' && hits <= 32 && !(track.role === 'bass' && values['rhythm'] === 'bass1');
       return { id: track.id, name: track.name, instrument: effective.role === 'drums' ? this.midi.drumLabel(effective.generatorSettings.pitch, this.projects.project().drumSlots) : effective.role,
-        values, supported, hits, pattern, velocities: velocities.slice(0, Math.min(32, hits)), velocitySupported: hits <= 32 && !(track.role === 'bass' && values['rhythm'] === 'bass1'),
+        values, supported, hits, pattern, velocities, velocitySupported,
+        velocityEditing: velocitySupported && values['useCustomVelocities'] === true,
+        slots: supported ? pattern : Array.from({ length: Math.min(32, hits) }, () => 1),
         active: 'trackId' in scope && track.id === scope.trackId };
     });
   });
+  readonly velocityEditing = computed(() => this.rows().some(row => row.velocityEditing));
   readonly canMultiplyHits = computed(() => {
     const scope = this.data.scope;
     const rows = this.rows().filter(row => !('trackId' in scope) || row.id === scope.trackId);
@@ -126,14 +147,19 @@ export class PatternSequencerComponent {
     input.value = String(this.rows().find(row => row.id === id)!.hits);
   }
 
-  toggle(id: string, index: number): void {
+  changeVelocityMode(id: string, event: Event): void {
+    this.cancelGesture();
+    this.patch(id, { useCustomVelocities: (event.target as HTMLInputElement).checked });
+  }
+
+  toggle(id: string, index: number, shift: boolean): void {
     const row = this.rows().find(row => row.id === id);
-    if (!row?.supported) return;
+    if (!row?.supported || (row.velocityEditing && !shift) || this.recordingProject) return;
     const pattern = [...row.pattern]; pattern[index] = 1 - pattern[index];
     this.storePattern(id, pattern);
   }
 
-  private storePattern(id: string, pattern: number[]): void {
+  private storePattern(id: string, pattern: number[], velocities?: number[]): void {
     const row = this.rows().find(row => row.id === id)!;
     // Preserve hidden cells for an existing custom grid; bake other rhythms in audible coordinates.
     const custom = [...(row.values['customPattern'] as readonly number[] ?? Array(32).fill(1))];
@@ -141,66 +167,177 @@ export class PatternSequencerComponent {
     const flip = row.values['rhythm'] === 'custom' && row.values['patternFlip'] === true;
     pattern.forEach((value, i) => custom[(i - shift + 32) % 32] = flip ? 1 - value : value);
     this.patch(id, { rhythm: 'custom', customPattern: custom,
+      ...(velocities?.some((value, index) => value !== row.velocities[index]) ? { customVelocities: velocities } : {}),
       ...(row.values['rhythm'] === 'custom' ? {} : { patternShift: 0, patternFlip: false }) });
   }
 
   start(event: PointerEvent, id: string, index: number): void {
-    if (event.button !== 0 || this.gesture) return;
+    this.finishHover();
+    if (this.gesture || this.recordingProject) return;
     const row = this.rows().find(row => row.id === id)!;
-    event.preventDefault(); (event.target as HTMLElement).focus();
-    this.gesture = { pointer: event.pointerId, id, last: index, sounded: 1 - row.pattern[index], project: this.projects.project() };
-    const pattern = [...row.pattern]; pattern[index] = this.gesture.sounded;
-    this.draft.set({ id, pattern });
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    const cell = event.currentTarget as HTMLElement;
+    const stroke = { pointer: event.pointerId, id, last: index, project: this.projects.project() };
+    if (event.button === 0 && row.supported && (!row.velocityEditing || event.shiftKey)) {
+      const sounded = 1 - row.pattern[index];
+      const adjustment = row.velocityEditing && sounded === 1
+        ? { index, value: this.velocityAt(event, cell), startY: event.clientY } : undefined;
+      this.gesture = { ...stroke, kind: 'hits', sounded, adjustment };
+      const pattern = [...row.pattern];
+      pattern[index] = sounded;
+      const velocities = adjustment ? [...row.velocities] : undefined;
+      if (velocities && adjustment) velocities[index] = adjustment.value;
+      this.draft.set({ id, pattern, velocities });
+    } else if (row.velocityEditing && row.slots[index] > 0 && (event.button === 1 || (event.button === 0 && !event.shiftKey))) {
+      const value = event.button === 0 ? row.velocities[index] : this.velocityAt(event, cell);
+      const velocities = [...row.velocities];
+      velocities[index] = value;
+      this.gesture = event.button === 0
+        ? { ...stroke, kind: 'velocity-adjust', adjustment: { index, value, startY: event.clientY } }
+        : { ...stroke, kind: 'velocity', value };
+      this.draft.set({ id, velocities });
+    } else {
+      if (row.velocityEditing && event.button === 1) event.preventDefault();
+      return;
+    }
+    event.preventDefault();
+    cell.focus({ preventScroll: true });
+    (cell.parentElement ?? cell).setPointerCapture(event.pointerId);
   }
 
-  move(event: PointerEvent): void {
+  move(event: PointerEvent, id: string): void {
     const gesture = this.gesture;
-    if (!gesture || gesture.pointer !== event.pointerId) return;
-    if (gesture.project !== this.projects.project()) { this.cancel(); return; }
+    const hover = event.ctrlKey && event.buttons === 0 && !this.recordingProject;
+    if (gesture?.pointer === null && !hover) { this.finishHover(); return; }
+    if (gesture ? gesture.id !== id || (gesture.pointer !== null && gesture.pointer !== event.pointerId) : !hover) return;
+    if (gesture && gesture.project !== this.projects.project()) { this.cancel(); return; }
+    if (gesture?.kind === 'velocity-adjust' || gesture?.kind === 'hits') {
+      const adjustment = gesture.adjustment;
+      if (adjustment) {
+        const draft = this.draft()!;
+        const value = this.clampVelocity(adjustment.value + (adjustment.startY - event.clientY) * 127 / 150);
+        if (draft.velocities![adjustment.index] !== value) {
+          const velocities = [...draft.velocities!];
+          velocities[adjustment.index] = value;
+          this.draft.set({ ...draft, velocities });
+        }
+      }
+      if (gesture.kind === 'velocity-adjust') return;
+    }
     const grid = event.currentTarget as HTMLElement;
     const cell = grid.ownerDocument.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-step]');
     if (!cell || !grid.contains(cell)) return;
     const index = Number(cell.dataset['step']);
-    const pattern = [...this.draft()!.pattern!];
-    for (let i = Math.min(gesture.last, index); i <= Math.max(gesture.last, index); i++) pattern[i] = gesture.sounded;
-    gesture.last = index; this.draft.set({ id: gesture.id, pattern });
-  }
-
-  finish(event: PointerEvent): void {
-    const gesture = this.gesture, draft = this.draft();
-    if (!gesture || gesture.pointer !== event.pointerId) return;
-    this.cancel();
-    if (draft?.pattern && gesture.project === this.projects.project()) this.storePattern(gesture.id, draft.pattern);
-  }
-
-  previewVelocity(id: string, index: number, event: Event): void {
-    if (this.velocityProject && this.velocityProject !== this.projects.project()) { this.cancel(); return; }
-    this.velocityProject ??= this.projects.project();
+    if (gesture?.kind === 'hits') {
+      if (gesture.last === index) return;
+      const pattern = [...this.draft()!.pattern!];
+      for (let i = Math.min(gesture.last, index); i <= Math.max(gesture.last, index); i++) pattern[i] = gesture.sounded;
+      gesture.last = index;
+      this.draft.set({ ...this.draft()!, pattern });
+      return;
+    }
     const row = this.rows().find(row => row.id === id)!;
-    const velocities = [...(this.draft()?.id === id ? this.draft()?.velocities : null)
-      ?? row.values['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES];
-    velocities[index] = Math.max(0, Math.min(127, Number((event.target as HTMLInputElement).value)));
+    if (!row.velocityEditing) return;
+    const value = this.velocityAt(event, cell);
+    const velocities = [...row.velocities];
+    if (!gesture) {
+      if (row.slots[index] === 0) return;
+      velocities[index] = value;
+      this.gesture = { kind: 'velocity', pointer: null, project: this.projects.project(), id, last: index, value };
+    } else {
+      const distance = index - gesture.last;
+      const direction = Math.sign(distance);
+      for (let step = 1; step < Math.abs(distance); step++) {
+        const intermediate = gesture.last + step * direction;
+        if (row.slots[intermediate] > 0) {
+          velocities[intermediate] = Math.round(gesture.value + (value - gesture.value) * step / Math.abs(distance));
+        }
+      }
+      if (row.slots[index] > 0) velocities[index] = value;
+      gesture.last = index;
+      gesture.value = value;
+    }
     this.draft.set({ id, velocities });
   }
 
-  commitVelocity(id: string, index: number, event: Event): void {
-    if (this.velocityProject && this.velocityProject !== this.projects.project()) { this.cancel(); return; }
-    this.previewVelocity(id, index, event);
-    const velocities = this.draft()?.velocities;
-    this.cancel();
-    if (velocities) this.patch(id, { useCustomVelocities: true, customVelocities: velocities });
+  finish(event: PointerEvent): void {
+    if (this.gesture?.pointer === event.pointerId) this.commitGesture();
   }
 
-  cancel(): void { this.gesture = null; this.velocityProject = null; this.draft.set(null); }
+  finishHover(): void {
+    if (this.gesture?.pointer === null) this.commitGesture();
+  }
+
+  private commitGesture(): void {
+    const gesture = this.gesture, draft = this.draft();
+    this.cancel();
+    if (!gesture || gesture.project !== this.projects.project()) return;
+    if (draft?.pattern) this.storePattern(gesture.id, draft.pattern, draft.velocities);
+    else if (draft?.velocities) this.storeVelocities(gesture.id, draft.velocities);
+  }
+
+  private velocityAt(event: PointerEvent, cell: HTMLElement): number {
+    const bounds = cell.getBoundingClientRect();
+    return this.clampVelocity(127 * (bounds.bottom - event.clientY) / bounds.height);
+  }
+
+  private clampVelocity(value: number): number {
+    return Math.max(0, Math.min(127, Math.round(value)));
+  }
+
+  private storeVelocities(id: string, velocities: number[]): void {
+    const row = this.rows().find(row => row.id === id);
+    if (row?.velocityEditing && velocities.some((value, index) => value !== row.velocities[index])) {
+      this.patch(id, { customVelocities: velocities });
+    }
+  }
+
+  cancel(): void { this.gesture = null; this.draft.set(null); }
+
+  cancelGesture(event?: Event): void {
+    if (!this.gesture) return;
+    this.cancel();
+    event?.stopPropagation();
+  }
 
   wheelVelocity(id: string, index: number, event: WheelEvent): void {
-    if (event.ctrlKey || event.metaKey || event.deltaY === 0 || this.velocityProject) return;
-    event.preventDefault(); event.stopPropagation();
+    if (event.ctrlKey || event.metaKey || event.deltaY === 0 || this.gesture || this.recordingProject) return;
     const row = this.rows().find(row => row.id === id)!;
-    const grid = [...(row.values['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES)];
-    grid[index] = Math.max(0, Math.min(127, grid[index] + (event.deltaY < 0 ? 1 : -1) * (event.shiftKey ? 1 : 6)));
-    this.patch(id, { useCustomVelocities: true, customVelocities: grid });
+    if (!row.velocityEditing || row.slots[index] === 0) return;
+    event.preventDefault(); event.stopPropagation();
+    const velocities = [...row.velocities];
+    velocities[index] = this.clampVelocity(velocities[index] - Math.sign(event.deltaY) * (event.shiftKey ? 1 : 6));
+    this.storeVelocities(id, velocities);
+  }
+
+  resetVelocity(id: string, index: number): void {
+    this.finishHover();
+    if (this.gesture || this.recordingProject) return;
+    const row = this.rows().find(row => row.id === id)!;
+    if (!row.velocityEditing || row.slots[index] === 0) return;
+    const velocities = [...row.velocities];
+    velocities[index] = Math.floor((Number(row.values['velocityMin']) + Number(row.values['velocityMax'])) / 2);
+    this.storeVelocities(id, velocities);
+  }
+
+  velocityKey(event: KeyboardEvent, id: string, index: number): void {
+    const row = this.rows().find(row => row.id === id)!;
+    if (!row.velocityEditing) return;
+    if (event.shiftKey && (event.key === ' ' || event.key === 'Enter')) {
+      event.preventDefault();
+      if (!event.repeat && !this.gesture) this.toggle(id, index, true);
+      return;
+    }
+    if (this.gesture || this.recordingProject || row.slots[index] === 0) return;
+    const current = row.velocities[index];
+    const values: Record<string, number> = {
+      ArrowUp: current + 1, ArrowRight: current + 1, ArrowDown: current - 1, ArrowLeft: current - 1,
+      PageUp: current + 6, PageDown: current - 6, Home: 0, End: 127,
+    };
+    if (!Object.hasOwn(values, event.key)) return;
+    event.preventDefault();
+    const velocities = [...row.velocities];
+    velocities[index] = this.clampVelocity(values[event.key]);
+    this.storeVelocities(id, velocities);
   }
 
   inherit(id: string, field: string): void {
