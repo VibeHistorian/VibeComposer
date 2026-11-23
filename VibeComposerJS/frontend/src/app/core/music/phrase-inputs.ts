@@ -19,5 +19,5 @@ export function sameProjectExceptVolume(left: CompositionProject, right: Composi
 export function samePhraseInputs(left: CompositionProject, right: CompositionProject): boolean {
   return left === right || equalExcept(left, right, ['mix', 'tracks', 'drumSlots', 'masterVolumePercent'])
     && left.tracks.length === right.tracks.length
-    && left.tracks.every((track, index) => equalExcept(track, right.tracks[index], ['mix']));
+    && left.tracks.every((track, index) => equalExcept(track, right.tracks[index], ['mix', 'drumPan']));
 }

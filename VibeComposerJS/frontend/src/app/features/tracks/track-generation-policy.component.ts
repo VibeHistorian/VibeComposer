@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import type { ArrangedPart } from '../../core/music/part-role';
 import type { InstrumentGenerationPolicy, TrackGenerationPolicy, TrackGenerationPolicyPatch } from '../../core/music/generation-policy.model';
 import { DEFAULT_INSTRUMENT_POLICIES, instrumentPoolOptions } from '../../core/music/instrument-generation';
-import { TRACK_POLICY_CONTROLS, DEFAULT_TRACK_POLICIES, automaticPolicyDefault, type PolicyControl } from '../../core/music/track-generation';
+import { DRUM_KIT_CONTROLS, TRACK_POLICY_CONTROLS, DEFAULT_TRACK_POLICIES, automaticPolicyDefault, type PolicyControl } from '../../core/music/track-generation';
+import type { DrumRerollMode } from '../../core/ui/ui-preferences';
 import { CompactToggleComponent } from '../../shared/compact-toggle.component';
 import { SelectComponent } from '../../shared/select.component';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
@@ -36,7 +37,11 @@ export class TrackGenerationPolicyComponent {
   readonly instrumentPools = computed(() => instrumentPoolOptions(this.role()));
   readonly poolLabels = { AUTO: 'Chord / Pluck', ALL: 'All', MELODY: 'Melody', BASS: 'Bass', CHORD: 'Chord',
     PLUCK: 'Pluck', LONG_PAD: 'Long pad', DRUM: 'Classic drums', DRUM_FULL: 'Full percussion', DRUM_ACOUSTIC: 'Acoustic kit', DRUM_HAND: 'Hand percussion' };
-  readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()].filter(control => !['onCompose', 'rerollSeeds', 'sameSeed'].includes(control.key)));
+  readonly drumRerollMode = input<DrumRerollMode>('kit');
+  readonly kitControls = computed(() => this.role() === 'drums' && this.drumRerollMode() === 'kit' ? DRUM_KIT_CONTROLS : []);
+  readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()].filter(control =>
+    !['onCompose', 'rerollSeeds', 'sameSeed'].includes(control.key) && !DRUM_KIT_CONTROLS.includes(control)
+    && (control.key !== 'overrandomizeChance' || this.drumRerollMode() === 'legacy')));
 
   readonly defaultInstrumentPolicies = DEFAULT_INSTRUMENT_POLICIES;
   defaultValue(control: PolicyControl): string | number { return (DEFAULT_TRACK_POLICIES[this.role()] as unknown as Record<string, string | number>)[control.key]; }
@@ -50,6 +55,7 @@ export class TrackGenerationPolicyComponent {
       velocityMin: 'VEL↓', velocityMax: 'VEL↑', struminess: 'STRUM',
       maxStrumPause: 'STRUM⏸︎', expandChance: 'EXP', maxSwing: 'SWING',
       dynamicChance: 'GHOST', overrandomizeChance: 'OVER', melodyChance: 'MEL%',
+      density: 'DENS', stereoWidth: 'WIDTH', experiment: 'EXPER', layering: 'LAYER', ring: 'RING',
     };
     return codes[control.key] ?? control.label.toUpperCase().slice(0, 5);
   }

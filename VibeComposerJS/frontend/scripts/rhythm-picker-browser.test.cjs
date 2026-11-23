@@ -665,6 +665,12 @@ test('production Angular controls initialize selects from settings and support r
         [...document.querySelectorAll('.score-display-header button')].find(button => button.textContent.trim() === 'Cancel').click();
         await waitFor(() => !document.querySelector('.score-display-header')
           && !document.querySelector('.track-group.drums .group-select').disabled, 'close drum editor');
+        settingsButton.click();
+        const rerollMode = await waitFor(() => document.querySelector('vc-select[aria-label="Drum reroll mode"]'), 'Drum reroll settings');
+        await changeControl(rerollMode, 'legacy');
+        await waitFor(() => rerollMode.getAttribute('value') === 'legacy', 'Legacy drum rerolls selected');
+        document.querySelector('[aria-label="Close settings"]').click();
+        await waitFor(() => !document.querySelector('vc-settings-dialog'), 'close drum reroll settings');
         const drumGroup = document.querySelector('.track-group.drums');
         drumGroup.querySelector('.group-select').click();
         await waitFor(() => drumGroup.querySelector('.policy-controls'), 'drums expanded by selection');

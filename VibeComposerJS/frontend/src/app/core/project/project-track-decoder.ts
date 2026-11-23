@@ -57,6 +57,10 @@ export function decodeTracks(value: unknown): CompositionTrack[] | undefined {
       }
     }
     if (!decoded) return undefined;
+    if (track.drumPan !== undefined) {
+      if (track.role !== 'drums' || (track.drumPan !== 'auto' && track.drumPan !== 'fixed')) return undefined;
+      decoded = { ...decoded, drumPan: track.drumPan };
+    }
     if (track.parameterLocks !== undefined) {
       if (!Array.isArray(track.parameterLocks) || new Set(track.parameterLocks).size !== track.parameterLocks.length
         || track.parameterLocks.some(key => typeof key !== 'string' || !PART_CONTROLS[decoded!.role].some(control => control.key === key))) return undefined;

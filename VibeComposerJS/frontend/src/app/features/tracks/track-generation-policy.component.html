@@ -20,6 +20,16 @@
     </div>
   </div>
 }
+@if (expanded() && kitControls().length) {
+  <div class="policy-controls" role="group" aria-label="Drum kit reroll rules">
+    @for (control of kitControls(); track control.key) {
+      <vc-compact-knob [mini]="true" [label]="'Reroll ' + control.label" [defaultValue]="+defaultValue(control)"
+        [shortLabel]="code(control)" [description]="control.description ?? ''" unit="%"
+        [minimum]="control.minimum!" [maximum]="control.maximum!" [value]="numericValue(control)" [disabled]="inactive(control)"
+        (valueCommit)="changeNumber(control, $event)" />
+    }
+  </div>
+}
 @if (expanded() && controls().length) {
   <div class="policy-controls" role="group" [attr.aria-label]="role() + ' track reroll rules'">
     @for (control of controls(); track control.key) {

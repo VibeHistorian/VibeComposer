@@ -83,11 +83,14 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
     if (Array.isArray(tracks)) tracks.forEach((raw, index) => {
       const path = `project.tracks[${index}]`;
       const keys = ['id', 'role', 'name', 'midiChannel', 'mix', 'generatorSettings'];
-      const track = object(raw, path, keys, [...keys, 'editedPhrase', 'phraseEdits', 'rerollLocked', 'parameterLocks', 'instrumentLocked', 'instrumentPool', 'orderOffset']);
+      const track = object(raw, path, keys, [...keys, 'editedPhrase', 'phraseEdits', 'rerollLocked', 'parameterLocks', 'instrumentLocked', 'instrumentPool', 'orderOffset', 'drumPan']);
       if (!track) return;
       mix(track['mix'], `${path}.mix`);
       const role = track['role'] as ArrangedPart;
       check(`${path}.role`, ARRANGED_PARTS.includes(role), `expected one of ${ARRANGED_PARTS.join(', ')}`);
+      if (track['drumPan'] !== undefined) {
+        check(`${path}.drumPan`, role === 'drums' && (track['drumPan'] === 'auto' || track['drumPan'] === 'fixed'), 'expected auto or fixed on a drum track');
+      }
       check(`${path}.id`, typeof track['id'] === 'string' && /^[a-zA-Z0-9_-]{1,64}$/.test(track['id']), 'expected 1–64 letters, digits, underscores, or hyphens');
       check(`${path}.name`, typeof track['name'] === 'string' && !!track['name'].trim() && track['name'].length <= 48, 'expected a nonempty name of at most 48 characters');
       check(`${path}.midiChannel`, Number.isInteger(track['midiChannel']) && (track['midiChannel'] as number) >= 1 && (track['midiChannel'] as number) <= 16 && (role !== 'drums' || track['midiChannel'] === 10), 'expected channel 1–16 (10 for drums)');

@@ -681,7 +681,8 @@ for (const role of ['bass', 'chords', 'drums', 'melody']) {
   });
 
   test(`${role} conflicts and unavailable reroll targets preserve history and counters`, () => {
-    const { service } = fixture();
+    const { service, uiPreferences } = fixture();
+    if (role === 'drums') uiPreferences.setDrumRerollMode('legacy');
     const id = `track-${role}-1`, sectionId = service.project().arrangement[0].id;
     service.updatePartSettings({ kind: 'global-role', role }, { velocityMax: 127 });
     service.updatePartSettings({ kind: 'section-role', sectionId, role }, { velocityMin: 120 });

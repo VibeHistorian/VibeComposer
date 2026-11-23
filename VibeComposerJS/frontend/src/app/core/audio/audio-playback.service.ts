@@ -1,7 +1,7 @@
 import { protectedAudioOutput } from './output-limiter';
 import { resolvedDrumSlots } from '../project/project-drum-kit';
 import { effect, inject, Injectable, signal, untracked } from '@angular/core';
-import { withMasterVolume, mixEnabled } from './mix-values';
+import { withMasterVolume, mixEnabled, drumChannelPan, withDrumChannelPan } from './mix-values';
 import { MidiOutputService } from './midi-output.service';
 import type { ArrangedPart } from '../music/part-role';
 import type { CompositionProject } from '../project/project.model';
@@ -82,6 +82,7 @@ export class AudioPlaybackService {
   private tempoMap: readonly TempoPoint[] = [{ beat: 0, seconds: 0, bpm: 120 }];
   private selectedLoopRange: PlaybackRange | null = null;
   private mixProject?: CompositionProject;
+  private midiDrumPan?: number;
   private scheduledProject?: CompositionProject;
   private recordingBacking: { range: PlaybackRange; excluded: ReadonlySet<string>; offset: number; previousRange: PlaybackRange | null; previousLoop: boolean; stop(): void } | null = null;
   private phrasePreview: PlaybackPhrasePreview | null = null;
@@ -155,7 +156,8 @@ export class AudioPlaybackService {
         if (context.state !== 'running') await context.resume();
         if (cancelled) return;
         if (this.midi.selectedOutput()) {
-          release = this.midi.hold(withMasterVolume(track, project.masterVolumePercent), note.midi, note.velocity,
+          const midiTrack = withDrumChannelPan(withMasterVolume(track, project.masterVolumePercent), drumChannelPan(project.tracks));
+          release = this.midi.hold(midiTrack, note.midi, note.velocity,
             track.role === 'drums' ? this.drumSlotsFor(project, [note.midi]) : undefined);
           return;
         }
@@ -188,10 +190,11 @@ export class AudioPlaybackService {
       if (!this.midi.selectedOutput()) await this.prepareInstrument(context);
       if (this.midi.selectedOutput()) {
         const pitches = new Set<number>();
+        const midiTrack = withDrumChannelPan(withMasterVolume(track, project?.masterVolumePercent), drumChannelPan(project?.tracks ?? [track]));
         for (const note of notes) {
           if (pitches.has(note.midi)) continue;
           pitches.add(note.midi);
-          this.midi.schedule(withMasterVolume(track, project?.masterVolumePercent), note.midi, note.velocity, performance.now() + 3, 0.3,
+          this.midi.schedule(midiTrack, note.midi, note.velocity, performance.now() + 3, 0.3,
             project && track.role === 'drums' ? this.drumSlotsFor(project, notes.map(note => note.midi)) : undefined);
         }
         return;
@@ -473,11 +476,12 @@ export class AudioPlaybackService {
 
   private midiTrack(track: CompositionTrack): CompositionTrack {
     const volumePercent = this.trackVolume(track) * this.masterVolumePercent / 100;
-    return volumePercent === track.mix.volumePercent ? track : { ...track, mix: { ...track.mix, volumePercent } };
+    return withDrumChannelPan(volumePercent === track.mix.volumePercent ? track : { ...track, mix: { ...track.mix, volumePercent } }, this.midiDrumPan);
   }
 
   updateMix(project: CompositionProject): void {
     this.mixProject = project;
+    this.midiDrumPan = drumChannelPan(project.tracks);
     if (!this.context || this.state() === 'stopped') return;
     const anySolo = project.tracks.some((track) => track.mix.solo);
     const now = this.context.currentTime;
@@ -550,6 +554,7 @@ export class AudioPlaybackService {
 
   private prepareMix(project: CompositionProject, context: AudioContext, crossfade = false): void {
     this.mixProject = project;
+    this.midiDrumPan = drumChannelPan(project.tracks);
     const oldBuses = [...this.buses.values()];
     const oldMixBus = this.mixBus;
     const disconnect = () => {

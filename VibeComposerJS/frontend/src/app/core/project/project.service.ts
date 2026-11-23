@@ -2,6 +2,7 @@ import { transferManualParameters } from '../music/manual-phrase-processing';
 import { followHarmonyMode } from '../music/harmony-mode';
 import { MAX_DRUM_SOUNDS } from '../music/drum-instruments';
 import { projectDrumPitches, reconcileDrumKit } from './project-drum-kit';
+import { rerollDrumKit, type DrumKitRerollScope } from './project-drum-reroll';
 import { copyArrangementPhrase, type ArrangementPhraseCopy } from './arrangement-phrase-copy';
 import { samePhraseInputs, sameProjectExceptVolume } from '../music/phrase-inputs';
 import type { TrackDuplicationOptions } from './track-duplication';
@@ -39,7 +40,7 @@ import type { PartSettingsScope, LocalPartSettingsScope, PartWorkflowResult } fr
 import type { InstrumentGenerationPolicy, ArpeggioGenerationPolicy, TrackGenerationPolicyPatch } from '../music/generation-policy.model';
 import type { CompositionProject } from './project.model';
 import { SectionTypeSettingsService } from './section-type-settings.service';
-import { copyPartSettings, decodePartPatch, resolvePartTrack, settingsValues, partPatchesEqual, partValuesEqual, type PartSettingValue, PART_CONTROLS, MANUAL_PARAMETER_TARGETS } from '../music/part-settings';
+import { copyPartSettings, decodePartPatch, resolvePartTrack, sectionTrackSettingsDifferences, settingsValues, partPatchesEqual, partValuesEqual, type PartSettingValue, PART_CONTROLS, MANUAL_PARAMETER_TARGETS } from '../music/part-settings';
 import { JavaRandom } from '../music/java-random';
 import { DRUM_HIT_MULTIPLIERS, multiplyDrumHits } from '../music/drum-hit-multiplier';
 import { chooseMelodyTargets, forceMelodyOutline } from '../music/melody-targets';
@@ -426,6 +427,13 @@ export class ProjectService {
     this.commit({ ...current, tracks: current.tracks.map(item => item.id === trackId ? { ...item, instrumentLocked: locked } : item) });
   }
 
+  setDrumPanAutomatic(trackId: string, automatic: boolean): void {
+    const current = this.state(), drumPan = automatic ? 'auto' : 'fixed';
+    const tracks = current.tracks.map(track => track.id === trackId && track.role === 'drums' && track.drumPan !== drumPan
+      ? { ...track, drumPan } as const : track);
+    if (tracks.some((track, index) => track !== current.tracks[index])) this.commit({ ...current, tracks });
+  }
+
   updateInstrumentPolicy(role: ArrangedPart, patch: Partial<InstrumentGenerationPolicy>): PartWorkflowResult {
     if (!ARRANGED_PARTS.includes(role)) return 'invalid';
     const current = this.state(), previous = current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role];
@@ -450,6 +458,9 @@ export class ProjectService {
       && (trackId === undefined || track.id === trackId));
     if (!sources.length) return current;
     if (count >= 2147483647) return undefined;
+    if (role === 'drums' && this.uiPreferences.drumRerollMode() === 'kit') {
+      return this.buildDrumKitReroll(current, sources, count, { instrumentsOnly: true, forceInstruments: true });
+    }
     const targets = rerollInstruments(this.trackRerollSeed(current, role, count), role,
       current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], sources, true,
       { reservedPitches: projectDrumPitches(current, sources.map(track => track.id)), remaining: current.tracks.filter(track => track.role === 'drums' && !sources.includes(track)).map(track => track.generatorSettings as DrumSettings) });
@@ -503,11 +514,22 @@ export class ProjectService {
       const track = { ...source, id, name: `${role[0].toUpperCase()}${number}`,
         midiChannel: assignTrackMidiChannel(role, tracks),
         generatorSettings: copyPartSettings(source.generatorSettings),
-        mix: { ...source.mix, muted: false, solo: false }, rerollLocked: false, instrumentLocked: false, editedPhrase: undefined, phraseEdits: undefined } as CompositionTrack;
+        mix: { ...source.mix, muted: false, solo: false }, rerollLocked: false, instrumentLocked: false, editedPhrase: undefined, phraseEdits: undefined,
+        ...(role === 'drums' && this.uiPreferences.drumRerollMode() === 'kit' ? {
+          drumPan: undefined, parameterLocks: undefined, mix: { ...source.mix, muted: false, solo: false, panPercent: 0 },
+        } : {}) } as CompositionTrack;
       created.push(track); tracks.push(track);
     }
     const policy = current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role];
     const seed = this.trackRerollSeed(current, role, count);
+    const presenceRandom = new JavaRandom(BigInt.asIntN(64, seed ^ 0x50524553454e4345n));
+    const arrangement = current.arrangement.map(section => ({ ...section, trackPresence: { ...section.trackPresence,
+      ...generateTrackPresence(created, this.sectionTypeSettings.chances()[section.type], () => presenceRandom.nextDouble()) } }));
+    if (role === 'drums' && this.uiPreferences.drumRerollMode() === 'kit') {
+      const staged = { ...current, tracks, arrangement };
+      const candidate = this.buildDrumKitReroll(staged, created, count);
+      return this.commitPartWorkflow({ ...candidate, trackRerollCounts: { ...current.trackRerollCounts, drums: count + 1 } });
+    }
     const members = tracks.filter(track => track.role === role);
     const drumContext = { onlyAdd: true, totalTracks: members.length, reservedPitches: projectDrumPitches(current),
       remaining: current.tracks.filter(track => track.role === 'drums').map(track => track.generatorSettings as DrumSettings) };
@@ -515,10 +537,8 @@ export class ProjectService {
     const settings = rerollRoleSettings(seed, role, policy, instrumentTracks, created.map(track => members.indexOf(track) + 1), drumContext);
     const generated = instrumentTracks.map((track, index) => ({ ...track, generatorSettings: settings[index] } as CompositionTrack));
     const replacements = new Map(generated.map(track => [track.id, track]));
-    const presenceRandom = new JavaRandom(BigInt.asIntN(64, seed ^ 0x50524553454e4345n));
     return this.commitPartWorkflow({ ...current, tracks: tracks.map(track => replacements.get(track.id) ?? track),
-      arrangement: current.arrangement.map(section => ({ ...section, trackPresence: { ...section.trackPresence,
-        ...generateTrackPresence(generated, this.sectionTypeSettings.chances()[section.type], () => presenceRandom.nextDouble()) } })),
+      arrangement,
       trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } });
   }
 
@@ -622,6 +642,21 @@ export class ProjectService {
         if (!sources.length) continue;
         const count = counts[role] ?? 0;
         if (count >= 2147483647) return 'invalid';
+        if (role === 'drums' && this.uiPreferences.drumRerollMode() === 'kit') {
+          const plans = this.planDrumKit(current, sources, count, { sectionId: section.id });
+          let changed = false;
+          for (const track of plans) {
+            const base = current.tracks.find(item => item.id === track.id);
+            if (base?.role !== 'drums' || base === track || !sources.some(source => source.id === track.id)) continue;
+            const patch = sectionTrackSettingsDifferences(base, section, track.generatorSettings, current.melodyGlobal);
+            if (partPatchesEqual(patch, trackPartOverrides[track.id] ?? {})) continue;
+            if (Object.keys(patch).length) trackPartOverrides[track.id] = patch;
+            else delete trackPartOverrides[track.id];
+            changed = true;
+          }
+          if (changed) counts.drums = count + 1;
+          continue;
+        }
         const roleTracks = current.tracks.filter(track => track.role === role);
         const drumContext = { totalTracks: roleTracks.length, reservedPitches: projectDrumPitches(current, sources.map(track => track.id)),
           remaining: roleTracks.filter(track => !sources.some(source => source.id === track.id))
@@ -631,11 +666,7 @@ export class ProjectService {
           sources.map(track => roleTracks.findIndex(item => item.id === track.id) + 1), drumContext);
         sources.forEach((track, index) => {
           const base = current.tracks.find(item => item.id === track.id)!;
-          const inherited = settingsValues(resolvePartTrack(base, { ...section, trackPartOverrides: undefined },
-            current.melodyGlobal).generatorSettings, role);
-          // Keep unchanged controls inheriting instead of freezing the entire rerolled snapshot.
-          const patch = copyPartSettings(Object.fromEntries(Object.entries(settingsValues(settings[index], role))
-            .filter(([field, value]) => !partValuesEqual(value, inherited[field]))) as PartSettingsPatch);
+          const patch = sectionTrackSettingsDifferences(base, section, settings[index], current.melodyGlobal);
           if (Object.keys(patch).length) trackPartOverrides[track.id] = patch;
           else delete trackPartOverrides[track.id];
         });
@@ -661,6 +692,9 @@ export class ProjectService {
     const policy = current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role];
     const count = current.trackRerollCounts?.[role] ?? 0;
     if (count >= 2147483647) return undefined;
+    if (role === 'drums' && this.uiPreferences.drumRerollMode() === 'kit') {
+      return this.buildDrumKitReroll(current, sources, count, { forceInstruments });
+    }
     const seed = this.trackRerollSeed(current, role, count);
     const drumContext = { totalTracks: roleTracks.length, reservedPitches: projectDrumPitches(current, sources.map(track => track.id)),
       remaining: roleTracks.filter(track => !sources.includes(track)).map(track => track.generatorSettings as DrumSettings) };
@@ -671,6 +705,21 @@ export class ProjectService {
     const next = { ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track),
       trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } };
     return next;
+  }
+
+  private planDrumKit(project: CompositionProject, sources: readonly CompositionTrack[], count: number,
+    scope?: DrumKitRerollScope) {
+    return rerollDrumKit(project, sources.map(track => track.id), this.trackRerollSeed(project, 'drums', count),
+      project.trackGenerationPolicies?.drums ?? DEFAULT_TRACK_POLICIES.drums,
+      project.instrumentGenerationPolicies?.drums ?? DEFAULT_INSTRUMENT_POLICIES.drums, scope);
+  }
+
+  private buildDrumKitReroll(project: CompositionProject, sources: readonly CompositionTrack[], count: number,
+    scope?: DrumKitRerollScope): CompositionProject {
+    const planned = new Map(this.planDrumKit(project, sources, count, scope).map(track => [track.id, track]));
+    const tracks = project.tracks.map(track => planned.get(track.id) ?? track);
+    return tracks.every((track, index) => track === project.tracks[index]) ? project
+      : { ...project, tracks, trackRerollCounts: { ...project.trackRerollCounts, drums: count + 1 } };
   }
 
   /** Explicit Compose only. Live reload, playback and ordinary edits never run policies. */
@@ -708,8 +757,12 @@ export class ProjectService {
       next = { ...next, tracks: next.tracks.map((track, index) => track.role === 'melody' && !track.rerollLocked && !hasManualPhrase(track)
         ? { ...track, generatorSettings: { ...track.generatorSettings, ...contextualRange(BigInt(seed) + BigInt(index)) } } : track) };
     }
+    const composeKit = this.uiPreferences.drumRerollMode() === 'kit'
+      && (current.trackGenerationPolicies?.drums ?? DEFAULT_TRACK_POLICIES.drums).onCompose !== false
+      && current.tracks.some(track => track.role === 'drums' && !track.rerollLocked);
     for (const role of ARRANGED_PARTS) {
       if ((current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role]).onCompose === false) continue;
+      if (role === 'drums' && composeKit) continue;
       const candidate = this.buildRoleReroll(next, role);
       if (!candidate) return 'invalid';
       next = candidate;
@@ -751,11 +804,20 @@ export class ProjectService {
       if (next.arrangementManual) {
         next = arrangementCommands.randomizeArrangementPresence(next, undefined,
           this.sectionTypeSettings.chances(), () => random.nextDouble())!;
-        if (this.uiPreferences.generateArrangementVariations()) next = arrangementCommands.randomizeArrangementVariations(next,
+        if (!composeKit && this.uiPreferences.generateArrangementVariations()) next = arrangementCommands.randomizeArrangementVariations(next,
           BigInt(next.seed), undefined, next.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY, this.uiPreferences.variationRerolls())!;
       } else next = arrangementCommands.randomizeArrangement(next, this.sectionTypeSettings.chances(), BigInt(next.seed),
-        this.uiPreferences.generateArrangementVariations(), this.uiPreferences.variationRerolls());
+        !composeKit && this.uiPreferences.generateArrangementVariations(), this.uiPreferences.variationRerolls());
       next = arrangementCommands.randomizeArrangementBeatDuration(next, BigInt(next.seed));
+    }
+    if (composeKit) {
+      const candidate = this.buildRoleReroll(next, 'drums');
+      if (!candidate) return 'invalid';
+      next = candidate;
+      if (next.randomizeArrangementOnCompose && this.uiPreferences.generateArrangementVariations()) {
+        next = arrangementCommands.randomizeArrangementVariations(next, BigInt(next.seed), undefined,
+          next.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY, this.uiPreferences.variationRerolls())!;
+      }
     }
     next = { ...next, tracks: next.tracks.map(track => {
       const source = current.tracks.find(source => source.id === track.id);
@@ -1156,14 +1218,19 @@ export class ProjectService {
     }, 0) + 1;
     const id = `track-${role}-${nextNumber}`;
     const channel = assignTrackMidiChannel(role, current.tracks);
+    const kit = role === 'drums' && this.uiPreferences.drumRerollMode() === 'kit';
+    const retainedPitches = kit ? projectDrumPitches(current) : [];
+    const drumDefaults = retainedPitches.length === MAX_DRUM_SOUNDS && !retainedPitches.includes(DEFAULT_DRUM_SETTINGS.pitch) && source.role === 'drums'
+      ? { ...DEFAULT_DRUM_SETTINGS, pitch: source.generatorSettings.pitch } : DEFAULT_DRUM_SETTINGS;
     let track = { ...source, id, name: `${role[0].toUpperCase()}${nextNumber}`, midiChannel: channel,
       mix: { ...source.mix, muted: false, solo: false },
-      generatorSettings: copyPartSettings(role === 'drums' ? DEFAULT_DRUM_SETTINGS : source.generatorSettings),
+      generatorSettings: copyPartSettings(role === 'drums' ? drumDefaults : source.generatorSettings),
       rerollLocked: false,
       instrumentLocked: false,
+      ...(kit ? { drumPan: undefined, parameterLocks: undefined, mix: { ...source.mix, muted: false, solo: false, panPercent: 0 } } : {}),
       editedPhrase: role === 'drums' ? undefined : source.editedPhrase?.map((note) => ({ ...note })),
       phraseEdits: role === 'drums' ? undefined : source.phraseEdits?.map(edit => ({ ...edit, notes: edit.notes.map(note => ({ ...note })) })) } as CompositionTrack;
-    if (scorePoint) {
+    if (scorePoint && !kit) {
       track = { ...track, editedPhrase: undefined, phraseEdits: undefined } as CompositionTrack;
       const members = [...current.tracks.filter(member => member.role === role), track];
       const seed = this.trackRerollSeed(current, role, count);
@@ -1180,6 +1247,10 @@ export class ProjectService {
       ...(scorePoint && role !== 'drums' && section.id === scorePoint.sectionId && section.rolePartOverrides?.[role]?.transpose !== undefined
         ? { trackPartOverrides: { ...section.trackPartOverrides, [id]: { transpose: 0 } } } : {}),
     }));
+    if (kit && scorePoint) {
+      const staged = { ...current, tracks: [...current.tracks, track], arrangement };
+      track = this.planDrumKit(staged, [track], count).find(item => item.id === id) ?? track;
+    }
     if (scorePoint && role !== 'drums') {
       const candidate = { ...current, tracks: [...current.tracks, track], arrangement };
       let pitches: number[];
@@ -1246,6 +1317,7 @@ export class ProjectService {
     if (track.role === 'drums' && ((patch.midiChannel !== undefined && patch.midiChannel !== 10)
       || patch.mix?.program !== undefined)) return;
     tracks[index] = { ...track, ...patch, name: patch.name?.trim() ?? track.name,
+      ...(track.role === 'drums' && patch.mix?.panPercent !== undefined ? { drumPan: 'fixed' as const } : {}),
       mix: patch.mix ? { ...track.mix, ...patch.mix,
         ...(patch.mix.volumePercent !== undefined ? { volumePercent: normalizeVolumePercent(patch.mix.volumePercent) } : {}),
         ...(patch.mix.solo === true ? { muted: false } : patch.mix.muted === true ? { solo: false } : {}) } : track.mix };

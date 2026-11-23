@@ -48,6 +48,7 @@
           </header>
           <div class="track-policy-header">
             <vc-track-generation-policy [role]="group.role" [policy]="policyFor(group.role)" [expanded]="!isGroupCollapsed(group.role)" [disabled]="editing()" (policyChanged)="updateRolePolicy(group.role, $event)"
+              [drumRerollMode]="preferences.drumRerollMode()"
               (reseedRequested)="reseedRole(group.role)" [instrumentPolicy]="instrumentPolicyFor(group.role)" (instrumentPolicyChanged)="updateInstrumentPolicy(group.role, $event)" />
             @if (rerollMessageFor(group.role)) { <span role="status">{{ rerollMessageFor(group.role) }}</span> }
           </div>
@@ -92,6 +93,11 @@
                 <div class="track-mix-controls" (click)="$event.stopPropagation()">
                   <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Pan ' + track.name" [defaultValue]="0"
                     [value]="track.mix.panPercent" [minimum]="-100" [maximum]="100" valueFormat="pan"
+                    [valueToggle]="track.role === 'drums' && preferences.drumRerollMode() === 'kit' ? {
+                      pressed: drumPanIsAutomatic(track), label: 'Auto pan ' + track.name, disabled: editing(),
+                      tooltip: 'Toggle automatic pan on Kit rerolls. Editing the pan holds it in place.'
+                    } : null"
+                    (valueToggleChange)="projects.setDrumPanAutomatic(track.id, $event)"
                     (valuePreview)="previewTrackPan(track.id, $event)"
                     (valueCommit)="updateTrackPan(track.id, $event)" />
                   <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Volume ' + track.name" [defaultValue]="100"

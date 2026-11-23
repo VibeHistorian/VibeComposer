@@ -3,7 +3,7 @@ import { resolvedDrumSlots } from '../project/project-drum-kit';
 import type { DrumSlots } from './drum-instruments';
 import { DEFAULT_MIDI_PPQ, validMidiPpq } from './midi-resolution';
 import { Midi } from '@tonejs/midi';
-import { midiPanValue, mixEnabled, withMasterVolume } from '../audio/mix-values';
+import { drumChannelPan, midiPanValue, mixEnabled, withDrumChannelPan, withMasterVolume } from '../audio/mix-values';
 import type { CompositionProject } from '../project/project.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { PhraseNote } from './phrase-note';
@@ -21,11 +21,15 @@ export function generatePhraseMidi(name: string, tempoBpm: number,
   const offset = -tracks.reduce((start, { notes }) => notes.reduce((minimum, note) => Math.min(minimum, note.startBeat), start), 0);
   midi.name = name;
   midi.header.setTempo(tempoBpm);
+  const kitPan = drumChannelPan(tracks.map(({ track }) => track));
+  let wroteKitPan = false;
   for (const { track: source, notes } of tracks) {
     const track = midi.addTrack();
     track.name = source.name;
     track.channel = source.midiChannel - 1;
-    configureMix(track, source, false);
+    const sharedPan = source.role === 'drums' && kitPan !== undefined;
+    configureMix(track, withDrumChannelPan(source, kitPan), false, !sharedPan || !wroteKitPan);
+    if (sharedPan) wroteKitPan = true;
     for (const note of notes) {
       const start = note.startBeat + offset;
       const end = start + note.durationBeats;
@@ -55,6 +59,8 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
   if (offset > 0) midi.header.tempos.unshift({ ticks: 0, bpm: midi.header.tempos[0].bpm });
   midi.header.update();
   const anySolo = project.tracks.some((track) => track.mix.solo);
+  const kitPan = drumChannelPan(project.tracks);
+  let wroteKitPan = false;
 
   for (const role of ARRANGED_PARTS) {
     const members = tracksInRoleOrder(project.tracks).filter(track => track.role === role);
@@ -62,7 +68,10 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
       const track = midi.addTrack();
       track.name = compositionTrack.name;
       track.channel = compositionTrack.midiChannel - 1;
-      const included = configureMix(track, withMasterVolume(compositionTrack, project.masterVolumePercent), anySolo);
+      const sharedPan = role === 'drums' && kitPan !== undefined;
+      const included = configureMix(track, withDrumChannelPan(withMasterVolume(compositionTrack, project.masterVolumePercent), kitPan),
+        anySolo, !sharedPan || !wroteKitPan);
+      if (sharedPan) wroteKitPan = true;
       if (!included) continue;
       for (const note of phrases[compositionTrack.id]) {
         track.addNote({
@@ -82,10 +91,10 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
   return midi.toArray();
 }
 
-function configureMix(track: ReturnType<Midi['addTrack']>, compositionTrack: CompositionTrack, anySolo: boolean): boolean {
+function configureMix(track: ReturnType<Midi['addTrack']>, compositionTrack: CompositionTrack, anySolo: boolean, writePan: boolean): boolean {
   const { mix } = compositionTrack;
   if (compositionTrack.role !== 'drums') track.instrument.number = mix.program;
   track.addCC({ number: 7, time: 0, value: Math.max(0, Math.min(1, mix.volumePercent / 100)) });
-  track.addCC({ number: 10, time: 0, value: midiPanValue(mix.panPercent) / 127 });
+  if (writePan) track.addCC({ number: 10, time: 0, value: midiPanValue(mix.panPercent) / 127 });
   return mixEnabled(mix, anySolo);
 }

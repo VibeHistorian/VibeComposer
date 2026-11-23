@@ -2,7 +2,14 @@
   <vc-control-heading #heading [class.label-hidden]="!showLabel()" [label]="label()" [shortLabel]="shortLabel()" [tooltipEnabled]="tooltipEnabled()" [showStatus]="showLabel() && (!mini() || shortLabel() !== null)" [inheritance]="inheritance()" (inheritRequested)="inheritRequested.emit()" />
   <span class="knob-face" [style.--knob-progress]="angle()" [style.--knob-accent]="mixAccent()" [class.mix-face]="mixAccent() !== null" aria-hidden="true"><span>{{ mini() && !hoverLabelOnly() && shortLabel() === null ? valueFormat() === 'decibels' ? 'dB' : label().slice(0, 1) : mixed() && preview() === null ? '—' : shownValue() }}</span></span>
   @if (showValueBelow() || showValueInline()) {
-    <output class="knob-value">{{ mixed() && preview() === null ? 'Mixed' : formattedValue() }}</output>
+    @let readout = mixed() && preview() === null ? 'Mixed' : formattedValue();
+    @if (valueToggle(); as toggle) {
+      <button type="button" class="knob-value knob-value-toggle" [disabled]="disabled() || toggle.disabled"
+        [attr.aria-label]="toggle.label + ' · ' + readout" [attr.aria-pressed]="toggle.pressed" [title]="toggle.tooltip"
+        (click)="$event.stopPropagation(); valueToggleChange.emit(!toggle.pressed)">{{ readout }}</button>
+    } @else {
+      <output class="knob-value">{{ readout }}</output>
+    }
   }
   @if (caption()) { <output class="knob-caption">{{ caption() }}</output> }
   <input [id]="heading.controlId" type="range" [disabled]="disabled()" [min]="sliderMinimum()" [max]="sliderMaximum()" [step]="sliderStep()" [value]="sliderValue()"

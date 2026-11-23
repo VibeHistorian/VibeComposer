@@ -990,6 +990,15 @@ test('overview rerolls freeze only differences while preserving effective reroll
       args[3].forEach((track, index) => expected.set(track.id, settings.settingsValues(result[index], track.role)));
       return result;
     };
+    const kit = load('core/project/project-drum-reroll.ts');
+    const rerollKit = kit.rerollDrumKit;
+    kit.rerollDrumKit = (...args) => {
+      const result = rerollKit(...args);
+      for (const track of result.filter(track => args[1].includes(track.id))) {
+        expected.set(track.id, settings.settingsValues(track.generatorSettings, 'drums'));
+      }
+      return result;
+    };
     const scope = { kind, sectionId, ...(kind === 'section-track' ? { trackId: 'track-bass-1' }
       : kind === 'section-role' ? { role: 'bass' } : {}) };
     const before = service.exportProjectJson();

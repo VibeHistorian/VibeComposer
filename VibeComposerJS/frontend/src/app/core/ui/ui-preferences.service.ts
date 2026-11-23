@@ -23,6 +23,10 @@ export class UiPreferencesService {
   private latestWrite?: Promise<void>;
   private readonly draft = signal<QuickSettings | null>(null);
   readonly preferences = this.state.asReadonly();
+  readonly drumRerollMode = computed(() => this.state().drumRerollMode);
+  setDrumRerollMode(value: string): void {
+    if (value === 'kit' || value === 'legacy') this.commit({ ...this.state(), drumRerollMode: value });
+  }
   readonly sectionTypeChances = computed(() => this.state().sectionTypeChances);
   setSectionTypeChance(type: SectionType, role: ArrangedPart, chance: number): void {
     if (!SECTION_TYPES.includes(type) || !ARRANGED_PARTS.includes(role) || !validSectionChance(chance)) return;

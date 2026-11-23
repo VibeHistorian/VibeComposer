@@ -30,6 +30,12 @@ interface TrackBase {
   readonly rerollLocked?: boolean;
   readonly instrumentLocked?: boolean;
   readonly instrumentPool?: Exclude<InstrumentPool, 'AUTO'>;
+  /** Drum pan ownership. Noncentered pans from older projects are treated as authored. */
+  readonly drumPan?: 'auto' | 'fixed';
+}
+
+export function drumPanIsAutomatic(track: CompositionTrack): boolean {
+  return track.role === 'drums' && (track.drumPan === 'auto' || (track.drumPan === undefined && track.mix.panPercent === 0));
 }
 
 export type CompositionTrack =

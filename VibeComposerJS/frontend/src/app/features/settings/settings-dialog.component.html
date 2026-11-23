@@ -137,6 +137,12 @@
         @case ('behavior') {
           <section aria-labelledby="behavior-title">
             <h2 id="behavior-title">Behavior</h2>
+            <div class="setting-row" vcSettingRow label="Drum reroll mode" scope="compose" descriptionId="drum-reroll-mode-description"
+              description="Kit fits drum sounds, rhythms and stereo placement together. Legacy uses the original seeded drum reroll. Applies to future rerolls and Compose.">
+              <div class="setting-controls"><vc-select aria-label="Drum reroll mode" aria-describedby="drum-reroll-mode-description"
+                [options]="[{ value: 'kit', label: 'Kit' }, { value: 'legacy', label: 'Legacy' }]" [selectDefault]="'kit'"
+                [value]="preferences.drumRerollMode()" (valueChange)="preferences.setDrumRerollMode($event)" /></div>
+            </div>
             <div class="setting-row" vcSettingRow label="Global humanization" scope="sound" description="Maximum ± beat offsets, after part timing and swing. Includes manual notes. Pickups and tails may cross section edges; ownership stays with the source section. Zero disables."><div class="setting-controls">
               <label>Timing beats<input aria-label="Global timing humanization" type="number" min="0" max="0.25" step="0.005" [value]="projects.project().humanization?.timingBeats ?? 0" (change)="setHumanization('timingBeats', +$any($event.target).value)" /></label>
               <label>Duration beats<input aria-label="Global duration humanization" type="number" min="0" max="0.25" step="0.005" [value]="projects.project().humanization?.durationBeats ?? 0" (change)="setHumanization('durationBeats', +$any($event.target).value)" /></label>

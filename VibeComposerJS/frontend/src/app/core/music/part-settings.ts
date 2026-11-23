@@ -295,6 +295,14 @@ export function resolvePartTrack(track: CompositionTrack, section?: ArrangementS
     ...section.rolePartOverrides?.[track.role], ...section.trackPartOverrides?.[track.id] } } as CompositionTrack;
 }
 
+/** Store only values that differ from the role layer so the other controls keep inheriting. */
+export function sectionTrackSettingsDifferences(track: CompositionTrack, section: ArrangementSection,
+  settings: PartSettingsPatch, globals?: MelodyGlobalSettings): PartSettingsPatch {
+  const inherited = settingsValues(resolvePartTrack(track, { ...section, trackPartOverrides: undefined }, globals).generatorSettings, track.role);
+  return copyPartSettings(Object.fromEntries(Object.entries(settingsValues(settings, track.role))
+    .filter(([field, value]) => !partValuesEqual(value, inherited[field]))) as PartSettingsPatch);
+}
+
 export function hasPartOverrides(section: ArrangementSection, role: ArrangedPart, trackId?: string): boolean {
   return !!Object.keys(section.rolePartOverrides?.[role] ?? {}).length
     || !!Object.keys(trackId ? section.trackPartOverrides?.[trackId] ?? {} : {}).length;

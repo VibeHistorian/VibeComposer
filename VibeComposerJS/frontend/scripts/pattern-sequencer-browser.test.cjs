@@ -38,6 +38,12 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       await wait(()=>document.querySelectorAll('.track-group.drums .track-select').length===3,'three drums');
       await wait(()=>read()?.tracks.filter(t=>t.role==='drums').length===3,'three drums persisted');
       const ids = read().tracks.filter(t=>t.role==='drums').map(t=>t.id);
+      // Exercise the same editable grid on each row, including newly generated Kit tracks.
+      if (read().tracks.some(t=>t.role==='drums' && t.generatorSettings.rhythm!=='half')) {
+        const selector = await wait(()=>document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="drums"] [data-control-key="rhythm"] :is(vc-select, vc-menu-select)'), 'Drums role rhythm');
+        await changeControl(selector, 'half');
+      }
+      await wait(()=>read().tracks.filter(t=>t.role==='drums').every(t=>t.generatorSettings.rhythm==='half'),'grid rhythms saved');
       document.querySelector('.track-group.drums .track-select').click();
       await wait(()=>document.querySelector('.track-group.drums .track-select').getAttribute('aria-pressed')==='true','selected drum track');
       await wait(()=>document.querySelector('button[aria-label="Edit rhythm pattern"]'),'preview');
@@ -49,6 +55,8 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       launcher.click();
       await wait(()=>document.querySelectorAll('vc-pattern-sequencer .track').length===3,'all drum rows');
       const popup=document.querySelector('vc-pattern-sequencer');
+      for (const toggle of popup.querySelectorAll('.pattern-row input[type="checkbox"]:checked')) toggle.click();
+      await wait(()=>!popup.querySelector('.velocity-editing') && read().tracks.filter(t=>t.role==='drums').every(t=>!t.generatorSettings.useCustomVelocities),'velocity grids disabled');
       check(!popup.querySelector('.velocity-editing'),'velocities hidden');
       const storedDrums=read().tracks.filter(t=>t.role==='drums');
       const percussion=popup.querySelectorAll('.pattern-row .identity > span');
@@ -121,6 +129,7 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
         && checkbox.getBoundingClientRect().left > editedRow.querySelector('input[type="number"]').getBoundingClientRect().right, 'inline V checkbox after steps');
       checkbox.click();
       await wait(()=>lane.classList.contains('velocity-editing') && storedSettings().useCustomVelocities, 'velocity toggle');
+      const initialVelocities = storedSettings().customVelocities ?? Array(32).fill(79);
       const expandedBounds = cell(0).getBoundingClientRect();
       check(expandedBounds.height === initialBounds.height * 2 && expandedBounds.width === initialBounds.width, 'same cells double in height');
       check(!editedRow.querySelector('input[type="range"]') && popup.querySelectorAll('.velocity-editing').length===1,'one integrated velocity grid');
@@ -167,12 +176,12 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       check(cell(0).getAttribute('aria-valuenow')==='56', 'left press starts at the stored velocity');
       pointer('pointermove', 3, 0, { clientY: startY });
       await new Promise(resolve => requestAnimationFrame(resolve));
-      check(cell(0).getAttribute('aria-valuenow')==='56' && cell(3).getAttribute('aria-valuenow')==='79', 'horizontal left drag leaves both values intact');
+      check(cell(0).getAttribute('aria-valuenow')==='56' && +cell(3).getAttribute('aria-valuenow')===initialVelocities[3], 'horizontal left drag leaves both values intact');
       pointer('pointermove', 3, 0, { clientY: startY + 100 });
       await wait(()=>cell(0).getAttribute('aria-valuenow')==='0', 'left drag clamps below the cell');
       pointer('pointermove', 3, 0, { clientY: startY - 60 });
       await wait(()=>cell(0).getAttribute('aria-valuenow')==='107', 'left drag continues above the cell');
-      check(cell(3).getAttribute('aria-valuenow')==='79' && storedSettings().customVelocities?.[0]===56, 'left drag previews the starting cell only');
+      check(+cell(3).getAttribute('aria-valuenow')===initialVelocities[3] && storedSettings().customVelocities?.[0]===56, 'left drag previews the starting cell only');
       pointer('pointerup', 3, 0, { clientY: startY - 60 });
       await wait(()=>storedSettings().customVelocities?.[0]===107,'left drag commits');
       pointer('pointerdown', 0, 22, { button: 1 });
@@ -183,7 +192,7 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       check(storedSettings().customVelocities?.[0]!==22,'no commit during drag');
       pointer('pointerup', 3, 110, { button: 1 });
       await wait(()=>storedSettings().customVelocities?.[0]===22,'velocity commit');
-      check(storedSettings().customVelocities.slice(0, 4).join() === '22,79,79,110', 'stroke leaves rest velocities intact');
+      check(storedSettings().customVelocities.slice(0, 4).join() === [22,initialVelocities[1],initialVelocities[2],110].join(), 'stroke leaves rest velocities intact');
       check(storedSettings().customPattern.join() === patternBeforeVelocity, 'velocity stroke leaves rhythm intact');
       const addedBounds = cell(1).getBoundingClientRect();
       const addedY = addedBounds.bottom - addedBounds.height * 40 / 127;
@@ -191,7 +200,7 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       await wait(()=>active(1) && cell(1).getAttribute('aria-valuenow')==='40', 'Shift-add previews a hit at the click height');
       pointer('pointermove', 1, 0, { shiftKey: true, clientY: addedY - 12 });
       await wait(()=>cell(1).getAttribute('aria-valuenow')==='50', 'Shift drag fine-adjusts the new hit');
-      check(storedSettings().customPattern[1]===0 && storedSettings().customVelocities[1]===79, 'new hit and velocity stay in preview');
+      check(storedSettings().customPattern[1]===0 && storedSettings().customVelocities[1]===initialVelocities[1], 'new hit and velocity stay in preview');
       pointer('pointerup', 1, 0, { shiftKey: true, clientY: addedY - 12 });
       await wait(()=>storedSettings().customPattern[1]===1 && storedSettings().customVelocities[1]===50, 'new hit and velocity commit together');
       row(ids[1]).querySelector('input[type="number"]').value='4';
@@ -203,7 +212,7 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       document.querySelector('.project-tools button[aria-label="Undo"]').click();
       await wait(()=>read().tracks.find(t=>t.id===ids[1]).generatorSettings.hitsPerPattern===8,'undo hits');
       document.querySelector('.project-tools button[aria-label="Undo"]').click();
-      await wait(()=>storedSettings().customPattern[1]===0 && storedSettings().customVelocities[1]===79,'one undo restores both the rest and its velocity');
+      await wait(()=>storedSettings().customPattern[1]===0 && storedSettings().customVelocities[1]===initialVelocities[1],'one undo restores both the rest and its velocity');
       document.querySelector('.project-tools button[aria-label="Undo"]').click();
       await wait(()=>storedSettings().customVelocities?.[0]===107,'one undo velocity');
       check(storedSettings().customVelocities?.[3] !== 110 && storedSettings().customPattern.join() === patternBeforeVelocity, 'one undo restores full stroke only');

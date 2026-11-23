@@ -26,6 +26,13 @@
 .mini .knob-value { font: 10px var(--font-ui); white-space: nowrap; }
 .mini.at-default .knob-face, .mini.at-default .knob-value { filter: brightness(var(--knob-default-brightness)); }
 
+/* Optional readout toggle */
+.knob-value-toggle { padding: 0; border: 0; background: transparent; cursor: pointer; }
+.knob-value-toggle[aria-pressed="true"] { color: var(--accent-primary); }
+.knob-value-toggle:hover { text-decoration: underline; }
+.knob-value-toggle:focus-visible { outline: 1px solid var(--border-focus); outline-offset: 1px; }
+.knob-value-toggle:disabled { cursor: default; }
+
 /* Named generation mini knobs */
 .named-mini { width: 48px; }
 .named-mini vc-control-heading { display: flex; justify-content: center; }

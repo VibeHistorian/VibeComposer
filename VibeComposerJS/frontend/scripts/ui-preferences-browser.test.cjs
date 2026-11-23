@@ -43,6 +43,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
       }
       if (sessionStorage.getItem('ui-preferences-reloaded')) {
         ensure(JSON.parse(storedSetting(key)).scoreNoteShape==='instrument-log','note shape restored after reload');
+        ensure(JSON.parse(storedSetting(key)).drumRerollMode==='legacy','Legacy drum reroll restored after reload');
         ensure(button('Harmony On Compose').getAttribute('aria-pressed')==='false','harmony Compose toggle restored after reload');
         ensure(getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()==='#dd88ee','main theme restored after reload');
         ensure(getComputedStyle(document.querySelector('.arrangement-panel > .canvas-heading')).backgroundColor==='rgb(56, 40, 72)','app heading restored after reload');
@@ -84,6 +85,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         document.querySelector('[aria-label="Close settings"]').click();
         button('Settings').click();
         await wait(()=>document.querySelector('#behavior-title'),'Behavior reopens by default');
+        ensure(document.querySelector('vc-select[aria-label="Drum reroll mode"]').getAttribute('value')==='legacy','Legacy mode remains selected');
         ensure(button('Preview').getAttribute('aria-pressed')==='false','preview resets when reopened');
         ensure(!document.querySelector('.cdk-overlay-backdrop.appearance-preview'),'reopened dialog dims workspace');
         button('Appearance General').click();
@@ -592,6 +594,40 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         await wait(()=>button('Reset to default'),'reset button');
         button('Reset to default').click();
         await wait(()=>control(quick(),'transpose')&&!control(quick(),'feedbackCount'),'reset predefined defaults');
+        const drumHeader = document.querySelector('.track-group.drums');
+        if (drumHeader.querySelector('.collapse-group-button').getAttribute('aria-expanded')==='false') {
+          drumHeader.querySelector('.collapse-group-button').click();
+        }
+        const kitRules = await wait(()=>drumHeader.querySelector('[aria-label="Drum kit reroll rules"]'),'expanded Drums kit rules');
+        for (const [label, value] of [['Density',45],['Stereo width',55],['Experiment',20],['Layering',25],['Ring',25]]) {
+          const knob = kitRules.querySelector('input[aria-label="Reroll '+label+' %"]');
+          ensure(knob?.matches('input[type="range"]') && +knob.value===value,'Drums kit knob default: '+label);
+        }
+        await changeControl(kitRules.querySelector('input[aria-label="Reroll Density %"]'), '68');
+        await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).trackGenerationPolicies?.drums?.density===68,'Kit density saved in the project');
+        const mix = drumHeader.querySelector('.track-mix-controls');
+        const pan = mix.querySelector('button[aria-label^="Auto pan "]');
+        const volume = mix.querySelector('output.knob-value');
+        ensure(pan?.title.includes('Kit rerolls') && pan.textContent.trim() && !pan.textContent.includes('Auto'),'pan readout is the Auto toggle');
+        ensure(Math.abs(pan.getBoundingClientRect().top-volume.getBoundingClientRect().top)<1 &&
+          Math.abs(pan.getBoundingClientRect().height-volume.getBoundingClientRect().height)<1,'pan and volume share the same readout line');
+        const panText = pan.textContent.trim(), pressed = pan.getAttribute('aria-pressed');
+        pan.click();
+        await wait(()=>pan.getAttribute('aria-pressed')!==pressed,'pan readout toggles Auto');
+        ensure(pan.textContent.trim()===panText,'toggle preserves pan value');
+        pan.click();
+        await wait(()=>pan.getAttribute('aria-pressed')===pressed,'pan readout toggles back');
+        button('Settings').click();
+        const rerollMode = await wait(()=>document.querySelector('vc-select[aria-label="Drum reroll mode"]'),'Drum reroll combobox');
+        ensure(rerollMode.getAttribute('value')==='kit','Kit defaults on');
+        ensure(JSON.stringify((await selectOptions(rerollMode)).map(option=>option.value))===JSON.stringify(['kit','legacy']),'Drum reroll modes');
+        await changeControl(rerollMode,'legacy');
+        await wait(()=>JSON.parse(storedSetting(key)).drumRerollMode==='legacy','Legacy setting committed');
+        document.querySelector('[aria-label="Close settings"]').click();
+        await wait(()=>!drumHeader.querySelector('[aria-label="Drum kit reroll rules"]') &&
+          drumHeader.querySelector('input[aria-label="Reroll Overrandomize %"]'),'Legacy rules shown in the Drums header');
+        ensure(!mix.querySelector('button[aria-label^="Auto pan "]') && mix.querySelectorAll('output.knob-value').length===2,'Legacy keeps the plain pan readout');
+
         // Reapply customized placement and verify browser storage restoration on reload.
         control(quick(),'transpose').querySelector('.placement-target').click();
         await wait(()=>control(inspector(),'transpose'),'move after reset');

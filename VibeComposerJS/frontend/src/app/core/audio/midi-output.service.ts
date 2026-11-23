@@ -108,7 +108,7 @@ export class MidiOutputService {
     this.channels.add(channel);
     if (program !== null) this.send([0xc0 | channel, program]);
     this.send([0xb0 | channel, 7, volume]);
-    this.send([0xb0 | channel, 10, pan]);
+    if (track.role !== 'drums' || previous?.pan !== pan) this.send([0xb0 | channel, 10, pan]);
   }
 
   updateVolume(track: CompositionTrack, volumePercent: number): void {

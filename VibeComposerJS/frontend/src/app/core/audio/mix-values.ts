@@ -1,4 +1,4 @@
-import type { MixChannelSettings } from '../project/track.model';
+import { drumPanIsAutomatic, type CompositionTrack, type MixChannelSettings } from '../project/track.model';
 
 /** Playback uses a linear gain of volumePercent / 100. */
 export const MAX_VOLUME_PERCENT = 100 * 10 ** (6 / 20);
@@ -31,6 +31,20 @@ export function mixEnabled(mix: Pick<MixChannelSettings, 'muted' | 'solo'>, anyS
 /** MIDI pan is a seven-bit controller with center at 64. */
 export function midiPanValue(panPercent: number): number {
   return Math.round((panPercent + 100) * 127 / 200);
+}
+
+/** Auto pan lives in the audio mixer. MIDI percussion shares one channel-wide pan. */
+export function drumChannelPan(tracks: readonly CompositionTrack[]): number | undefined {
+  const drums = tracks.filter(track => track.role === 'drums');
+  if (!drums.some(track => track.drumPan === 'auto')) return undefined;
+  const authored = drums.filter(track => !drumPanIsAutomatic(track));
+  const first = authored[0]?.mix.panPercent ?? 0;
+  return authored.every(track => track.mix.panPercent === first) ? first : 0;
+}
+
+export function withDrumChannelPan(track: CompositionTrack, panPercent: number | undefined): CompositionTrack {
+  return track.role === 'drums' && panPercent !== undefined && track.mix.panPercent !== panPercent
+    ? { ...track, mix: { ...track.mix, panPercent } } : track;
 }
 
 /** MIDI channel volume has no separate master bus; combine levels only at the output boundary. */

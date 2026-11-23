@@ -24,13 +24,16 @@ test('realtime audio survives delays and fractional loops without hidden playhea
         new Function('require', 'module', 'exports', ${JSON.stringify(compile('tiny-synth-engine.ts'))})(() => WebAudioTinySynth, adapter, adapter.exports);
         const outputStage = { exports: {} };
         new Function('module', 'exports', ${JSON.stringify(compile('output-limiter.ts'))})(outputStage, outputStage.exports);
+        const trackModel = { exports: {} }, mix = { exports: {} };
+        new Function('module', 'exports', ${JSON.stringify(compile('../project/track.model.ts'))})(trackModel, trackModel.exports);
+        new Function('require', 'module', 'exports', ${JSON.stringify(compile('mix-values.ts'))})(() => trackModel.exports, mix, mix.exports);
         const dependencies = {
           './output-limiter': outputStage.exports,
           '@angular/core': angular,
           './instrument-settings.service': { InstrumentSettingsService: class InstrumentSettingsService {} },
           './midi-output.service': { MidiOutputService: class MidiOutputService {} },
           './create-instrument-engine': { createInstrumentEngine: async ctx => new adapter.exports.TinySynthEngine(ctx) },
-          './mix-values': { mixEnabled: (mix, solo) => !mix.muted && (!solo || mix.solo) },
+          './mix-values': mix.exports,
           '../music/phrase': { resolvedTrackPhrase: (project, track) => track.notes },
           '../music/phrase-bounds': { noteTimelineBounds: () => ({ startBeat: 0, endBeat: window.testDurationBeats ?? 16 }) },
           '../music/phrase-inputs': { samePhraseInputs: () => false },

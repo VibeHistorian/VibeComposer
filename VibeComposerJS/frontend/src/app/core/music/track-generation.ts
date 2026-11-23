@@ -1,5 +1,5 @@
 import { CLASSIC_DRUM_INSTRUMENTS, drumFamily } from './drum-instruments';
-import type { ArpeggioGenerationPolicy, TrackGenerationPolicies, TrackGenerationPolicy } from './generation-policy.model';
+import { DEFAULT_DRUM_KIT_POLICY, type ArpeggioGenerationPolicy, type TrackGenerationPolicies, type TrackGenerationPolicy } from './generation-policy.model';
 import type { ArpeggioSettings, BassSettings, ChordSettings, DrumSettings, MelodySettings } from './part-settings.model';
 import { type ArrangedPart, ARRANGED_PARTS } from './part-role';
 import type { CompositionTrack } from '../project/track.model';
@@ -12,7 +12,7 @@ import type { StrumType } from './chord-strum';
 
 export const DEFAULT_CHORD_POLICY_EXTENSION = Object.freeze({ strum: true, struminess: 50, split: false,
   maxSplit: 25, maxStrumPause: 35, expandChance: 70 });
-export const DEFAULT_DRUM_POLICY_EXTENSION = Object.freeze({ dynamicChance: 50, overrandomizeChance: 0, melodyChance: 30 });
+export const DEFAULT_DRUM_POLICY_EXTENSION = Object.freeze({ dynamicChance: 50, overrandomizeChance: 0, melodyChance: 30, ...DEFAULT_DRUM_KIT_POLICY });
 
 export const DEFAULT_ARPEGGIO_POLICY: ArpeggioGenerationPolicy = Object.freeze({
   onCompose: true, rerollSeeds: false, sameSeed: false, fixedHits: 4, randomHits: true, sameHits: true, powerOfTwo: true,
@@ -30,6 +30,13 @@ export interface PolicyControl {
   readonly advanced?: boolean;
   readonly description?: string;
 }
+export const DRUM_KIT_CONTROLS: readonly PolicyControl[] = [
+  { key: 'density', label: 'Density %', minimum: 0, maximum: 100, description: 'How many attacks the whole kit plays. Quiet ghost notes count less.' },
+  { key: 'stereoWidth', label: 'Stereo width %', minimum: 0, maximum: 100, description: 'How wide Auto pan places eligible voices in audio. Kicks stay centered.' },
+  { key: 'experiment', label: 'Experiment %', minimum: 0, maximum: 100, description: 'How readily a reroll chooses unusual sounds, accents and less tightly fitted grooves.' },
+  { key: 'layering', label: 'Layering %', minimum: 0, maximum: 100, description: 'Favor shared accents between complementary voices. Lower values leave more room for replies.' },
+  { key: 'ring', label: 'Ring %', minimum: 0, maximum: 100, description: 'Favor ringing voices and allow more space for their tails.' },
+];
 export const ARPEGGIO_POLICY_CONTROLS: readonly PolicyControl[] = [
   { key: 'onCompose', label: 'On Compose' },
   { key: 'fixedHits', label: 'Arps hits', minimum: 1, maximum: 32 },
@@ -86,6 +93,7 @@ export const TRACK_POLICY_CONTROLS: Readonly<Record<ArrangedPart, readonly Polic
     { key: 'overrandomizeChance', label: 'Overrandomize %', minimum: 0, maximum: 100, advanced: true },
     { key: 'melodyChance', label: 'Follow Melody %', minimum: 0, maximum: 100, advanced: true },
     { key: 'shiftChance', label: 'Shift chance %', minimum: 0, maximum: 100, advanced: true },
+    ...DRUM_KIT_CONTROLS,
   ],
   melody: [{ key: 'onCompose', label: 'On Compose' },
     { key: 'targetsOnCompose', label: 'Automatic targets' }, { key: 'patternsOnCompose', label: 'Automatic block patterns' },

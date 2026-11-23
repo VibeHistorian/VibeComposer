@@ -1553,6 +1553,7 @@ test('Melody grids preserve exact attacks and joined lengths in both generators'
 test('Melody grid changes validate merged settings before committing or loading', () => {
   const { service, phrase } = fixture();
   const trackId = 'track-melody-1', sectionId = service.project().arrangement[0].id;
+  service.setSectionTrackPresence(0, trackId, true);
   const track = () => service.project().tracks.find(track => track.id === trackId);
   const global = { kind: 'global-track', trackId }, local = { kind: 'section-track', trackId, sectionId };
   service.updatePartSettings(global, { rhythm: 'half', hitsPerPattern: 8 });
@@ -2647,7 +2648,7 @@ test('drum pattern popup resolves every row in the selected section and edits on
   assert.equal(section.trackPartOverrides[tracks[2].id], undefined);
   assert.deepEqual(section.trackPartOverrides[tracks[1].id].customVelocities, Array(32).fill(40));
   popup.inherit(tracks[1].id, 'customVelocities');
-  assert.equal(service.project().arrangement[1].trackPartOverrides[tracks[1].id].customVelocities, undefined);
+  assert.equal(service.project().arrangement[1].trackPartOverrides[tracks[1].id]?.customVelocities, undefined);
 });
 
 test('role sequencer skips non-grid rhythms and keeps the dedicated velocity editor available', () => {

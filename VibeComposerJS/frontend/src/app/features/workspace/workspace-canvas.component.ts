@@ -26,7 +26,7 @@ import { partEditorContext } from '../part-settings/part-editor-context';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { type ArrangedPart, ARRANGED_PARTS, PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/music/part-role';
 import { type ArrangementSection, type SectionType, SECTION_TYPES } from '../../core/project/arrangement.model';
-import type { CompositionTrack } from '../../core/project/track.model';
+import { drumPanIsAutomatic, type CompositionTrack } from '../../core/project/track.model';
 import type { CompositionProject } from '../../core/project/project.model';
 import type { PartSettingsScope } from '../../core/project/part-settings-scope';
 import type { TrackGenerationPolicyPatch, InstrumentGenerationPolicy, InstrumentPool } from '../../core/music/generation-policy.model';
@@ -235,6 +235,7 @@ export class WorkspaceCanvasComponent {
   defaultChannel(track: CompositionTrack): number { return DEFAULT_TRACKS.find(item => item.role === track.role)!.midiChannel; }
   readonly maximumVolume = MAX_VOLUME_PERCENT;
   readonly preferences = inject(UiPreferencesService);
+  readonly drumPanIsAutomatic = drumPanIsAutomatic;
   readonly projects = inject(ProjectService);
   readonly playback = inject(AudioPlaybackService);
   readonly workspaceUi = inject(WorkspaceUiService);

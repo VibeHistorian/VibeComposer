@@ -319,7 +319,8 @@ test('P6 drum policies choose Ghosts, melody dependencies and overrandomized phr
 });
 
 test('P6 drum rule-only edits, rerolls, Compose and additions preserve ownership, atomic history and MIDI replay', () => {
-  const {service,load,phrase,midi}=fixture({ contextualMelody: false });
+  const {service,load,phrase,midi,uiPreferences}=fixture({ contextualMelody: false });
+  uiPreferences.setDrumRerollMode('legacy');
   const id='track-drums-1', sectionId=service.project().arrangement[0].id;
   service.updateSettings({seed:'9007199254740993'});
   service.updateTrackGeneratorSettings(id,{pitch:42}); service.setTrackInstrumentLock(id,true);
@@ -645,8 +646,9 @@ test('P5e forced outline follows the first stored Melody and only copies the pro
   assert.equal(service.project().tracks.find(track => track.id === third).generatorSettings.speed, 0, 'next stored member becomes the source');
 });
 
-test('drum group rerolls reserve a core kit, respect remaining drums, and retain patches/manual notes through MIDI and replay', () => {
-  const { service, midi, load } = fixture({ contextualMelody: false });
+test('legacy drum group rerolls preserve Java core-kit choices, patches, manual notes and replay', () => {
+  const { service, midi, load, uiPreferences } = fixture({ contextualMelody: false });
+  uiPreferences.setDrumRerollMode('legacy');
   service.setRoleTrackCount('drums', 6);
   const tracks = () => service.project().tracks.filter(track => track.role === 'drums');
   service.updateTrackGeneratorSettings(tracks()[0].id, { pitch: 35 });
@@ -685,8 +687,9 @@ test('drum group rerolls reserve a core kit, respect remaining drums, and retain
   service.rerollRoleTracks('drums'); assert.deepEqual(tracks().map(track => track.generatorSettings.pitch), pitches);
 });
 
-test('drum additions fill missing core voices without modifying existing tracks and reuse existing swing', () => {
-  const { service, load } = fixture({ contextualMelody: false });
+test('legacy drum additions fill missing core voices without modifying existing tracks and reuse existing swing', () => {
+  const { service, load, uiPreferences } = fixture({ contextualMelody: false });
+  uiPreferences.setDrumRerollMode('legacy');
   const core = load('core/music/track-generation.ts');
   service.setRoleTrackCount('drums', 0);
   service.generateRoleTracks('drums', 1);

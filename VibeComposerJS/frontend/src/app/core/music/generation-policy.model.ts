@@ -59,6 +59,11 @@ export interface ChordGenerationPolicy extends SeedGenerationPolicy {
 }
 
 export interface DrumGenerationPolicy extends SeedGenerationPolicy {
+  readonly density?: number;
+  readonly stereoWidth?: number;
+  readonly experiment?: number;
+  readonly layering?: number;
+  readonly ring?: number;
   readonly dynamicChance?: number;
   readonly overrandomizeChance?: number;
   readonly melodyChance?: number;
@@ -70,6 +75,8 @@ export interface DrumGenerationPolicy extends SeedGenerationPolicy {
   readonly hitsMultiplier: '1' | '1/2' | '3/4' | '3/2' | '2';
   readonly shiftChance: number;
 }
+
+export const DEFAULT_DRUM_KIT_POLICY = Object.freeze({ density: 45, stereoWidth: 55, experiment: 20, layering: 25, ring: 25 });
 
 export interface MelodyGenerationPolicy extends SeedGenerationPolicy {
   readonly onCompose?: boolean;
