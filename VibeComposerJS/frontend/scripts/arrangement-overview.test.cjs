@@ -336,7 +336,7 @@ test('section-local redraws fit exactly without introducing scrollbar-sized over
       })) });
       component.drawOverview();
       assert.equal(content.style.width, `${width}px`);
-      assert.equal(content.style.height, `${Math.max(height, 300)}px`);
+      assert.equal(content.style.height, `${height}px`);
       assert.equal(refs.get('viewport').style.width, `${width}px`);
       assert.equal(refs.get('viewport').style.height, `${height}px`);
     }
@@ -370,7 +370,7 @@ test('scrollbars follow timeline zoom and row space instead of automatic content
   component.drawOverview();
   assert.equal(host.style.overflowX, 'scroll');
   assert.equal(host.style.overflowY, 'hidden');
-  host.clientHeight = 270;
+  host.clientHeight = Number.parseFloat(host.style.height) - 30;
   component.drawOverview();
   assert.equal(host.style.overflowY, 'scroll');
   component.horizontalScale = 1;
@@ -422,23 +422,34 @@ test('Alt, Shift, and unmodified wheel events keep their existing browser behavi
   }
 });
 
-test('sections of at least four beats enforce enough zoom for at most two track-button rows', () => {
-  const { component, refs } = fixture();
+test('sections of at least four beats fit notes above at most two track-button rows', () => {
+  const { component, refs, base } = fixture();
   const original = component.project();
   for (const count of [1, 2, 7, 9, 10, 15, 16, 31, 32, 63, 64]) {
-    const tracks = Array.from({ length: count }, (_, index) => ({ ...original.tracks[0], id: `bass-${index + 1}` }));
+    const notes = [
+      { id: 'low', startBeat: 0, durationBeats: 1, midi: 48, velocity: 100 },
+      { id: 'high', startBeat: 2, durationBeats: 1, midi: 60, velocity: 100 },
+    ];
+    const tracks = Array.from({ length: count }, (_, index) => ({
+      ...original.tracks[0], id: `bass-${index + 1}`, notes: index === 0 ? notes : [],
+    }));
     component.project.set({ ...original, tracks, arrangement: original.arrangement.map((section, index) => ({
       ...section, measures: index === 0 ? 1 : index === 1 ? 2 : 8,
       presentTracks: tracks.map((track) => track.id),
     })) });
+    base.rectangles = [];
     component.drawOverview();
     const cell = component.hits.find((hit) => hit.key === 'cell:intro:bass');
     const buttons = component.hits.filter((hit) => hit.key.startsWith('toggle:intro:'));
     assert.equal(buttons.length, count, `${count} tracks are visible in the first short cell`);
     assert.ok(new Set(buttons.map((button) => button.y)).size <= 2, `${count} tracks use at most two rows`);
+    const paintedNotes = base.rectangles.filter(({ alpha }) => alpha < 1).map(({ bounds }) => bounds);
+    assert.equal(paintedNotes.length, 2);
+    const [[, lowY, , lowHeight], [, highY]] = paintedNotes;
+    assert.ok(highY > cell.y && highY < lowY, 'the preview preserves pitch order');
+    assert.ok(lowY + lowHeight <= Math.min(...buttons.map(button => button.y)), 'the complete preview fits above the button hit areas');
     for (const button of buttons) {
       assert.ok(button.x >= cell.x && button.x + button.width <= cell.x + cell.width + 1e-7);
-      assert.ok(button.y >= cell.y + 11.5, 'buttons leave the top of the compact cell for notes');
       assert.ok(button.y + button.height <= cell.y + cell.height);
       assert.equal(component.hitAt({ clientX: button.x + 8, clientY: button.y + 8 }).key, button.key);
     }
@@ -609,7 +620,6 @@ test('manual section notes replace nearby freeze markers, including an empty sav
   })) });
   base.texts = []; base.arcs = [];
   component.drawOverview();
-  assert.equal(component.rowHeight, 52, 'rows stay 20% shorter than the previous 65px height');
   for (const sectionId of ['intro', 'verse', 'outro']) {
     const button = component.hits.find(area => area.key === `toggle:${sectionId}:bass-1`);
     const number = base.texts.find(mark => mark.value === '1' && mark.x >= button.x && mark.x < button.x + button.width && mark.y > button.y && mark.y < button.y + button.height);

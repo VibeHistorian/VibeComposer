@@ -37,7 +37,7 @@ interface PreviewNote {
   readonly trackIndex: number;
   readonly leftPercent: number;
   readonly widthPercent: number;
-  readonly topPercent: number;
+  readonly pitchPosition: number;
   readonly opacity: number;
   readonly overflow: boolean;
 }
@@ -65,8 +65,12 @@ interface OverviewHitArea {
   readonly remove?: () => void;
 }
 
-const RULER_HEIGHT = 40;
-const MIN_ROW_HEIGHT = 52;
+const RULER_HEIGHT = 34;
+const RULER_METADATA_BASELINE = 28;
+const MIN_ROW_HEIGHT = 46;
+const PREVIEW_TOP_INSET = 2;
+const PREVIEW_BUTTON_GAP = 2;
+const PREVIEW_NOTE_HEIGHT = 2;
 const MAX_TRACK_BUTTON_ROWS = 2;
 const ROLE_COLORS: Readonly<Record<ArrangedPart, string>> = {
   melody: 'melody', bass: 'bass', chords: 'chords', arpeggio: 'arpeggio', drums: 'drum',
@@ -203,12 +207,13 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         const minPitch = Math.min(...notes.map((note) => note.midi));
         const maxPitch = Math.max(...notes.map((note) => note.midi));
         const pitchSpan = Math.max(12, maxPitch - minPitch);
+        const previewMaxPitch = (minPitch + maxPitch + pitchSpan) / 2;
         const sectionBeats = sectionDurationBeats(this.project(), section.section);
         previews.set(this.cellKey(section.section.id, group.role), notes.map((note) => ({
           trackIndex: note.trackIndex,
           leftPercent: (note.startBeat - section.startBeat) / sectionBeats * 100,
           widthPercent: Math.max(0.45, note.durationBeats / sectionBeats * 100),
-          topPercent: (maxPitch - note.midi) / pitchSpan * 78 + 8,
+          pitchPosition: (previewMaxPitch - note.midi) / pitchSpan,
           opacity: 0.48 + note.velocity / 127 * 0.48,
           overflow: note.startBeat < section.startBeat || note.startBeat + note.durationBeats > sectionEndBeat,
         })));
@@ -375,6 +380,14 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const buttonInset = 1;
     const buttonRightSpace = buttonSize === 16 ? buttonGap : 0;
     const buttonHorizontalSpace = buttonInset * 2 + buttonRightSpace;
+    const togglesPerRow = (width: number): number =>
+      Math.max(1, Math.floor((width - buttonHorizontalSpace + buttonGap + 1e-7) / buttonPitch));
+    const previewHeightForRows = (rows: number): number => {
+      const buttonStack = Math.max(1, rows) * buttonPitch - buttonGap + buttonInset;
+      return this.rowHeight - PREVIEW_TOP_INSET - PREVIEW_BUTTON_GAP - buttonStack;
+    };
+    const previewNoteY = (note: PreviewNote, rowY: number, height: number): number =>
+      rowY + PREVIEW_TOP_INSET + note.pitchPosition * (height - PREVIEW_NOTE_HEIGHT);
     const minimumCellWidth = trackCount > 0
       ? buttonPitch * Math.ceil(trackCount / MAX_TRACK_BUTTON_ROWS) - buttonGap + buttonHorizontalSpace : 0;
     const fullSectionBeats = sections.map(item => sectionDurationBeats(this.project(), item.section)).filter(beats => beats >= 4);
@@ -539,16 +552,16 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reroll' }),
           reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reset' }) }, this.labelWidth, RULER_HEIGHT);
         const visibleTracks = this.overviewTracks(item.section, group);
-        const togglesPerRow = Math.max(1, Math.floor((width - buttonHorizontalSpace + buttonGap + 1e-7) / buttonPitch));
-        const toggleRows = Math.ceil(visibleTracks.length / togglesPerRow);
-        const previewHeight = Math.max(4, this.rowHeight - 10 - Math.max(1, toggleRows) * buttonPitch);
+        const perRow = togglesPerRow(width);
+        const toggleRows = Math.ceil(visibleTracks.length / perRow);
+        const previewHeight = previewHeightForRows(toggleRows);
         context.save();
-        context.beginPath(); context.rect(x, y + 5, width, previewHeight); context.clip();
+        context.beginPath(); context.rect(x, y + PREVIEW_TOP_INSET, width, previewHeight); context.clip();
         const durations = sectionChordDurations(this.project(), item.section);
         let slotBeat = 0;
         for (let bar = 1; bar < item.section.measures; bar++) {
           slotBeat += durations[(bar - 1) % durations.length];
-          fill(x + slotBeat * this.pixelsPerBeat, y + 5, 1, previewHeight, '--border-subtle');
+          fill(x + slotBeat * this.pixelsPerBeat, y + PREVIEW_TOP_INSET, 1, previewHeight, '--border-subtle');
         }
         for (const note of this.previewNotes(item.section.id, group.role)) {
           const noteX = x + note.leftPercent / 100 * width;
@@ -556,7 +569,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           if (noteX + noteWidth <= this.labelWidth || noteX >= this.width) continue;
           context.fillStyle = noteColors[note.trackIndex];
           context.globalAlpha = note.opacity;
-          context.fillRect(noteX, y + 5 + note.topPercent / 100 * previewHeight, noteWidth, 2);
+          context.fillRect(noteX, previewNoteY(note, y, previewHeight), noteWidth, PREVIEW_NOTE_HEIGHT);
         }
         context.globalAlpha = 1;
         context.restore();
@@ -567,8 +580,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           const noteColor = this.preferences.appearance().progressiveTrackColoring === false
             ? color(group.role === 'drums' ? '--role-drums' : `--role-${role}-strong`)
             : trackColor(group.role, trackNumber - 1, group.tracks.length, color);
-          const toggleRow = Math.floor(index / togglesPerRow);
-          const centerX = x + buttonInset + index % togglesPerRow * buttonPitch + buttonHalf;
+          const toggleRow = Math.floor(index / perRow);
+          const centerX = x + buttonInset + index % perRow * buttonPitch + buttonHalf;
           const centerY = y + this.rowHeight - (toggleRows - toggleRow - 1) * buttonPitch - buttonHalf - buttonInset;
           const present = this.trackPresent(item.section, track);
           const hovered = this.hoveredKey === `toggle:${item.section.id}:${track.id}`;
@@ -618,20 +631,19 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       const group = groups[row];
       const y = RULER_HEIGHT + row * this.rowHeight - this.offsetY;
       context.save();
-      context.beginPath(); context.rect(this.labelWidth, y + 5, this.width - this.labelWidth, Math.max(4, this.rowHeight - 10 - buttonPitch)); context.clip();
+      context.beginPath(); context.rect(this.labelWidth, y + PREVIEW_TOP_INSET, this.width - this.labelWidth, previewHeightForRows(1)); context.clip();
       context.fillStyle = brighten(color(group.role === 'drums' ? '--role-drums' : `--role-${ROLE_COLORS[group.role]}-strong`), noteBrightness);
       context.shadowColor = context.fillStyle;
       context.shadowBlur = 6;
       for (const item of sections) {
         const width = sectionDurationBeats(this.project(), item.section) * this.pixelsPerBeat;
         const tracks = this.overviewTracks(item.section, group);
-        const perRow = Math.max(1, Math.floor((width - buttonHorizontalSpace + buttonGap + 1e-7) / buttonPitch));
-        const previewHeight = Math.max(4, this.rowHeight - 10 - Math.max(1, Math.ceil(tracks.length / perRow)) * buttonPitch);
+        const previewHeight = previewHeightForRows(Math.ceil(tracks.length / togglesPerRow(width)));
         for (const note of this.previewNotes(item.section.id, group.role)) {
           if (!note.overflow) continue;
           context.globalAlpha = note.opacity;
           context.fillRect(this.beatX(item.startBeat) + note.leftPercent / 100 * width,
-            y + 5 + note.topPercent / 100 * previewHeight, Math.max(1, note.widthPercent / 100 * width), 2);
+            previewNoteY(note, y, previewHeight), Math.max(1, note.widthPercent / 100 * width), PREVIEW_NOTE_HEIGHT);
         }
       }
       context.restore();
@@ -666,7 +678,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       const swingWidth = swingLabel ? context.measureText(swingLabel).width + 8 : 0;
       context.save(); context.beginPath();
       context.rect(x + 7, 0, Math.max(0, width - 14), RULER_HEIGHT / 2); context.clip();
-      text(heading, x + 7, 15, '--text-strong', headingFontStyle);
+      text(heading, x + 7, 14, '--text-strong', headingFontStyle);
       context.restore();
       if (compact) {
         const end = x + width - rangeWidth - 18 - swingWidth;
@@ -678,20 +690,20 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           const chordWidth = context.measureText(chord.label).width;
           if (left + chordWidth + suffixWidth > end) {
             if (left + context.measureText('…' + suffix).width <= end) {
-              text('…' + suffix, left, 31, '--text-secondary');
+              text('…' + suffix, left, RULER_METADATA_BASELINE, '--text-secondary');
             }
             left = end;
             break;
           }
           context.fillStyle = `hsl(${chord.hue} ${color('--chordlet-foreground-tone')})`;
-          context.fillText(chord.label, left, 31);
+          context.fillText(chord.label, left, RULER_METADATA_BASELINE);
           left += chordWidth + 5;
         }
-        if (suffix && left + suffixWidth <= end) text(suffix, left - 3, 31, '--text-secondary');
+        if (suffix && left + suffixWidth <= end) text(suffix, left - 3, RULER_METADATA_BASELINE, '--text-secondary');
       }
-      if (swingLabel) text(swingLabel, x + width - rangeWidth - 7 - swingWidth, 31, '--accent-primary');
+      if (swingLabel) text(swingLabel, x + width - rangeWidth - 7 - swingWidth, RULER_METADATA_BASELINE, '--accent-primary');
       context.textAlign = 'right';
-      text(range, x + width - 7, 31, '--text-muted');
+      text(range, x + width - 7, RULER_METADATA_BASELINE, '--text-muted');
       context.textAlign = 'start';
       context.restore();
       hit({ key: `heading:${item.section.id}`, x, y: 0, width, height: RULER_HEIGHT,
