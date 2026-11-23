@@ -9,8 +9,8 @@ import { DEFAULT_MELODY_GLOBAL } from '../../core/music/melody-global-settings';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { PatternSequencerComponent } from './pattern-sequencer.component';
 import { DurationsDialogComponent } from './durations-dialog.component';
-import { ArpeggioPatternDialogComponent } from './arpeggio-pattern-dialog.component';
-import { arpeggioPreviews } from '../../core/music/arpeggio-preview';
+import { NumericSequenceDialogComponent, sequencePoints } from './numeric-sequence-dialog.component';
+import { partSequenceEditor, partSequenceRange, partSequenceRows, type PartSequenceKey } from './part-sequence-editor';
 import { durationPreview } from '../../core/music/durations';
 import { validateDurationDraft } from '../../core/music/duration-validation';
 import type { CommonPartSettings, ChordRhythm, PatternJoinMode } from '../../core/music/part-settings.model';
@@ -124,17 +124,28 @@ export class PartSettingsEditorComponent {
   private readonly dialogs = inject(Dialog);
   readonly scope = input.required<PartSettingsScope>();
   private readonly context = computed(() => partEditorContext(this.projects.project(), this.scope()));
-  openArpeggioPattern(): void {
-    this.dialogs.open(ArpeggioPatternDialogComponent, { ariaLabel: 'Arpeggio pattern', data: { scope: this.scope() } });
+  openSequence(key: PartSequenceKey): void {
+    const scope = this.scope();
+    const editor = partSequenceEditor(this.projects.project(), scope, key);
+    this.dialogs.open(NumericSequenceDialogComponent, { ariaLabel: editor.title, data: { scope, editor } });
   }
-  readonly arpeggioPreview = computed(() => {
+  private readonly arpeggioPreview = computed(() => {
     if (this.role() !== 'arpeggio') return null;
-    const rows = arpeggioPreviews(this.projects.project(), this.scope());
-    if (!rows.length || rows.some(row => JSON.stringify(row.values) !== JSON.stringify(rows[0].values))) return null;
+    const rows = partSequenceRows(this.projects.project(), this.scope(), 'pattern');
+    if (!rows.length || rows.some(row => !partValuesEqual(row.values, rows[0].values))) return null;
     return rows[0].values;
   });
-  readonly arpeggioPoints = computed(() => this.arpeggioPreview()?.map((value, index, values) =>
-    `${(index + .5) / values.length * 100},${(12 - value) / 24 * 100}`).join(' ') ?? '');
+  sequenceKey(control: PartControl): PartSequenceKey | undefined {
+    const { key } = control;
+    return key === 'chordNoteChoices' || key === 'melodyPatternOffsets' || key === 'arpContour' ? key : undefined;
+  }
+  sequenceValues(key: PartSequenceKey): readonly number[] | null {
+    return key === 'pattern' ? this.arpeggioPreview() : this.values()[key] as readonly number[] | null;
+  }
+  sequencePreviewPoints(key: PartSequenceKey, values: readonly number[]): string {
+    // Duplicate a single value across the middle of the preview so the line is visible.
+    return sequencePoints(values.length === 1 ? [values[0], values[0]] : values, partSequenceRange(key), 5, 90);
+  }
   openSequencer(velocities = false): void {
     if (!velocities && this.usesDurations()) {
       this.openDurations();

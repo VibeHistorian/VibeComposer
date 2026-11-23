@@ -377,7 +377,7 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       await wait(()=>arpSettings().pattern==='random','arpeggio direction persisted before drafting');
       const arpBefore = sessionStorage.getItem('vibecomposer.project.v12');
       arpLauncher.click();
-      let arpPopup = await wait(()=>document.querySelector('vc-arpeggio-pattern-dialog'),'arp popup');
+      let arpPopup = await wait(()=>document.querySelector('vc-numeric-sequence-dialog'),'arp popup');
       const arpSteps = ()=>arpPopup.querySelectorAll('.steps input');
       await wait(()=>arpSteps().length>0,'random pattern visible');
       check(!arpPopup.querySelector('textarea'),'no duplicated textarea');
@@ -385,20 +385,20 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       check([...arpPopup.querySelectorAll('.point-label')].every((label,index)=>label.textContent.trim()===arpSteps()[index].value),'point values match steps');
       check(arpPopup.querySelector('polyline').getAttribute('points').length>0,'random plotted');
       const arpButton = label=>[...arpPopup.querySelectorAll('button')].find(button=>button.textContent.trim()===label);
-      await changeControl(arpPopup.querySelector('[aria-label="Load arpeggio direction"]'),'down');
+      await changeControl(await wait(()=>arpPopup.querySelector('[aria-label="Load arpeggio direction"]'),'direction presets'),'down');
       check(sessionStorage.getItem('vibecomposer.project.v12')===arpBefore,'loading direction stays draft');
       arpButton('Cancel').click();
-      await wait(()=>!document.querySelector('vc-arpeggio-pattern-dialog'),'arp cancel');
+      await wait(()=>!document.querySelector('vc-numeric-sequence-dialog'),'arp cancel');
       check(sessionStorage.getItem('vibecomposer.project.v12')===arpBefore,'arp cancel preserves state');
       arpLauncher.click();
-      arpPopup=await wait(()=>document.querySelector('vc-arpeggio-pattern-dialog'),'arp reopen');
-      await changeControl(arpPopup.querySelector('[aria-label="Arpeggio pattern step count"]'),'4');
+      arpPopup=await wait(()=>document.querySelector('vc-numeric-sequence-dialog'),'arp reopen');
+      await changeControl(await wait(()=>arpPopup.querySelector('[aria-label="Arpeggio pattern step count"]'),'direction step count'),'4');
       await wait(()=>arpPopup.querySelectorAll('.steps input').length===4,'arp step fields');
       [-2,0,4,7].forEach((value,index)=>{ const input=arpSteps()[index]; input.value=String(value); input.dispatchEvent(new Event('input',{bubbles:true})); });
       await wait(()=>[...arpPopup.querySelectorAll('.point-label')].map(label=>label.textContent.trim()).join(',')==='-2,0,4,7','graph labels update');
       check(!arpButton('Save pattern').disabled,'arp save enabled');
       arpButton('Save pattern').click();
-      await wait(()=>!document.querySelector('vc-arpeggio-pattern-dialog'),'arp save closes');
+      await wait(()=>!document.querySelector('vc-numeric-sequence-dialog'),'arp save closes');
       await wait(()=>arpSettings().pattern==='custom','arpeggio pattern persisted');
       check(arpSettings().pattern==='custom' && JSON.stringify(arpSettings().arpPatternCustom)==='[-2,0,4,7]','arp save custom');
       document.querySelector('.project-tools button[aria-label="Undo"]').click();
@@ -423,7 +423,7 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       const groupPopup = await wait(()=>document.querySelector('vc-pattern-sequencer [data-track-id="'+arps[0].id+'"]')?.closest('vc-pattern-sequencer'), 'editable group member renders');
       check(groupPopup.querySelectorAll('.track').length===1 && groupPopup.querySelector('.step'), 'duration member is skipped and the rhythm grid remains editable');
       await fetch('/result',{method:'POST',body:JSON.stringify({passed:true})});
-    } catch(error){await fetch('/result',{method:'POST',body:JSON.stringify({error:error.message})});}
+    } catch(error){await fetch('/result',{method:'POST',body:JSON.stringify({error:error.message,stack:error.stack})});}
   })();</script>`;
   let resolve, reject;
   const result = new Promise((done, fail) => { resolve = done; reject = fail; });

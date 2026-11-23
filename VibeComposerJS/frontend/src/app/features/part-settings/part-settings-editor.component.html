@@ -74,7 +74,11 @@
             } @else {
               <vc-control-heading #heading [label]="title(control)" [inheritance]="'global'"
                 (inheritRequested)="resetControl(control)" />
-              @if (control.kind === 'integers' || control.kind === 'integer') {
+              @if (sequenceKey(control); as key) {
+                <ng-container [ngTemplateOutlet]="sequencePreview" [ngTemplateOutletContext]="{
+                  $implicit: key, label: 'Edit ' + (key === 'arpContour' ? 'arpeggio contour' : 'melody ' + control.label.toLowerCase()), id: heading.controlId
+                }" />
+              } @else if (control.kind === 'integers' || control.kind === 'integer') {
                 <input [attr.data-parameter-key]="control.key" [id]="heading.controlId" class="part-list" type="text" [value]="textValue(control)"
                   [attr.aria-label]="control.label" [placeholder]="values()[control.key] === null ? 'Mixed' : ''"
                   (focus)="startTextEdit()" (change)="commitText(control, $event)"
@@ -97,11 +101,7 @@
                 }
                 </div>
                 @if (control.key === 'pattern' && role() === 'arpeggio') {
-                  <button type="button" class="mini-preview arp-preview" aria-label="Edit arpeggio pattern" aria-haspopup="dialog" title="View or edit the generated direction" (click)="openArpeggioPattern()">
-                    @if (arpeggioPreview()) {
-                      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline [attr.points]="arpeggioPoints()" /></svg>
-                    } @else { <span class="mixed">Mixed</span> }
-                  </button>
+                  <ng-container [ngTemplateOutlet]="sequencePreview" [ngTemplateOutletContext]="{ $implicit: 'pattern', label: 'Edit arpeggio pattern' }" />
                 }
                 @if (control.key === 'rhythm' && usesDurations()) {
                   <button type="button" class="mini-preview duration-preview" [class.custom-member]="parameterFrozen('customDurations') || parameterFrozen('customDurationChances') || parameterFrozen('customDurationRandomWeighting')" [attr.aria-label]="'Edit custom ' + role() + ' durations'" aria-haspopup="dialog"
@@ -144,6 +144,19 @@
     </fieldset>
   }
 </div>
+
+<ng-template #sequencePreview let-key let-label="label" let-id="id">
+  @let values = sequenceValues(key);
+  <button type="button" class="mini-preview sequence-preview" [class.arp-preview]="key === 'pattern'"
+    [attr.data-parameter-key]="key === 'pattern' ? null : key" [attr.id]="id ?? null" [attr.aria-label]="label" aria-haspopup="dialog"
+    [title]="values ? values.join(', ') || 'Off' : 'Mixed'" (click)="openSequence(key)">
+    @if (values?.length) {
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline [attr.points]="sequencePreviewPoints(key, values!)" /></svg>
+    } @else {
+      <span class="mixed">{{ values ? 'Off' : 'Mixed' }}</span>
+    }
+  </button>
+</ng-template>
 
 <ng-template #quickInheritance let-control>
   @if (!local()) {

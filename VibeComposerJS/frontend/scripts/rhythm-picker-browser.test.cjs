@@ -323,16 +323,36 @@ test('production Angular controls initialize selects from settings and support r
         document.querySelector('button[aria-label="Close pattern sequencer"]').click();
         await waitFor(() => !document.querySelector('vc-pattern-sequencer'));
         document.querySelector('.track-group.melody .group-select').click();
-        const targets = await waitFor(() => {
-          const inputs = [...document.querySelectorAll('input[aria-label="TARGETS"]')];
-          return inputs.length === 1 ? inputs : null;
-        }, 'melody minimum editors');
-        result.melodyInitialTargets = targets.map(input => input.value);
-        targets[0].focus(); targets[0].value = '0, 4, -2';
-        targets[0].dispatchEvent(new Event('change', { bubbles: true }));
-        await waitFor(() => targets.every(input => input.value === '0, 4, -2'), 'shared melody target commit');
-        const structure = document.querySelector('input[aria-label="WORDS"]');
-        structure.focus(); await changeControl(structure, '1, -1, 2');
+        const openSequence = async label => {
+          (await waitFor(() => document.querySelector('[aria-label="' + label + '"]'), label)).click();
+          return waitFor(() => document.querySelector('vc-numeric-sequence-dialog [aria-label="Load preset"]')
+            ?.closest('vc-numeric-sequence-dialog'), 'sequence editor');
+        };
+        const setSequence = async (dialog, values) => {
+          await changeControl(dialog.querySelector('.step-count'), String(values.length));
+          const steps = await waitFor(() => {
+            const inputs = dialog.querySelectorAll('.steps input');
+            return inputs.length === values.length ? inputs : null;
+          }, 'resized sequence');
+          steps.forEach((input, index) => {
+            input.value = String(values[index]);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          });
+          dialog.querySelector('.save').click();
+          await waitFor(() => !dialog.isConnected, 'sequence saved');
+        };
+        const targets = await openSequence('Edit melody targets');
+        result.melodyInitialTargets = [...targets.querySelectorAll('.steps input')].map(input => input.value);
+        await changeControl(targets.querySelector('[aria-label="Load preset"]'), 'Roots');
+        const targetCount = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).progression.length;
+        await waitFor(() => targets.querySelectorAll('.steps input').length === targetCount, 'root targets loaded');
+        [...targets.querySelectorAll('button')].find(button => button.textContent === 'Randomize').click();
+        await setSequence(targets, [0, 4, -2]);
+        await waitFor(() => readTrack('melody').generatorSettings.chordNoteChoices?.join(',') === '0,4,-2', 'shared melody target commit');
+        const words = await openSequence('Edit melody words');
+        await changeControl(words.querySelector('[aria-label="Load preset"]'), 'Mirror');
+        await waitFor(() => words.querySelectorAll('.steps input').length === 2, 'mirror words loaded');
+        await setSequence(words, [1, -1, 2]);
         const transpose = document.querySelector('input[aria-label="Transpose"]');
         wheel(transpose, -100, true);
         await waitFor(() => transpose.getAttribute('aria-valuetext') === '5 st', 'melody discrete transpose');
@@ -747,7 +767,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.deepEqual(actual.retainedVelocities, actual.customVelocities);
     assert.equal(actual.randomBoundsHidden, true);
     assert.equal(actual.velocitiesEnabled, true);
-    assert.deepEqual(actual.melodyInitialTargets, ['0, 2, 2, 4']);
+    assert.deepEqual(actual.melodyInitialTargets, ['0', '2', '2', '4']);
     assert.deepEqual(actual.melody.chordNoteChoices, [0, 4, -2]);
     assert.deepEqual(actual.melody.melodyPatternOffsets, [1, -1, 2]);
     assert.equal(actual.melody.transpose, 7);

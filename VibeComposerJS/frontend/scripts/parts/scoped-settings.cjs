@@ -28,24 +28,28 @@ test('arp popup drafts cancel, validate, commit once in every scope and reject s
   const first = 'track-arpeggio-1';
   for (const kind of ['global-track', 'global-role', 'section-track', 'section-role']) {
     const scope = kind.endsWith('track') ? { kind, trackId: first } : { kind, role: 'arpeggio' };
-    const { service, settings, load } = fixture({ dialogData: { scope } });
+    const data = { scope };
+    const { service, settings, load } = fixture({ dialogData: data });
     if (kind.startsWith('section')) scope.sectionId = service.project().arrangement[0].id;
     const second = service.duplicateTrack(first);
-    const { ArpeggioPatternDialogComponent } = load('features/part-settings/arpeggio-pattern-dialog.component.ts');
+    const { NumericSequenceDialogComponent } = load('features/part-settings/numeric-sequence-dialog.component.ts');
+    const { partSequenceEditor } = load('features/part-settings/part-sequence-editor.ts');
+    data.editor = partSequenceEditor(service.project(), scope, 'pattern');
     const before = service.exportProjectJson(), position = service.historyPosition();
-    const popup = new ArpeggioPatternDialogComponent(); popup.dialog.close = () => {};
-    popup.selectTrack(first); popup.choosePattern('down');
-    const source = popup.text();
+    const popup = new NumericSequenceDialogComponent(); popup.dialog.close = () => {};
+    popup.selectTrack(first); popup.choosePreset('down');
+    const source = popup.values();
     const drawing = { button: 0, pointerId: 1, clientX: 0, clientY: 56, preventDefault() {},
       currentTarget: { setPointerCapture() {}, getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }) } };
     popup.start(drawing); assert.equal(popup.values()[0], 0);
-    popup.cancelGesture(); assert.equal(popup.text(), source, 'pointer cancellation restores the draft');
+    popup.cancelGesture(drawing); assert.equal(popup.values(), source, 'pointer cancellation restores the draft');
+    popup.randomize(); assert.equal(popup.values().length, source.length);
     assert.equal(service.exportProjectJson(), before, 'choosing another source stays a draft');
-    for (const text of ['', '1,', '1.5', '13', '-13', Array(513).fill(0).join(',')]) {
-      popup.text.set(text); popup.save(); assert.ok(popup.error());
+    for (const values of [[], [1, NaN], [1.5], [13], [-13], Array(513).fill(0)]) {
+      popup.values.set(values); popup.save(); assert.ok(popup.error());
       assert.equal(service.exportProjectJson(), before);
     }
-    popup.text.set('-2, 0, 4, 7'); popup.save();
+    popup.values.set([-2, 0, 4, 7]); popup.save();
     assert.equal(service.historyPosition(), position + 1);
     const project = service.project(), section = kind.startsWith('section') ? project.arrangement[0] : undefined;
     const resolved = id => settings.resolvePartTrack(project.tracks.find(track => track.id === id), section).generatorSettings;
@@ -57,8 +61,9 @@ test('arp popup drafts cancel, validate, commit once in every scope and reject s
     service.undo(); assert.equal(service.exportProjectJson(), before);
     service.redo(); assert.equal(service.exportProjectJson(), saved);
     assert.equal(service.importProjectJson(saved), true);
-    const stale = new ArpeggioPatternDialogComponent();
-    stale.selectTrack(first); stale.text.set('1, 2');
+    data.editor = partSequenceEditor(service.project(), scope, 'pattern');
+    const stale = new NumericSequenceDialogComponent();
+    stale.selectTrack(first); stale.values.set([1, 2]);
     service.removeTrack(first); const deleted = service.exportProjectJson();
     stale.save(); assert.equal(service.exportProjectJson(), deleted);
   }
@@ -66,12 +71,15 @@ test('arp popup drafts cancel, validate, commit once in every scope and reject s
 
 test('arp editor retains the complete melody-following cycle beyond 32 steps', () => {
   const scope = { kind: 'global-track', trackId: 'track-arpeggio-1' };
-  const { service, phrase, settings, load } = fixture({ dialogData: { scope } });
+  const data = { scope };
+  const { service, phrase, settings, load } = fixture({ dialogData: data });
   service.updatePartSettings(scope, { pattern: 'random', rhythm: 'melody', arpPatternRotate: 4 });
   const track = () => service.project().tracks.find(track => track.id === scope.trackId);
   const original = phrase.generateTrackPhrase(service.project(), track());
-  const { ArpeggioPatternDialogComponent } = load('features/part-settings/arpeggio-pattern-dialog.component.ts');
-  const popup = new ArpeggioPatternDialogComponent(); popup.dialog.close = () => {};
+  const { NumericSequenceDialogComponent } = load('features/part-settings/numeric-sequence-dialog.component.ts');
+  const { partSequenceEditor } = load('features/part-settings/part-sequence-editor.ts');
+  data.editor = partSequenceEditor(service.project(), scope, 'pattern');
+  const popup = new NumericSequenceDialogComponent(); popup.dialog.close = () => {};
   assert.equal(popup.values().length, service.project().progression.length * 16);
   assert.ok(popup.values().length > 32); assert.equal(popup.error(), null);
   popup.save();
@@ -79,6 +87,41 @@ test('arp editor retains the complete melody-following cycle beyond 32 steps', (
   assert.equal(service.importProjectJson(service.exportProjectJson()), true);
   assert.ok(settings.decodePartPatch('arpeggio', { arpPatternCustom: Array(512).fill(0) }));
   assert.equal(settings.decodePartPatch('arpeggio', { arpPatternCustom: Array(513).fill(0) }), undefined);
+});
+
+test('melody target presets and randomization use the selected scope harmony and target mode', () => {
+  const { service, load } = fixture();
+  const { partSequenceEditor } = load('features/part-settings/part-sequence-editor.ts');
+  const { chooseMelodyTargets } = load('core/music/melody-targets.ts');
+  const trackId = 'track-melody-1';
+  const sectionId = service.project().arrangement[0].id;
+  const local = { kind: 'section-track', trackId, sectionId };
+  const global = { kind: 'global-track', trackId };
+  service.setSectionMusicalState(sectionId, {
+    chordDegrees: [2, 4, 6], context: { scale: 'natural-minor' },
+    customChords: [null, { root: 7, spice: '7', inversion: 2 }, null],
+  });
+  service.updatePartSettings(local, { targetDirection: 'DESC', rangeMin: 52, rangeMax: 66 });
+  const project = service.project();
+  const editor = scope => partSequenceEditor(service.project(), scope, 'chordNoteChoices');
+  const preset = (scope, label) => editor(scope).presets.find(preset => preset.label === label).load(trackId);
+  assert.deepEqual(preset(local, 'Roots'), [1, 4, 5]);
+  assert.equal(preset(global, 'Roots').length, project.progression.length);
+  const seed = 107;
+  const section = project.arrangement[0];
+  assert.deepEqual(editor(local).randomize(trackId, [], seed),
+    chooseMelodyTargets(seed, [2, 4, 6], project.melodyGlobal, 'C', 'natural-minor', section.customChords,
+      { targetDirection: 'DESC', rangeMin: 52, rangeMax: 66 }));
+  assert.deepEqual(editor(global).randomize(trackId, [], seed),
+    chooseMelodyTargets(seed, project.progression, project.melodyGlobal, 'C', project.scale, project.progressionChords,
+      project.tracks.find(track => track.id === trackId).generatorSettings));
+  service.updateMelodyGlobal({ contextualMelody: false, blockTargetMode: 0 });
+  assert.deepEqual(preset(local, 'Roots'), [0, 0, 0]);
+  assert.deepEqual(preset(local, 'Fifths'), [2, 2, 2]);
+  service.updateMelodyGlobal({ blockTargetMode: 1 });
+  assert.deepEqual(preset(local, 'Roots'), [0, 0, 0]);
+  service.updateMelodyGlobal({ blockTargetMode: 2 });
+  assert.deepEqual(preset(local, 'Roots'), [1, 4, 5]);
 });
 
 test('contextual phrasing resolves per melody track and section and persists with history', () => {

@@ -494,17 +494,32 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const direction = await wait(() => document.querySelector('.part-settings-panel [aria-label="DIRECTION"]'), 'arp direction');
       await change(direction, 'custom');
       document.querySelector('.part-settings-panel [aria-label="Edit arpeggio pattern"]').click();
-      const customDirection = await wait(() => document.querySelector('vc-arpeggio-pattern-dialog [aria-label="Arpeggio pattern step count"]'), 'custom direction editor');
-      const startingTrack = document.querySelector('vc-arpeggio-pattern-dialog [aria-label="Arpeggio starting track"]');
+      const customDirection = await wait(() => document.querySelector('vc-numeric-sequence-dialog [aria-label="Arpeggio pattern step count"]'), 'custom direction editor');
+      const startingTrack = document.querySelector('vc-numeric-sequence-dialog [aria-label="Starting track"]');
       await change(startingTrack, read().tracks.find(track => track.role === 'arpeggio').id);
       await change(customDirection, '4');
-      await wait(() => document.querySelectorAll('vc-arpeggio-pattern-dialog .steps input').length === 4, 'four arp steps');
-      [-1,0,3,1].forEach((value,index) => { const input=document.querySelectorAll('vc-arpeggio-pattern-dialog .steps input')[index]; input.value=String(value); input.dispatchEvent(new Event('input', { bubbles: true })); });
-      const saveDirection = await wait(() => [...document.querySelectorAll('vc-arpeggio-pattern-dialog button')].find(button => button.textContent.trim() === 'Save pattern' && !button.disabled), 'save direction enabled');
+      await wait(() => document.querySelectorAll('vc-numeric-sequence-dialog .steps input').length === 4, 'four arp steps');
+      [-1,0,3,1].forEach((value,index) => { const input=document.querySelectorAll('vc-numeric-sequence-dialog .steps input')[index]; input.value=String(value); input.dispatchEvent(new Event('input', { bubbles: true })); });
+      const saveDirection = await wait(() => [...document.querySelectorAll('vc-numeric-sequence-dialog button')].find(button => button.textContent.trim() === 'Save pattern' && !button.disabled), 'save direction enabled');
       saveDirection.click();
-      await wait(() => !document.querySelector('vc-arpeggio-pattern-dialog'), 'direction saved');
+      await wait(() => !document.querySelector('vc-numeric-sequence-dialog'), 'direction saved');
       await change(document.querySelector('.part-settings-panel [aria-label="Rotate"]'), '3');
-      await change(document.querySelector('#part-inspector [aria-label="Contour"]'), '0, 2, -1');
+      const contourLauncher = () => document.querySelector('#part-inspector [aria-label="Edit arpeggio contour"]');
+      const contourDialog = async () => {
+        contourLauncher().click();
+        return wait(() => document.querySelector('vc-numeric-sequence-dialog [aria-label="Load preset"]')
+          ?.closest('vc-numeric-sequence-dialog'), 'contour editor');
+      };
+      let contour = await contourDialog();
+      await change(contour.querySelector('[aria-label="Load preset"]'), 'Arch');
+      await wait(() => contour.querySelectorAll('.steps input').length === 5, 'arch contour preset');
+      await change(contour.querySelector('.step-count'), '3');
+      const lastContourStep = await wait(() => contour.querySelectorAll('.steps input').length === 3
+        && contour.querySelectorAll('.steps input')[2], 'three contour steps');
+      lastContourStep.value = '-1';
+      lastContourStep.dispatchEvent(new Event('input', { bubbles: true }));
+      contour.querySelector('.save').click();
+      await wait(() => !contour.isConnected, 'contour saved');
       document.querySelector('#part-inspector [aria-label="Chord-relative contour"]').click();
       document.querySelector('#part-inspector [aria-label="Octave adjustments"]').click();
       if (document.querySelector('#part-inspector [aria-label="Correct by melody"]')) throw new Error('Removed arpeggio correction control is visible');
@@ -514,7 +529,11 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         track.generatorSettings.pattern === 'custom' && track.generatorSettings.arpPatternCustom.join(',') === '-1,0,3,1'
         && track.generatorSettings.arpContour.join(',') === '0,2,-1' && track.generatorSettings.useOctaveAdjustments)
         && document.querySelector('.part-settings-panel [aria-label="Rotate"]').value === '3';
-      await change(document.querySelector('#part-inspector [aria-label="Contour"]'), '');
+      contour = await contourDialog();
+      await change(contour.querySelector('[aria-label="Load preset"]'), 'Off');
+      await wait(() => !contour.querySelector('.steps input'), 'empty contour draft');
+      contour.querySelector('.save').click();
+      await wait(() => !contour.isConnected, 'empty contour saved');
       await wait(() => read().tracks.find(track => track.role === 'arpeggio').generatorSettings.arpContour.length === 0, 'clear contour');
       await change(document.querySelector('.part-settings-panel [aria-label="PATTERN"]'), 'melody');
       await wait(() => read().tracks.find(track => track.role === 'arpeggio').generatorSettings.rhythm === 'melody', 'arp melody rhythm');
