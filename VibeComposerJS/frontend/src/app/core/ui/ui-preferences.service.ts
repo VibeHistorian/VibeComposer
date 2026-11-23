@@ -272,6 +272,9 @@ export class UiPreferencesService {
   toggleScoreOutlineOtherTracks(): void { this.commit({ ...this.state(), scoreOutlineOtherTracks: !this.scoreOutlineOtherTracks() }); }
 
   toggleScoreGhostNotes(): void { this.commit({ ...this.state(), scoreGhostNotes: !this.scoreGhostNotes() }); }
+  setPatternSequencerRowsPerBar(enabled: boolean): void {
+    this.commit({ ...this.state(), patternSequencerRowsPerBar: enabled });
+  }
   setShrinkPianoRollToVisibleNotes(enabled: boolean): void {
     this.commit({ ...this.state(), shrinkPianoRollToVisibleNotes: enabled });
   }

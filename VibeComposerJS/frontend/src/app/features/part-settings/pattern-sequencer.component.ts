@@ -3,6 +3,7 @@ import { recordedSegments, recordingCell, type RecordedSpan } from '../../core/a
 import { SelectComponent } from '../../shared/select.component';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { combinedControlKeys } from '../../core/ui/ui-preferences';
+import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import type { ArrangedPart } from '../../core/music/part-role';
 import type { ChordRhythm, PartSettingsPatch } from '../../core/music/part-settings.model';
@@ -46,6 +47,7 @@ export class PatternSequencerComponent {
   readonly data = inject<PatternSequencerData>(DIALOG_DATA);
   readonly dialog = inject(DialogRef);
   readonly projects = inject(ProjectService);
+  private readonly preferences = inject(UiPreferencesService);
   private readonly midi = inject(MidiOutputService);
   readonly recordingCell = recordingCell;
   readonly recordingTrack = signal('');
@@ -94,6 +96,7 @@ export class PatternSequencerComponent {
     const scope = this.data.scope;
     const section = 'sectionId' in scope ? project.arrangement.find(s => s.id === scope.sectionId) : undefined;
     const draft = this.draft();
+    const rowsPerBar = this.preferences.preferences().patternSequencerRowsPerBar;
     return project.tracks.filter(track => this.data.role === 'drums' ? track.role === 'drums'
       : 'trackId' in scope ? track.id === scope.trackId : track.role === this.data.role).map(track => {
       const effective = resolvePartTrack(track, section, project.melodyGlobal);
@@ -108,10 +111,18 @@ export class PatternSequencerComponent {
       const velocities = draft?.id === track.id && draft.velocities ? draft.velocities
         : values['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES;
       const velocitySupported = track.role !== 'melody' && hits <= 32 && !(track.role === 'bass' && values['rhythm'] === 'bass1');
+      const slots = supported ? pattern : Array.from({ length: Math.min(32, hits) }, () => 1);
+      const span = rowsPerBar && supported ? values['chordSpan'] : undefined;
+      const barCount = typeof span === 'number' && Number.isInteger(span) && span > 1 && slots.length > 0 && slots.length % span === 0 ? span : 1;
+      const barSteps = slots.length / barCount;
+      const bars = Array.from({ length: barCount }, (_, bar) => {
+        const start = bar * barSteps;
+        return { start, slots: slots.slice(start, start + barSteps) };
+      });
       return { id: track.id, name: track.name, instrument: effective.role === 'drums' ? this.midi.drumLabel(effective.generatorSettings.pitch, this.projects.project().drumSlots) : effective.role,
         values, supported, hits, pattern, velocities, velocitySupported,
         velocityEditing: velocitySupported && values['useCustomVelocities'] === true,
-        slots: supported ? pattern : Array.from({ length: Math.min(32, hits) }, () => 1),
+        slots, bars, barSteps,
         active: 'trackId' in scope && track.id === scope.trackId };
     });
   });
@@ -127,7 +138,7 @@ export class PatternSequencerComponent {
       this.projects.multiplyDrumHits(this.data.scope, Number(value));
     }
   }
-  readonly steps = computed(() => Array.from({ length: Math.max(0, ...this.rows().map(row => Math.min(32, row.hits))) }, (_, i) => i));
+  readonly steps = computed(() => Array.from({ length: Math.max(0, ...this.rows().map(row => row.barSteps)) }, (_, i) => i));
   readonly scopeLabel = computed(() => {
     const scope = this.data.scope;
     return 'sectionId' in scope ? this.projects.project().arrangement.find(s => s.id === scope.sectionId)?.type ?? 'Section' : 'Global patterns';

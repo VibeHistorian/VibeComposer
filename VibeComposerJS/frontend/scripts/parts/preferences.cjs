@@ -643,6 +643,25 @@ test('panel layout persists, transfers, defaults and stays outside project histo
   assert.equal(service.historyPosition(), history);
 });
 
+test('pattern sequencer bar rows persist as an opt-in UI preference', () => {
+  const { service, uiPreferences: prefs, load } = fixture();
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  const before = service.exportProjectJson(), history = service.historyPosition();
+  const older = JSON.parse(prefs.exportJson());
+  delete older.patternSequencerRowsPerBar;
+  assert.equal(prefs.preferences().patternSequencerRowsPerBar, false);
+  prefs.setPatternSequencerRowsPerBar(true);
+  const saved = prefs.exportJson();
+  assert.equal(new UiPreferencesService().preferences().patternSequencerRowsPerBar, true);
+  assert.equal(prefs.importJson(JSON.stringify({ ...older, patternSequencerRowsPerBar: 'true' })), false);
+  assert.equal(prefs.importJson(JSON.stringify(older)), true);
+  assert.equal(prefs.preferences().patternSequencerRowsPerBar, false);
+  assert.equal(prefs.importJson(saved), true);
+  assert.equal(prefs.preferences().patternSequencerRowsPerBar, true);
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.historyPosition(), history);
+});
+
 test('applying scoped adjustments stores the palette and persists scopes with neutral knobs', () => {
   const cases = [
     { scopes: ['role', 'all', 'app'], app: [0, 25, 30], role: [-20, 25, 0] },

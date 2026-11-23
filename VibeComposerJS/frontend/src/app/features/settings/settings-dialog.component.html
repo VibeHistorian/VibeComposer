@@ -122,6 +122,18 @@
             </div>
           </section>
         }
+        @case ('ui-elements') {
+          <section aria-labelledby="ui-elements-title">
+            <h2 id="ui-elements-title">UI Elements</h2>
+            <h3 class="settings-section-heading">Pattern Sequencer</h3>
+            <div class="setting-row" vcSettingRow label="Show one row per bar" description="Split a pattern by Span when its subdivisions divide evenly.">
+              <div class="setting-controls">
+                <input type="checkbox" aria-label="Show one row per bar" [checked]="preferences.preferences().patternSequencerRowsPerBar"
+                  (change)="preferences.setPatternSequencerRowsPerBar($any($event.target).checked)" />
+              </div>
+            </div>
+          </section>
+        }
         @case ('behavior') {
           <section aria-labelledby="behavior-title">
             <h2 id="behavior-title">Behavior</h2>

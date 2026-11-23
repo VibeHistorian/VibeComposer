@@ -29,6 +29,10 @@ header vc-select[aria-disabled="true"] { opacity: .5; }
 .ruler .cells span { text-align: center; }
 .track { padding: 6px 0; border-bottom: 1px solid var(--border-subtle); }
 .track.selected .identity strong { color: var(--parameter-rhythm); }
+.pattern-row.wrapped { align-items: start; }
+.pattern-bars { flex: 1; min-width: 0; }
+.bar-label { margin-bottom: 3px; color: var(--text-muted); font: 9px var(--font-mono); }
+.custom-pattern-grid + .bar-label { margin-top: 5px; }
 .custom-pattern-grid { touch-action: none; }
 .step { height: 100%; min-width: 0; padding: 0; background: var(--surface-input); user-select: none; }
 .step.beat { border-left-color: var(--border-contrast); }

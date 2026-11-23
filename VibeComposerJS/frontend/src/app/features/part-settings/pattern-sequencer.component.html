@@ -14,7 +14,7 @@
     <div class="ruler"><span class="identity">Track / steps</span><div class="cells">@for (step of steps(); track step) { <span>{{ step + 1 }}</span> }</div></div>
     @for (row of rows(); track row.id) {
       <section class="track" [class.selected]="row.active" [attr.data-track-id]="row.id">
-        <div class="pattern-row">
+        <div class="pattern-row" [class.wrapped]="row.bars.length > 1">
           <div class="identity"><strong>{{ row.name }}</strong><span>{{ row.instrument }}</span>
             @if (row.supported) { <input type="number" [min]="minimumHits" max="32" [value]="row.hits" [attr.aria-label]="row.name + ' steps'" (change)="changeHits(row.id, $event)" /> }
             @if (row.velocitySupported) {
@@ -26,28 +26,34 @@
             @if ('sectionId' in data.scope) { <button type="button" class="inherit" [attr.aria-label]="'Inherit ' + row.name + ' pattern'" (click)="inherit(row.id, 'customPattern')">Inherit rhythm</button> }
           </div>
           @if (row.supported || row.velocityEditing) {
-            <div class="cells custom-pattern-grid" [class.velocity-editing]="row.velocityEditing" [style.--row-steps]="row.slots.length"
+            <div class="pattern-bars"
               (pointermove)="move($event, row.id)" (pointerup)="finish($event)" (pointerleave)="finishHover()"
               (pointercancel)="cancelGesture()" (lostpointercapture)="cancelGesture()">
-              @for (slot of row.slots; track $index) {
-                @let velocityCell = row.velocityEditing && slot > 0;
-                @let velocity = row.velocities[$index];
-                <button type="button" class="step custom-pattern-slot" [style.--step-index]="$index" [class.active]="slot > 0"
-                  [style.--velocity-fill.%]="velocityCell ? velocity * 100 / 127 : null"
-                  [class.recording-step]="recordingBeat() !== null && row.id === (recordingTrack() || recordingOptions()[0]?.value) && $index === recordingCell(recordingBeat()!, 4, row.hits)"
-                  [class.beat]="$index * 4 % row.hits === 0" [attr.data-step]="$index" [attr.data-rhythm-slot]="$index"
-                  [attr.role]="velocityCell ? 'slider' : null"
-                  [attr.aria-pressed]="velocityCell ? null : slot > 0"
-                  [attr.aria-label]="row.name + (velocityCell ? ' velocity subdivision ' : ' subdivision ') + ($index + 1)"
-                  [attr.aria-valuemin]="velocityCell ? 0 : null" [attr.aria-valuemax]="velocityCell ? 127 : null"
-                  [attr.aria-valuenow]="velocityCell ? velocity : null" [attr.aria-orientation]="velocityCell ? 'vertical' : null"
-                  [attr.aria-valuetext]="velocityCell && velocity === 0 ? '0, silent' : null"
-                  (pointerdown)="start($event, row.id, $index)" (click)="$event.detail === 0 && toggle(row.id, $index, $event.shiftKey)"
-                  (wheel)="wheelVelocity(row.id, $index, $event)" (keydown)="velocityKey($event, row.id, $index)"
-                  (auxclick)="row.velocityEditing && $event.preventDefault()"
-                  (contextmenu)="row.velocityEditing && $event.preventDefault(); resetVelocity(row.id, $index)">
-                  @if (velocityCell) { <span class="velocity-value">{{ velocity }}</span> }
-                </button>
+              @for (bar of row.bars; track bar.start; let barIndex = $index) {
+                @if (row.bars.length > 1) { <div class="bar-label">Bar {{ barIndex + 1 }}</div> }
+                <div class="custom-pattern-grid" [class.velocity-editing]="row.velocityEditing" [style.--row-steps]="bar.slots.length">
+                  @for (slot of bar.slots; track $index) {
+                    @let step = bar.start + $index;
+                    @let velocityCell = row.velocityEditing && slot > 0;
+                    @let velocity = row.velocities[step];
+                    <button type="button" class="step custom-pattern-slot" [style.--step-index]="$index" [class.active]="slot > 0"
+                      [style.--velocity-fill.%]="velocityCell ? velocity * 100 / 127 : null"
+                      [class.recording-step]="recordingBeat() !== null && row.id === (recordingTrack() || recordingOptions()[0]?.value) && step === recordingCell(recordingBeat()!, 4, row.hits)"
+                      [class.beat]="$index * 4 % bar.slots.length === 0" [attr.data-step]="step" [attr.data-rhythm-slot]="step"
+                      [attr.role]="velocityCell ? 'slider' : null"
+                      [attr.aria-pressed]="velocityCell ? null : slot > 0"
+                      [attr.aria-label]="row.name + (velocityCell ? ' velocity subdivision ' : ' subdivision ') + (step + 1)"
+                      [attr.aria-valuemin]="velocityCell ? 0 : null" [attr.aria-valuemax]="velocityCell ? 127 : null"
+                      [attr.aria-valuenow]="velocityCell ? velocity : null" [attr.aria-orientation]="velocityCell ? 'vertical' : null"
+                      [attr.aria-valuetext]="velocityCell && velocity === 0 ? '0, silent' : null"
+                      (pointerdown)="start($event, row.id, step)" (click)="$event.detail === 0 && toggle(row.id, step, $event.shiftKey)"
+                      (wheel)="wheelVelocity(row.id, step, $event)" (keydown)="velocityKey($event, row.id, step)"
+                      (auxclick)="row.velocityEditing && $event.preventDefault()"
+                      (contextmenu)="row.velocityEditing && $event.preventDefault(); resetVelocity(row.id, step)">
+                      @if (velocityCell) { <span class="velocity-value">{{ velocity }}</span> }
+                    </button>
+                  }
+                </div>
               }
             </div>
           } @else { <span class="unavailable">{{ row.values['rhythm'] === 'bass1' ? 'bass1 rhythm'

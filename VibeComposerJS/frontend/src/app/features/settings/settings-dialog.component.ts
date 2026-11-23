@@ -265,13 +265,14 @@ export class SettingsDialogComponent {
       { id: 'appearance', label: 'General' },
       { id: 'score', label: 'Score' },
       { id: 'arrangement-appearance', label: 'Arrangement' },
+      { id: 'ui-elements', label: 'UI Elements' },
     ] },
     { id: 'shortcuts', label: 'Shortcuts', children: SHORTCUT_PAGES.map(({ id, label }) => ({ id, label })) },
     { id: 'midi', label: 'MIDI', children: [] },
     { id: 'project', label: 'Project', children: [] },
   ] as const;
   readonly categoryScopes: Readonly<Record<string, readonly SettingScope[]>> = {
-    appearance: ['ui'], score: ['ui'], 'arrangement-appearance': ['ui'], behavior: ['ui', 'compose', 'sound'],
+    appearance: ['ui'], score: ['ui'], 'arrangement-appearance': ['ui'], 'ui-elements': ['ui'], behavior: ['ui', 'compose', 'sound'],
     variations: ['compose'], harmony: ['ui', 'compose', 'sound'], arrangement: ['compose'], melody: ['compose', 'sound'], 'section-types': ['compose'],
     ...Object.fromEntries(SHORTCUT_PAGES.map(page => [page.id, ['ui'] as const])), midi: ['ui', 'sound'], project: ['ui'],
   };
