@@ -21,7 +21,7 @@ export const SHORTCUTS = [
   { id: 'retainPitch', group: 'Editing modifiers', label: 'Retain pitch while moving', description: 'Hold while moving notes to retain their pitch.', defaults: [modifier(false, true)] },
   { id: 'addNote', group: 'Placement', label: 'Place note on grid', description: 'Place a note with time snapping. Hold to preview placement.', defaults: [mouse(0, true)] },
   { id: 'addNoteFree', group: 'Placement', label: 'Place note off grid', description: 'Place a note without time snapping. Hold to preview placement.', defaults: [mouse(0, false, true)] },
-  { id: 'controlWheel', group: 'Controls', label: 'Adjust value', description: 'Scroll over a knob or dropdown to change its value.', defaults: [wheel()] },
+  { id: 'controlWheel', group: 'Controls', label: 'Adjust value', description: 'Scroll over a knob, dropdown, or sequence step to change its value.', defaults: [wheel()] },
   { id: 'controlFineWheel', group: 'Controls', label: 'Fine adjustment', description: 'Scroll over a knob to change its value in smaller steps.', defaults: [wheel(false, true)] },
   { id: 'controlReset', group: 'Controls', label: 'Reset value', description: 'On a knob or dropdown, restore the default value.', defaults: [mouse(2)] },
   { id: 'controlFreeze', group: 'Controls', label: 'Toggle parameter lock', description: 'On a global track control, toggle its reroll/Compose lock. Combined members can be targeted individually.', defaults: [mouse(2, false, true)] },

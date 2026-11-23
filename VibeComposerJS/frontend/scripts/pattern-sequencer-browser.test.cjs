@@ -375,6 +375,20 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       const arpLauncher = await wait(()=>arpControl.querySelector('[aria-label="Edit arpeggio pattern"]'),'arp launcher');
       const arpSettings = ()=>read().tracks.find(track=>track.role==='arpeggio').generatorSettings;
       await wait(()=>arpSettings().pattern==='random','arpeggio direction persisted before drafting');
+      const arpPreview = () => arpLauncher.querySelector('vc-numeric-sequence-preview');
+      const arpLength = arpPreview().querySelector('polyline').getAttribute('points').split(' ').length;
+      const scrollArp = column => {
+        const preview = arpPreview();
+        const bounds = preview.getBoundingClientRect();
+        preview.dispatchEvent(new WheelEvent('wheel', {
+          clientX: bounds.left + (column + .5) * bounds.width / arpLength, deltaY: -100, bubbles: true, cancelable: true,
+        }));
+      };
+      scrollArp(0);
+      scrollArp(arpLength - 1);
+      await wait(()=>arpSettings().pattern==='custom' && arpSettings().arpPatternRotate===0, 'scroll converts direction to custom');
+      document.querySelector('.project-tools button[aria-label="Undo"]').click();
+      await wait(()=>arpSettings().pattern==='random' && !arpSettings().arpPatternCustom, 'one undo restores seeded direction');
       const arpBefore = sessionStorage.getItem('vibecomposer.project.v12');
       arpLauncher.click();
       let arpPopup = await wait(()=>document.querySelector('vc-numeric-sequence-dialog'),'arp popup');

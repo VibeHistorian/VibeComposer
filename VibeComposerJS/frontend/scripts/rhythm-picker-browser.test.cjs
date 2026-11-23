@@ -357,9 +357,29 @@ test('production Angular controls initialize selects from settings and support r
           const preview = document.querySelector('[aria-label="Edit melody words"] vc-numeric-sequence-preview');
           return preview?.querySelectorAll('.step-dot').length === 3 ? preview : null;
         }, 'stepped words preview');
-        const wordLines = [...wordPreview.querySelectorAll('line')];
-        result.steppedWords = wordLines.length === 2 && wordLines.every(line => line.getAttribute('y1') === line.getAttribute('y2')
-          && Number(line.getAttribute('x1')) < Number(line.getAttribute('x2')));
+        result.steppedWords = !wordPreview.querySelector('line, polyline');
+        const sequenceCompact = await openHistorySettings();
+        sequenceCompact.click();
+        await waitFor(() => sequenceCompact.checked, 'compact sequence history on');
+        document.querySelector('[aria-label="Close settings"]').click();
+        await waitFor(() => !document.querySelector('vc-settings-dialog'), 'sequence history settings closed');
+        const nudgeWord = (column, deltaY) => {
+          const preview = document.querySelector('[aria-label="Edit melody words"] vc-numeric-sequence-preview');
+          const bounds = preview.getBoundingClientRect();
+          preview.dispatchEvent(new WheelEvent('wheel', {
+            clientX: bounds.left + (column + .5) * bounds.width / 3, deltaY, bubbles: true, cancelable: true,
+          }));
+        };
+        nudgeWord(1, -100);
+        nudgeWord(2, 100);
+        await waitFor(() => readTrack('melody').generatorSettings.melodyPatternOffsets?.join(',') === '1,0,1', 'word wheel edits under pointer');
+        document.querySelector('.project-tools button[aria-label="Undo"]').click();
+        await waitFor(() => readTrack('melody').generatorSettings.melodyPatternOffsets?.join(',') === '1,-1,2', 'word wheel undo');
+        const restoreCompact = await openHistorySettings();
+        restoreCompact.click();
+        await waitFor(() => !restoreCompact.checked, 'compact history restored');
+        document.querySelector('[aria-label="Close settings"]').click();
+        await waitFor(() => !document.querySelector('vc-settings-dialog'), 'history settings closed');
         const targetLine = document.querySelector('[aria-label="Edit melody targets"] polyline');
         const targetHeights = targetLine.getAttribute('points').split(' ').map(point => Number(point.split(',')[1]));
         result.normalizedTargets = Math.max(...targetHeights) - Math.min(...targetHeights) >= 80;

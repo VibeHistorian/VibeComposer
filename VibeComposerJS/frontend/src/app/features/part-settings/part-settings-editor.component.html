@@ -149,7 +149,7 @@
   @let values = sequenceValues(key);
   <button type="button" class="mini-preview sequence-preview" [class.arp-preview]="key === 'pattern'"
     [attr.data-parameter-key]="key === 'pattern' ? null : key" [attr.id]="id ?? null" [attr.aria-label]="label" aria-haspopup="dialog"
-    [title]="values ? values.join(', ') || 'Off' : 'Mixed'" (click)="openSequence(key)">
+    [title]="values ? values.join(', ') || 'Off' : 'Mixed'" (click)="openSequence(key)" (wheel)="scrollSequence(key, $event)">
     @if (values?.length) {
       <vc-numeric-sequence-preview [values]="values!" [range]="sequenceRange(key)"
         [display]="key === 'melodyPatternOffsets' ? 'steps' : 'line'" />

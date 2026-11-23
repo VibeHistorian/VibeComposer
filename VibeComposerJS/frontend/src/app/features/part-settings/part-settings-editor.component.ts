@@ -11,7 +11,7 @@ import { PatternSequencerComponent } from './pattern-sequencer.component';
 import { DurationsDialogComponent } from './durations-dialog.component';
 import { NumericSequenceDialogComponent } from './numeric-sequence-dialog.component';
 import { NumericSequencePreviewComponent } from './numeric-sequence-preview.component';
-import { partSequenceEditor, partSequenceRange, partSequenceRows, type PartSequenceKey } from './part-sequence-editor';
+import { partSequenceEditor, partSequencePatch, partSequenceRange, partSequenceRows, type PartSequenceKey } from './part-sequence-editor';
 import { durationPreview } from '../../core/music/durations';
 import { validateDurationDraft } from '../../core/music/duration-validation';
 import type { CommonPartSettings, ChordRhythm, PatternJoinMode } from '../../core/music/part-settings.model';
@@ -144,6 +144,25 @@ export class PartSettingsEditorComponent {
     return key === 'pattern' ? this.arpeggioPreview() : this.values()[key] as readonly number[] | null;
   }
   readonly sequenceRange = partSequenceRange;
+  scrollSequence(key: PartSequenceKey, event: WheelEvent): void {
+    if (this.preferences.editingQuickSettings() || !event.deltaY || !this.preferences.matchesShortcut('controlWheel', event)) return;
+    const values = this.sequenceValues(key);
+    if (!values?.length) return;
+    const preview = (event.currentTarget as HTMLElement).querySelector('vc-numeric-sequence-preview');
+    const bounds = preview?.getBoundingClientRect();
+    if (!bounds?.width) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const column = Math.floor((event.clientX - bounds.left) / bounds.width * values.length);
+    const index = Math.max(0, Math.min(values.length - 1, column));
+    const { minimum, maximum } = partSequenceRange(key);
+    const value = values[index] - Math.sign(event.deltaY);
+    if (value < minimum || value > maximum) return;
+    const next = [...values];
+    next[index] = value;
+    this.projects.dismissGenerationError();
+    this.projects.updatePartSettings(this.scope(), partSequencePatch(key, next), `sequence-wheel:${key}`);
+  }
   openSequencer(velocities = false): void {
     if (!velocities && this.usesDurations()) {
       this.openDurations();

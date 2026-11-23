@@ -16,6 +16,10 @@ import { partEditorContext } from './part-editor-context';
 
 export type PartSequenceKey = 'pattern' | 'melodyPatternOffsets' | 'chordNoteChoices' | 'arpContour';
 
+export function partSequencePatch(key: PartSequenceKey, values: readonly number[]): ReturnType<NumericSequenceEditor['patch']> {
+  return key === 'pattern' ? { pattern: 'custom', arpPatternCustom: values, arpPatternRotate: 0 } : { [key]: values };
+}
+
 const CONTROLS = {
   pattern: PART_CONTROLS.arpeggio.find(control => control.key === 'arpPatternCustom')!,
   melodyPatternOffsets: PART_CONTROLS.melody.find(control => control.key === 'melodyPatternOffsets')!,
@@ -47,7 +51,7 @@ export function partSequenceEditor(project: CompositionProject, scope: PartSetti
     minimumSteps: control.allowEmpty ? 0 : 1,
     maximumSteps: 32,
     description: control.description ?? '',
-    patch: (values: readonly number[]) => ({ [key]: values }),
+    patch: (values: readonly number[]) => partSequencePatch(key, values),
   };
   switch (key) {
     case 'pattern':
@@ -61,7 +65,6 @@ export function partSequenceEditor(project: CompositionProject, scope: PartSetti
           load: trackId => arpeggioPreviews(project, scope, value).find(row => row.trackId === trackId)!.values,
         })),
         randomize: (_, values, seed) => javaShuffle(Array.from({ length: values.length }, (_, index) => index % 8), new JavaRandom(seed)),
-        patch: values => ({ pattern: 'custom', arpPatternCustom: values, arpPatternRotate: 0 }),
       };
     case 'melodyPatternOffsets':
       return {

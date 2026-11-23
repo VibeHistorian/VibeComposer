@@ -360,7 +360,8 @@ export class ProjectService {
   }
 
   /** Only single-control edits can join a burst; scope and field identify the control. */
-  private controlHistoryKey(target: readonly string[], patch: object): string | undefined {
+  private controlHistoryKey(target: readonly string[], patch: object, compactAs?: string): string | undefined {
+    if (compactAs !== undefined) return JSON.stringify([...target, compactAs]);
     const keys = Object.keys(patch);
     // Each velocity stroke is a complete grid edit with its own undo step.
     return keys.length === 1 && keys[0] !== 'customVelocities' ? JSON.stringify([...target, keys[0]]) : undefined;
@@ -771,15 +772,15 @@ export class ProjectService {
     return this.commitPartWorkflow(next);
   }
 
-  updatePartSettings(scope: PartSettingsScope, patch: PartSettingsPatch): void {
+  updatePartSettings(scope: PartSettingsScope, patch: PartSettingsPatch, compactAs?: string): void {
     const current = this.state();
     const track = 'trackId' in scope ? current.tracks.find((candidate) => candidate.id === scope.trackId) : undefined;
     const role = 'role' in scope ? scope.role : track?.role;
     if (!role || !ARRANGED_PARTS.includes(role)) return;
     const decoded = decodePartPatch(role, patch, true);
     if (!decoded) return;
-    if (scope.kind === 'global-role') { this.updateRoleGeneratorSettings(role, decoded); return; }
-    if (scope.kind === 'global-track') { this.updateTrackGeneratorSettings(scope.trackId, decoded); return; }
+    if (scope.kind === 'global-role') { this.updateRoleGeneratorSettings(role, decoded, compactAs); return; }
+    if (scope.kind === 'global-track') { this.updateTrackGeneratorSettings(scope.trackId, decoded, compactAs); return; }
     const arrangement = current.arrangement.map((section) => {
       if (section.id !== scope.sectionId) return section;
       const key = scope.kind === 'section-role' ? role : scope.trackId;
@@ -820,7 +821,7 @@ export class ProjectService {
         : { ...section, trackPartOverrides: map };
     });
     this.commit({ ...current, arrangement }, this.controlHistoryKey(
-      ['part', scope.kind, scope.sectionId, scope.kind === 'section-role' ? scope.role : scope.trackId], decoded));
+      ['part', scope.kind, scope.sectionId, scope.kind === 'section-role' ? scope.role : scope.trackId], decoded, compactAs));
   }
 
   resetPartSettings(scope: PartSettingsScope, field?: string | readonly string[]): void {
@@ -1077,9 +1078,9 @@ export class ProjectService {
     return this.uiPreferences.manualPhrasesFollowMode() ? followManualPhraseMode(current, next) : next;
   }
 
-  updateRoleGeneratorSettings(role: ArrangedPart, patch: PartSettingsPatch): void {
+  updateRoleGeneratorSettings(role: ArrangedPart, patch: PartSettingsPatch, compactAs?: string): void {
     const current = this.state();
-    const controlKey = this.controlHistoryKey(['part', 'global-role', role], patch);
+    const controlKey = this.controlHistoryKey(['part', 'global-role', role], patch, compactAs);
     if (role === 'drums' && 'pitch' in patch) return;
     if (!current.tracks.some((track) => track.role === role)) return;
     const tracks = current.tracks.map(track => track.role === role
@@ -1262,7 +1263,7 @@ export class ProjectService {
     this.commit({ ...current, tracks }, controlKey);
   }
 
-  updateTrackGeneratorSettings(trackId: string, patch: PartSettingsPatch): void {
+  updateTrackGeneratorSettings(trackId: string, patch: PartSettingsPatch, compactAs?: string): void {
     const current = this.state();
     const index = current.tracks.findIndex((track) => track.id === trackId);
     if (index < 0) return;
@@ -1276,7 +1277,7 @@ export class ProjectService {
           : decodeDrums(generatorSettings) !== undefined;
     if (!validSettings) return;
     tracks[index] = { ...track, generatorSettings } as CompositionTrack;
-    this.commit({ ...current, tracks }, this.controlHistoryKey(['part', 'global-track', trackId], patch));
+    this.commit({ ...current, tracks }, this.controlHistoryKey(['part', 'global-track', trackId], patch, compactAs));
   }
 
   copyArrangementPhrase(request: ArrangementPhraseCopy): void {
