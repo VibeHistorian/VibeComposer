@@ -2607,6 +2607,26 @@ test('drum pattern popup resolves every row in the selected section and edits on
   assert.equal(service.project().arrangement[1].trackPartOverrides[tracks[1].id].customVelocities, undefined);
 });
 
+test('role sequencer skips non-grid rhythms and keeps the dedicated velocity editor available', () => {
+  const { service, load } = fixture({ contextualMelody: false });
+  const track = service.project().tracks.find(track => track.role === 'arpeggio');
+  const durationsId = service.duplicateTrack(track.id), melodyId = service.duplicateTrack(track.id);
+  const sectionId = service.project().arrangement[0].id;
+  const scope = id => ({ kind: 'section-track', sectionId, trackId: id });
+  service.updatePartSettings(scope(track.id), { rhythm: 'half' });
+  service.updatePartSettings(scope(durationsId), { rhythm: 'durations' });
+  service.updatePartSettings(scope(melodyId), { rhythm: 'melody', useCustomVelocities: true });
+  const { PatternSequencerComponent } = load('features/part-settings/pattern-sequencer.component.ts');
+  const popup = new PatternSequencerComponent();
+  popup.data.role = 'arpeggio';
+  popup.data.scope = { kind: 'section-role', sectionId, role: 'arpeggio' };
+  assert.deepEqual(popup.rows().map(row => row.id), [track.id]);
+  assert.deepEqual(popup.recordingOptions().map(option => option.value), [track.id]);
+  popup.data.velocities = true;
+  assert.deepEqual(popup.rows().map(row => [row.id, row.supported]), [[track.id, true], [melodyId, false]]);
+  assert.deepEqual(popup.recordingOptions().map(option => option.value), [track.id]);
+});
+
 test('drum sequencer resolves percussion names and multiplies only its selected scope', () => {
   const { service, load } = fixture({ contextualMelody: false });
   const first = 'track-drums-1', second = service.duplicateTrack(first);
@@ -2632,6 +2652,9 @@ test('drum sequencer resolves percussion names and multiplies only its selected 
   assert.equal(popup.rows().find(row => row.id === first).hits, 4);
   popup.patch(first, { rhythm: 'melody' });
   assert.equal(popup.canMultiplyHits(), false);
+  popup.data.scope = { kind: 'section-role', role: 'drums', sectionId };
+  assert.deepEqual(popup.rows().map(row => row.id), [second]);
+  assert.equal(popup.canMultiplyHits(), false, 'a group multiplier still requires every member to be editable');
 });
 
 for (const role of ['bass', 'arpeggio']) {

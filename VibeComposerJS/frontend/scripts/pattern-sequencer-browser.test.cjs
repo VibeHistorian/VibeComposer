@@ -405,6 +405,23 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       await wait(()=>arpSettings().pattern==='random','arp one undo');
       (await wait(()=>{ const button=document.querySelector('.project-tools button[aria-label="Redo"]'); return button && !button.disabled ? button : null; },'arp redo enabled')).click();
       await wait(()=>arpSettings().pattern==='custom','arp redo');
+      const arpGroup = document.querySelector('.track-group.arpeggio');
+      await changeControl(document.querySelector('vc-part-settings-editor[data-control-role="arpeggio"] [aria-label="PATTERN"]'), 'half');
+      await wait(()=>arpSettings().rhythm==='half', 'first arpeggio uses a step grid');
+      arpGroup.querySelector('.group-select').click();
+      await changeControl(await wait(()=>arpGroup.querySelector('input[aria-label$=" track count"]'), 'arpeggio track count'), '2');
+      const secondArp = await wait(()=>arpGroup.querySelectorAll('.track-select')[1], 'second arpeggio track');
+      secondArp.click();
+      await wait(()=>secondArp.getAttribute('aria-pressed')==='true', 'second arpeggio selected');
+      await changeControl(await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="arpeggio"] [aria-label="PATTERN"]'), 'second arpeggio rhythm'), 'durations');
+      const arps = await wait(()=>{
+        const tracks = read().tracks.filter(track=>track.role==='arpeggio');
+        return tracks[1]?.generatorSettings.rhythm==='durations' && tracks;
+      }, 'second arpeggio uses durations');
+      arpGroup.querySelector('.group-select').click();
+      (await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="arpeggio"] [aria-label="Edit rhythm pattern"]'), 'group rhythm preview')).click();
+      const groupPopup = await wait(()=>document.querySelector('vc-pattern-sequencer [data-track-id="'+arps[0].id+'"]')?.closest('vc-pattern-sequencer'), 'editable group member renders');
+      check(groupPopup.querySelectorAll('.track').length===1 && groupPopup.querySelector('.step'), 'duration member is skipped and the rhythm grid remains editable');
       await fetch('/result',{method:'POST',body:JSON.stringify({passed:true})});
     } catch(error){await fetch('/result',{method:'POST',body:JSON.stringify({error:error.message})});}
   })();</script>`;

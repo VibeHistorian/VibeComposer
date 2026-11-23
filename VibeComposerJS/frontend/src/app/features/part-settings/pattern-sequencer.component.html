@@ -56,11 +56,10 @@
                 </div>
               }
             </div>
-          } @else { <span class="unavailable">{{ row.values['rhythm'] === 'bass1' ? 'bass1 rhythm'
-            : data.role === 'melody' ? (row.values['rhythm'] === 'durations' ? 'Custom durations' : 'Generated rhythm') : 'Follows melody blocks' }}</span> }
+          } @else { <span class="unavailable">Follows melody blocks</span> }
         </div>
       </section>
-    } @empty { <p>No tracks in this group.</p> }
+    } @empty { <p>No editable tracks in this selection.</p> }
   </div>
 </div>
 <footer>

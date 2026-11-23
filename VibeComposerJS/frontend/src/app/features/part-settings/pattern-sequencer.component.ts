@@ -6,7 +6,7 @@ import { combinedControlKeys } from '../../core/ui/ui-preferences';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import type { ArrangedPart } from '../../core/music/part-role';
-import type { ChordRhythm, PartSettingsPatch } from '../../core/music/part-settings.model';
+import type { PartSettingsPatch } from '../../core/music/part-settings.model';
 import type { PartSettingsScope } from '../../core/project/part-settings-scope';
 import { ProjectService } from '../../core/project/project.service';
 import { resolvePartTrack, settingsValues } from '../../core/music/part-settings';
@@ -15,7 +15,7 @@ import { isMelodyGrid, MIN_MELODY_GRID_ATTACKS } from '../../core/music/melody-g
 import { DEFAULT_CUSTOM_VELOCITIES } from '../../core/music/velocity-pattern';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 
-export interface PatternSequencerData { scope: PartSettingsScope; role: ArrangedPart; melodyHits: number }
+export interface PatternSequencerData { scope: PartSettingsScope; role: ArrangedPart; melodyHits: number; velocities?: boolean }
 
 interface GridStroke {
   id: string;
@@ -98,19 +98,22 @@ export class PatternSequencerComponent {
     const draft = this.draft();
     const rowsPerBar = this.preferences.preferences().patternSequencerRowsPerBar;
     return project.tracks.filter(track => this.data.role === 'drums' ? track.role === 'drums'
-      : 'trackId' in scope ? track.id === scope.trackId : track.role === this.data.role).map(track => {
+      : 'trackId' in scope ? track.id === scope.trackId : track.role === this.data.role).flatMap(track => {
       const effective = resolvePartTrack(track, section, project.melodyGlobal);
       const values = settingsValues(effective.generatorSettings, effective.role);
-      const supported = track.role === 'melody' ? isMelodyGrid(values['rhythm'])
-        : values['rhythm'] !== 'melody' && !(track.role === 'bass' && values['rhythm'] === 'bass1');
-      const hits = values['rhythm'] === 'melody' ? this.data.melodyHits : Number(values['hitsPerPattern'] ?? 8);
+      const rhythm = values['rhythm'];
+      const followsMelody = rhythm === 'melody';
+      const hits = followsMelody ? this.data.melodyHits : Number(values['hitsPerPattern'] ?? 8);
+      const validHits = Number.isInteger(hits) && hits >= 1 && hits <= 32;
+      const supported = validHits && isMelodyGrid(rhythm);
+      const velocitySupported = track.role !== 'melody' && validHits && (supported || followsMelody);
+      if (!supported && !(this.data.velocities && velocitySupported)) return [];
       const pattern = draft?.id === track.id && draft.pattern ? draft.pattern : supported ? chordRhythmMask({
-        rhythm: values['rhythm'] as ChordRhythm, hitsPerPattern: hits, patternShift: Number(values['patternShift'] ?? 0),
+        rhythm, hitsPerPattern: hits, patternShift: Number(values['patternShift'] ?? 0),
         patternFlip: values['patternFlip'] === true, euclideanPulses: Number(values['euclideanPulses'] ?? 4),
         customPattern: values['customPattern'] as readonly number[] | undefined }) : [];
       const velocities = draft?.id === track.id && draft.velocities ? draft.velocities
         : values['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES;
-      const velocitySupported = track.role !== 'melody' && hits <= 32 && !(track.role === 'bass' && values['rhythm'] === 'bass1');
       const slots = supported ? pattern : Array.from({ length: Math.min(32, hits) }, () => 1);
       const span = rowsPerBar && supported ? values['chordSpan'] : undefined;
       const barCount = typeof span === 'number' && Number.isInteger(span) && span > 1 && slots.length > 0 && slots.length % span === 0 ? span : 1;
@@ -119,18 +122,22 @@ export class PatternSequencerComponent {
         const start = bar * barSteps;
         return { start, slots: slots.slice(start, start + barSteps) };
       });
-      return { id: track.id, name: track.name, instrument: effective.role === 'drums' ? this.midi.drumLabel(effective.generatorSettings.pitch, this.projects.project().drumSlots) : effective.role,
+      return [{ id: track.id, name: track.name, instrument: effective.role === 'drums' ? this.midi.drumLabel(effective.generatorSettings.pitch, project.drumSlots) : effective.role,
         values, supported, hits, pattern, velocities, velocitySupported,
         velocityEditing: velocitySupported && values['useCustomVelocities'] === true,
         slots, bars, barSteps,
-        active: 'trackId' in scope && track.id === scope.trackId };
+        active: 'trackId' in scope && track.id === scope.trackId }];
     });
   });
   readonly velocityEditing = computed(() => this.rows().some(row => row.velocityEditing));
   readonly canMultiplyHits = computed(() => {
     const scope = this.data.scope;
-    const rows = this.rows().filter(row => !('trackId' in scope) || row.id === scope.trackId);
-    return this.data.role === 'drums' && rows.length > 0 && rows.every(row => row.supported);
+    if (this.data.role !== 'drums') return false;
+    const rows = this.rows();
+    if ('trackId' in scope) return rows.some(row => row.id === scope.trackId && row.supported);
+    // Group multiplication requires every drum track in the scope, including hidden rows.
+    return rows.length > 0 && rows.every(row => row.supported)
+      && rows.length === this.projects.project().tracks.filter(track => track.role === 'drums').length;
   });
   multiplyHits(value: string): void {
     if (value && this.canMultiplyHits()) {
