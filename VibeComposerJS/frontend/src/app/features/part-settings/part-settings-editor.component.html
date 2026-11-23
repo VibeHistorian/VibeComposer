@@ -151,7 +151,8 @@
     [attr.data-parameter-key]="key === 'pattern' ? null : key" [attr.id]="id ?? null" [attr.aria-label]="label" aria-haspopup="dialog"
     [title]="values ? values.join(', ') || 'Off' : 'Mixed'" (click)="openSequence(key)">
     @if (values?.length) {
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline [attr.points]="sequencePreviewPoints(key, values!)" /></svg>
+      <vc-numeric-sequence-preview [values]="values!" [range]="sequenceRange(key)"
+        [display]="key === 'melodyPatternOffsets' ? 'steps' : 'line'" />
     } @else {
       <span class="mixed">{{ values ? 'Off' : 'Mixed' }}</span>
     }

@@ -9,7 +9,8 @@ import { DEFAULT_MELODY_GLOBAL } from '../../core/music/melody-global-settings';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { PatternSequencerComponent } from './pattern-sequencer.component';
 import { DurationsDialogComponent } from './durations-dialog.component';
-import { NumericSequenceDialogComponent, sequencePoints } from './numeric-sequence-dialog.component';
+import { NumericSequenceDialogComponent } from './numeric-sequence-dialog.component';
+import { NumericSequencePreviewComponent } from './numeric-sequence-preview.component';
 import { partSequenceEditor, partSequenceRange, partSequenceRows, type PartSequenceKey } from './part-sequence-editor';
 import { durationPreview } from '../../core/music/durations';
 import { validateDurationDraft } from '../../core/music/duration-validation';
@@ -32,7 +33,7 @@ import { sectionGenerationHarmony } from '../../core/music/project-harmony';
 
 @Component({
   selector: 'vc-part-settings-editor',
-  imports: [MenuSelectComponent, ParameterShortcutDirective, NgTemplateOutlet, DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, SelectComponent],
+  imports: [MenuSelectComponent, ParameterShortcutDirective, NgTemplateOutlet, DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, SelectComponent, NumericSequencePreviewComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.data-control-role]': 'role()', '[style.--variation-role-color]': '"var(--role-" + role() + ")"', '[class.quick-layout]': '!showGroupTitles()', '[class.placement-editing]': 'preferences.editingQuickSettings()' },
   templateUrl: './part-settings-editor.component.html',
@@ -142,10 +143,7 @@ export class PartSettingsEditorComponent {
   sequenceValues(key: PartSequenceKey): readonly number[] | null {
     return key === 'pattern' ? this.arpeggioPreview() : this.values()[key] as readonly number[] | null;
   }
-  sequencePreviewPoints(key: PartSequenceKey, values: readonly number[]): string {
-    // Duplicate a single value across the middle of the preview so the line is visible.
-    return sequencePoints(values.length === 1 ? [values[0], values[0]] : values, partSequenceRange(key), 5, 90);
-  }
+  readonly sequenceRange = partSequenceRange;
   openSequencer(velocities = false): void {
     if (!velocities && this.usesDurations()) {
       this.openDurations();

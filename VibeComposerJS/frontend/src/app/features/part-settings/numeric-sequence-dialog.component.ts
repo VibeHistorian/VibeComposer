@@ -16,8 +16,9 @@ export function sequencePoints(values: readonly number[], range: NumericSequence
     `${(index + .5) / values.length * 100},${sequenceY(value, range, top, height)}`).join(' ');
 }
 
-function sequenceY(value: number, { minimum, maximum }: NumericSequenceRange, top: number, height: number): number {
-  return top + (maximum - value) / (maximum - minimum) * height;
+export function sequenceY(value: number, { minimum, maximum }: NumericSequenceRange, top: number, height: number): number {
+  const position = maximum === minimum ? .5 : (maximum - value) / (maximum - minimum);
+  return top + position * height;
 }
 
 export interface NumericSequenceEditor extends NumericSequenceRange {

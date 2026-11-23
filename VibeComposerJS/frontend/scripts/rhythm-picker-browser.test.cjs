@@ -353,6 +353,16 @@ test('production Angular controls initialize selects from settings and support r
         await changeControl(words.querySelector('[aria-label="Load preset"]'), 'Mirror');
         await waitFor(() => words.querySelectorAll('.steps input').length === 2, 'mirror words loaded');
         await setSequence(words, [1, -1, 2]);
+        const wordPreview = await waitFor(() => {
+          const preview = document.querySelector('[aria-label="Edit melody words"] vc-numeric-sequence-preview');
+          return preview?.querySelectorAll('.step-dot').length === 3 ? preview : null;
+        }, 'stepped words preview');
+        const wordLines = [...wordPreview.querySelectorAll('line')];
+        result.steppedWords = wordLines.length === 2 && wordLines.every(line => line.getAttribute('y1') === line.getAttribute('y2')
+          && Number(line.getAttribute('x1')) < Number(line.getAttribute('x2')));
+        const targetLine = document.querySelector('[aria-label="Edit melody targets"] polyline');
+        const targetHeights = targetLine.getAttribute('points').split(' ').map(point => Number(point.split(',')[1]));
+        result.normalizedTargets = Math.max(...targetHeights) - Math.min(...targetHeights) >= 80;
         const transpose = document.querySelector('input[aria-label="Transpose"]');
         wheel(transpose, -100, true);
         await waitFor(() => transpose.getAttribute('aria-valuetext') === '5 st', 'melody discrete transpose');
@@ -768,6 +778,8 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.randomBoundsHidden, true);
     assert.equal(actual.velocitiesEnabled, true);
     assert.deepEqual(actual.melodyInitialTargets, ['0', '2', '2', '4']);
+    assert.equal(actual.steppedWords, true);
+    assert.equal(actual.normalizedTargets, true);
     assert.deepEqual(actual.melody.chordNoteChoices, [0, 4, -2]);
     assert.deepEqual(actual.melody.melodyPatternOffsets, [1, -1, 2]);
     assert.equal(actual.melody.transpose, 7);
