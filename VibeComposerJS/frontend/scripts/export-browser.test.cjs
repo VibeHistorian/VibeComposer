@@ -22,7 +22,8 @@ for (const { width, missingMethod, sampler, chiptune } of [
   })), arrangement: [
     { id: 'first', type: 'VERSE1', measures: 1, trackPresence: presence, context: { tempoBpm: 120 },
       trackPhrases: { [trackId]: [{ id: 'sustain', midi: 48, startBeat: .5, durationBeats: 5, velocity: 100 }] } },
-    { id: 'second', type: 'VERSE2', measures: 1, trackPresence: presence, context: { tempoBpm: 60 }, trackPhrases: { [trackId]: [] } },
+    { id: 'second', type: 'VERSE2', measures: 1, trackPresence: presence, context: { tempoBpm: 60 },
+      trackPhrases: { [trackId]: [{ id: 'late', midi: 48, startBeat: 3.6, durationBeats: .125, velocity: 100 }] } },
   ] };
   const script = `<script>${observeSettings}
     sessionStorage.setItem('vibecomposer.project.v12', ${JSON.stringify(JSON.stringify(project))});
@@ -51,6 +52,16 @@ for (const { width, missingMethod, sampler, chiptune } of [
       const unhandledRejections = [];
       addEventListener('unhandledrejection', event => unhandledRejections.push(String(event.reason)));
       let offlineResumes = 0;
+      const sourceStartTimes = [];
+      for (const { prototype } of [AudioBufferSourceNode, OscillatorNode]) {
+        const nativeStart = prototype.start;
+        prototype.start = function(...args) {
+          if (this.context instanceof OfflineAudioContext && this.context.sampleRate === 48000) {
+            sourceStartTimes.push({ now: this.context.currentTime, start: args[0] });
+          }
+          return nativeStart.apply(this, args);
+        };
+      }
       const nativeOfflineResume = OfflineAudioContext.prototype.resume;
       OfflineAudioContext.prototype.resume = function(...args) {
         offlineResumes++;
@@ -153,7 +164,9 @@ for (const { width, missingMethod, sampler, chiptune } of [
         const context=new NativeAudioContext({sampleRate:48000});
         try {
           const decoded=await context.decodeAudioData(bytes);
-          ensure(decoded.numberOfChannels===2 && decoded.duration>6 && decoded.duration<6.1,'full tempo-mapped arrangement including silence');
+          const maxDuration = ${chiptune ? 6.4 : 6.1}; // Chiptune xylophone releases for 0.63s after the late note.
+          ensure(decoded.numberOfChannels===2 && decoded.duration>6 && decoded.duration<maxDuration,
+            'full tempo-mapped arrangement and release tail: '+decoded.duration);
           const rms=(channel,from,to)=> {
             const data=decoded.getChannelData(channel).subarray(from*48000,to*48000);
             return Math.sqrt(data.reduce((sum,v)=>sum+v*v,0)/data.length);
@@ -161,6 +174,9 @@ for (const { width, missingMethod, sampler, chiptune } of [
           ensure(rms(0,1,1.5)>.001 && rms(0,3,3.25)>.001,'sustain crosses section tempo change');
           ensure(rms(1,1,1.5)<.00001,'pan and solo exclude other tracks');
           ensure(rms(0,5,5.5)<.00001,'voice release ends and trailing section stays silent');
+          ensure(rms(0,5.62,5.7)>.001,'late note remains audible');
+          ensure(sourceStartTimes.some(({now,start}) => start>5.5 && start>=now && (missingMethod ? now===0 : now>0)),
+            'later notes are scheduled at the expected offline clock position');
         } finally { await context.close(); }
         ensure(offlineResumes===(missingMethod ? 0 : 19),'only supported render checkpoints suspend and resume');
         ensure(renderProgress[0]===0 && renderProgress.at(-1)===100,'render progress runs from 0 to 100: '+renderProgress);

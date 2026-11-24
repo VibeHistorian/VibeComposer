@@ -11,6 +11,8 @@ import { planVoices, type VoiceNote } from '../music/track-voicing';
 import { scheduleVoice } from './schedule-voice';
 
 const SAMPLE_RATE = 48000;
+const RENDER_QUANTUM = 128;
+const SCHEDULE_WINDOW_FRAMES = 4 * SAMPLE_RATE;
 // Pinned GM timbres include 11s releases, multiplied by TinySynth's 3.5 ratio.
 // Reserve enough render space, then trim to the actual scheduled voice endings.
 const MAX_RELEASE_TAIL_SECONDS = 40;
@@ -59,9 +61,9 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
       pitch?.offset.setValueAtTime(0, songSeconds);
       volume?.gain.setValueAtTime(1, songSeconds);
     }
-    let scheduled = 0;
+    let nextEvent = 0;
     let lastStop = songSeconds;
-    for (const { track, notes } of tracks) {
+    const events = tracks.flatMap(({ track, notes }) => {
       const gain = context.createGain(), pan = context.createStereoPanner();
       gain.gain.value = track.mix.volumePercent / 100;
       pan.pan.value = track.mix.panPercent / 100;
@@ -69,32 +71,66 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
       const channel = channels.get(track.midiChannel);
       pan.connect(channel?.volume ?? master);
       nodes.push(gain, pan);
-      for (const note of notes) {
-        const start = timeline.beatToSeconds(note.startBeat) + offsetSeconds;
+      return notes.map(note => ({ track, note, gain, pitch: channel?.pitch,
+        start: timeline.beatToSeconds(note.startBeat) + offsetSeconds }));
+    });
+    const canSuspend = typeof context.suspend === 'function' && typeof context.resume === 'function';
+    if (canSuspend) events.sort((a, b) => a.start - b.start);
+
+    const scheduleBefore = async (frame: number) => {
+      const end = frame === length ? Infinity : frame / SAMPLE_RATE;
+      for (; nextEvent < events.length; nextEvent++) {
+        const { track, note, gain, pitch, start } = events[nextEvent];
+        if (start >= end) break;
         const duration = Math.max(note.pitchChanges ? 0 : 0.035, timeline.beatToSeconds(note.startBeat + note.durationBeats) + offsetSeconds - start);
         const cut = note.cutBeat === undefined ? Infinity : timeline.beatToSeconds(note.cutBeat) + offsetSeconds;
         for (const voice of scheduleVoice(synth, gain, track.mix.program, track.role === 'drums',
-          note, start, duration, timeline.beatToSeconds(note.startBeat), cut, channel?.pitch)) {
+          note, start, duration, timeline.beatToSeconds(note.startBeat), cut, pitch)) {
           voice.onEnded(() => voice.dispose());
           lastStop = Math.max(lastStop, voice.stopTime);
         }
         // Building large arrangements also yields to input and paint.
-        if (++scheduled % 128 === 0) await new Promise<void>(resolve => setTimeout(resolve, 0));
+        if ((nextEvent + 1) % 128 === 0) await new Promise<void>(resolve => setTimeout(resolve, 0));
       }
+      await synth.flush();
+    };
+
+    // Future voices each add several connected nodes. Feed the same graph a
+    // few seconds at a time so each render quantum visits far fewer idle nodes.
+    // Keeping one context lets held notes, tails and automation span checkpoints.
+    const checkpoints: { frame: number; percent?: number }[] = [];
+    const progressStep = canSuspend && onProgress ? 5 : 100;
+    const lastStart = canSuspend ? events.at(-1)?.start ?? 0 : 0;
+    let frame = 0;
+    for (let percent = progressStep; percent <= 100; percent += progressStep) {
+      // Suspend at distinct render-quantum boundaries, even for very short regions.
+      const boundary = percent === 100 ? length : Math.floor(length * percent / 100 / RENDER_QUANTUM) * RENDER_QUANTUM;
+      if (boundary <= frame) continue;
+      while (frame + SCHEDULE_WINDOW_FRAMES < boundary && (frame + SCHEDULE_WINDOW_FRAMES) / SAMPLE_RATE <= lastStart) {
+        frame += SCHEDULE_WINDOW_FRAMES;
+        checkpoints.push({ frame });
+      }
+      if (percent < 100) checkpoints.push({ frame: boundary, percent });
+      frame = boundary;
     }
-    await synth.flush();
-    // Offline rendering has no progress event. Briefly suspend at known audio
-    // positions, report completed work, then immediately resume off the UI thread.
-    // Firefox lacks these methods; render uninterrupted and report completion there.
-    const canReportProgress = onProgress && typeof context.suspend === 'function' && typeof context.resume === 'function';
-    const checkpoints = canReportProgress ? Array.from({ length: 19 }, (_, index) => {
-      const percent = (index + 1) * 5;
-      return context.suspend(context.length / context.sampleRate * percent / 100).then(async () => {
-        onProgress(percent);
-        await context.resume();
-      });
-    }) : [];
-    const [rendered] = await Promise.all([context.startRendering(), ...checkpoints]);
+
+    const advance = async (index: number): Promise<void> => {
+      const checkpoint = checkpoints[index];
+      if (!checkpoint) return;
+      await context.suspend(checkpoint.frame / SAMPLE_RATE);
+      let following: Promise<void> | undefined;
+      try {
+        await scheduleBefore(checkpoints[index + 1]?.frame ?? length);
+        if (checkpoint.percent !== undefined) onProgress?.(checkpoint.percent);
+        following = advance(index + 1);
+      } finally {
+        await Promise.all([following, context.resume()]);
+      }
+    };
+    // Browsers without suspend/resume pre-schedule the full arrangement.
+    await scheduleBefore(checkpoints[0]?.frame ?? length);
+    const advancing = advance(0);
+    const [rendered] = await Promise.all([context.startRendering(), advancing]);
     const trimmed = context.createBuffer(2, Math.min(length, Math.ceil((lastStop + 0.01) * SAMPLE_RATE)), SAMPLE_RATE);
     for (let channel = 0; channel < 2; channel++) {
       trimmed.copyToChannel(rendered.getChannelData(channel).subarray(0, trimmed.length), channel);
