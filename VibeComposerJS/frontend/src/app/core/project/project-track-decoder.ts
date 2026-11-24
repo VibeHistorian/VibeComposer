@@ -7,6 +7,7 @@ import { PART_CONTROLS } from '../music/part-settings';
 import { INSTRUMENT_POOLS } from '../music/instrument-generation';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
 import { decodePhraseGlideEdits } from './project-glide-decoder';
+import { validTrackVoicing } from '../music/track-voicing';
 
 export function decodeTracks(value: unknown): CompositionTrack[] | undefined {
   if (!Array.isArray(value) || value.length > 64) return undefined;
@@ -27,7 +28,7 @@ export function decodeTracks(value: unknown): CompositionTrack[] | undefined {
       || (track.instrumentLocked !== undefined && typeof track.instrumentLocked !== 'boolean')) return undefined;
     if (track.phraseEdits !== undefined && !isPhraseRangeEdits(track.phraseEdits)) return undefined;
     const phraseGlides = track.phraseGlides === undefined ? undefined : decodePhraseGlideEdits(track.phraseGlides);
-    if (track.phraseGlides !== undefined && !phraseGlides) return undefined;
+    if (track.phraseGlides !== undefined && !phraseGlides || !validTrackVoicing(track)) return undefined;
     if (track.instrumentPool !== undefined && (typeof track.instrumentPool !== 'string' || track.role === 'drums' || track.instrumentPool.startsWith('DRUM')
       || !Object.hasOwn(INSTRUMENT_POOLS, track.instrumentPool)
       || !INSTRUMENT_POOLS[track.instrumentPool]?.includes(mix.program))) return undefined;
@@ -73,6 +74,8 @@ export function decodeTracks(value: unknown): CompositionTrack[] | undefined {
       ...edit, notes: edit.notes.map(note => ({ ...note })),
     })) };
     if (phraseGlides) decoded = { ...decoded, phraseGlides };
+    if (track.voiceMode !== undefined) decoded = { ...decoded, voiceMode: track.voiceMode };
+    if (track.glideMs !== undefined) decoded = { ...decoded, glideMs: track.glideMs };
     if (track.orderOffset !== undefined) decoded = { ...decoded, orderOffset: track.orderOffset };
     if (track.rerollLocked !== undefined) decoded = { ...decoded, rerollLocked: track.rerollLocked };
     if (track.instrumentLocked !== undefined) decoded = { ...decoded, instrumentLocked: track.instrumentLocked };

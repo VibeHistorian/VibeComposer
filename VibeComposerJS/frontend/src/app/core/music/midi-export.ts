@@ -12,6 +12,7 @@ import { mapDrumPitch, type DrumMapping } from './drum-instruments';
 import { parseMidi, writeMidi, type MidiEvent } from 'midi-file';
 import { GLIDE_LANES, glideNeutral, glidesByChannel, type PhraseGlides } from './phrase-glides';
 import { MIDI_EXPRESSION_CC, midiGlideEvents, midiGlideValue, PITCH_BEND_SENSITIVITY } from './midi-glides';
+import { midiVoicingControls, type TrackVoicing } from './track-voicing';
 
 /** Export the current editor draft in phrase-relative beats, regardless of mute/solo state.
  * Prepend pickup time and preserve tails. Notes already contain their sounding pitches. */
@@ -28,6 +29,7 @@ export function generatePhraseMidi(name: string, tempoBpm: number,
   midi.name = name;
   midi.header.setTempo(tempoBpm);
   const channelTracks = new Map<number, number>();
+  const voicing = new Map<number, TrackVoicing>();
   const kitPan = drumChannelPan(tracks.map(({ track }) => track));
   let wroteKitPan = false;
   for (const { track: source, notes } of tracks) {
@@ -37,6 +39,7 @@ export function generatePhraseMidi(name: string, tempoBpm: number,
     track.channel = source.midiChannel - 1;
     const sharedPan = source.role === 'drums' && kitPan !== undefined;
     configureMix(track, withDrumChannelPan(source, kitPan), false, !sharedPan || !wroteKitPan);
+    if (source.voiceMode !== undefined) voicing.set(source.midiChannel, source);
     if (sharedPan) wroteKitPan = true;
     for (const note of notes) {
       const start = note.startBeat + offset;
@@ -50,7 +53,7 @@ export function generatePhraseMidi(name: string, tempoBpm: number,
       });
     }
   }
-  return writeGlides(midi, channelTracks, glides, offset, beat => beat * 60 / tempoBpm, seconds => seconds * tempoBpm / 60);
+  return writeChannelControls(midi, channelTracks, glides, voicing, offset, beat => beat * 60 / tempoBpm, seconds => seconds * tempoBpm / 60);
 }
 
 /** Serialize every independent instrument track with its assigned channel and mix controls. */
@@ -70,6 +73,7 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
   const anySolo = project.tracks.some((track) => track.mix.solo);
   const kitPan = drumChannelPan(project.tracks);
   const channelTracks = new Map<number, number>();
+  const voicing = new Map<number, TrackVoicing>();
   let wroteKitPan = false;
 
   for (const role of ARRANGED_PARTS) {
@@ -84,6 +88,7 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
         anySolo, !sharedPan || !wroteKitPan);
       if (sharedPan) wroteKitPan = true;
       if (!included) continue;
+      if (compositionTrack.voiceMode !== undefined) voicing.set(compositionTrack.midiChannel, compositionTrack);
       for (const note of phrases[compositionTrack.id]) {
         track.addNote({
           midi: compositionTrack.role === 'drums' ? mapDrumPitch(note.midi, drumMapping, drumSlots) : note.midi,
@@ -99,7 +104,7 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
       filler.channel = role === 'drums' ? 9 : 0;
     }
   }
-  return writeGlides(midi, channelTracks, glides, offset, timeline.beatToSeconds, timeline.secondsToBeat);
+  return writeChannelControls(midi, channelTracks, glides, voicing, offset, timeline.beatToSeconds, timeline.secondsToBeat);
 }
 
 function earliestGlideBeat(channels: ReadonlyMap<number, PhraseGlides>, original: number): number {
@@ -111,12 +116,14 @@ function earliestGlideBeat(channels: ReadonlyMap<number, PhraseGlides>, original
 
 /** Tone's MIDI writer groups CCs by number. Merge the automation after serialization
  * so RPN selection/data/nulling and the first note at a controller change stay in order. */
-function writeGlides(midi: Midi, channelTracks: ReadonlyMap<number, number>, glides: ReadonlyMap<number, PhraseGlides>, offset: number,
+function writeChannelControls(midi: Midi, channelTracks: ReadonlyMap<number, number>, glides: ReadonlyMap<number, PhraseGlides>,
+  voicing: ReadonlyMap<number, TrackVoicing>, offset: number,
   secondsAt: (beat: number) => number, beatAt: (seconds: number) => number): Uint8Array {
   const bytes = midi.toArray();
-  if (!glides.size) return bytes;
+  if (!glides.size && !voicing.size) return bytes;
   const file = parseMidi(bytes);
-  for (const [channelNumber, curves] of glides) {
+  for (const channelNumber of new Set([...glides.keys(), ...voicing.keys()])) {
+    const curves = glides.get(channelNumber);
     const channel = channelNumber - 1;
     const index = channelTracks.get(channelNumber);
     if (index === undefined) continue;
@@ -124,10 +131,12 @@ function writeGlides(midi: Midi, channelTracks: ReadonlyMap<number, number>, gli
     const cc = (tick: number, controllerType: number, value: number) => events.push({
       tick, priority: 1, event: { type: 'controller', deltaTime: 0, channel, controllerType, value },
     });
-    if (curves.pitch.length) for (const [controller, value] of PITCH_BEND_SENSITIVITY) cc(0, controller, value);
+    const mode = voicing.get(channelNumber);
+    if (mode) for (const [controller, value] of midiVoicingControls(mode)) cc(0, controller, value);
+    if (curves?.pitch.length) for (const [controller, value] of PITCH_BEND_SENSITIVITY) cc(0, controller, value);
     for (const lane of GLIDE_LANES) {
-      const segments = curves[lane];
-      if (!segments.length) continue;
+      const segments = curves?.[lane];
+      if (!segments?.length) continue;
       const end = segments.at(-1)!.endBeat;
       const tickAt = (beat: number) => Math.round((beat + offset) * midi.header.ppq);
       const neutral = midiGlideValue(lane, glideNeutral(lane));

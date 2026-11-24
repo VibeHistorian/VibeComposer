@@ -18,6 +18,7 @@ import { isScaleMode } from '../../core/music/scales';
 import { NgTemplateOutlet } from '@angular/common';
 import { SectionContextEditorComponent } from '../arrangement/section-context-editor.component';
 import { resolveProjectTimeline, resolveSectionTrackGlides } from '../../core/music/project-timeline';
+import { MAX_GLIDE_MS, VOICE_MODES, type VoiceMode } from '../../core/music/track-voicing';
 import { clipGlideSegments, glidesByChannel, shiftGlideSegments, withGlidePreview, type GlideSegment } from '../../core/music/phrase-glides';
 import type { ScoreGlideReference } from '../score/score-glide-lane.component';
 import { sectionDurationBeats } from '../../core/music/section-context';
@@ -236,6 +237,8 @@ export class WorkspaceCanvasComponent {
   readonly defaultMix = DEFAULT_MIX;
   defaultChannel(track: CompositionTrack): number { return DEFAULT_TRACKS.find(item => item.role === track.role)!.midiChannel; }
   readonly maximumVolume = MAX_VOLUME_PERCENT;
+  readonly maximumGlide = MAX_GLIDE_MS;
+  readonly voiceModeOptions = VOICE_MODES.map(value => ({ value, label: value[0].toUpperCase() + value.slice(1) }));
   readonly preferences = inject(UiPreferencesService);
   readonly drumPanIsAutomatic = drumPanIsAutomatic;
   readonly projects = inject(ProjectService);
@@ -1162,6 +1165,9 @@ export class WorkspaceCanvasComponent {
     if (this.editing() || track.role === 'drums') return;
     const channel = Number(selection);
     if (Number.isInteger(channel)) this.projects.updateTrack(track.id, { midiChannel: channel });
+  }
+  updateVoiceMode(track: CompositionTrack, mode: string): void {
+    if (!this.editing()) this.projects.updateTrack(track.id, { voiceMode: mode as VoiceMode });
   }
   updateInstrument(track: CompositionTrack, selection: string): void {
     if (this.editing() || track.role === 'drums') return;

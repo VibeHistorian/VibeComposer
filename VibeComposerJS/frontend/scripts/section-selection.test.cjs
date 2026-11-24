@@ -35,6 +35,7 @@ function fixture() {
       'core/music/project-timeline': timelineModule,
       'core/music/phrase-range-edit': require('./music-loader.cjs').loadMusic('phrase-range-edit.ts'),
       'core/music/phrase-glides': require('./music-loader.cjs').loadMusic('phrase-glides.ts'),
+      'core/music/track-voicing': require('./music-loader.cjs').loadMusic('track-voicing.ts'),
       'core/music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
       'core/music/phrase': { phraseForTrack: () => [], layOutTrackPhrase: () => [] },
       'core/music/phrase-edit': require('./music-loader.cjs').loadMusic('phrase-edit.ts'),

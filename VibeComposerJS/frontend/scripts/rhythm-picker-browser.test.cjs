@@ -30,8 +30,9 @@ test('production Angular controls initialize selects from settings and support r
       };
       try {
         sessionStorage.clear();
+        const routingSelects = role => [...document.querySelectorAll('.track-group.' + role + ' :is(.track-instrument, .track-channel)')];
         const initialMidi = await waitFor(() => {
-          const selects = [...document.querySelectorAll('.track-group.bass .track-inline-select')];
+          const selects = routingSelects('bass');
           return selects.length === 2 && selects.every(select => select.getAttribute("value") !== '') ? selects : null;
         }, 'initial track instrument and channel');
         const initialSelection = initialMidi.map(select => select.getAttribute("value"));
@@ -41,7 +42,8 @@ test('production Angular controls initialize selects from settings and support r
           const bounds = items.map(item => (item.matches('vc-context-menu') ? item.querySelector('.track-select') : item).getBoundingClientRect());
           const row = line.getBoundingClientRect();
           return { symbols: [...line.querySelectorAll('.track-reroll-actions button')].map(button => button.textContent.trim()),
-            actionsBeforeInstrument: items[1].classList.contains('track-reroll-actions') && items[2].classList.contains('track-instrument'),
+            actionsBeforeInstrument: line.querySelector('.track-reroll-actions').getBoundingClientRect().right
+              <= line.querySelector('.track-instrument').getBoundingClientRect().left + 1,
             oneLine: bounds.every(box => Math.abs(box.top + box.height / 2 - (row.top + row.height / 2)) < 1),
             fits: bounds.every(box => box.left >= row.left && box.right <= row.right + 1) };
         });
@@ -122,7 +124,7 @@ test('production Angular controls initialize selects from settings and support r
         const initialChords = [...document.querySelectorAll('.chordlet-label')].map(button => button.textContent.trim());
         document.querySelector('.track-group.melody .track-select').click();
         await waitFor(() => document.querySelector('.track-name-field input')?.value === readTrack('melody').name, 'melody inspector');
-        const melodySelection = [...document.querySelectorAll('.track-group.melody .track-inline-select')].map(select => select.getAttribute("value"));
+        const melodySelection = routingSelects('melody').map(select => select.getAttribute("value"));
         const group = await waitFor(() => document.querySelector('.track-group.chords .group-select'));
         group.click();
         await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="chords"]'), 'Chords musical inspector');
@@ -411,7 +413,7 @@ test('production Angular controls initialize selects from settings and support r
           .map(control => control.dataset.controlKey ?? control.dataset.parameterKey);
         document.querySelector('.track-group.melody .track-select').click();
         await waitFor(() => document.querySelector('.track-name-field input')?.value === readTrack('melody').name, 'melody track context');
-        result.recreatedSelection = [...document.querySelectorAll('.track-group.melody .track-inline-select')].map(select => select.getAttribute("value"));
+        result.recreatedSelection = routingSelects('melody').map(select => select.getAttribute("value"));
         result.sharedRoles = [];
         for (const role of ['bass', 'arpeggio']) {
           document.querySelector('.track-group.' + role + ' .group-select').click();

@@ -7,6 +7,8 @@ import type { Sf2Bank } from './sf2-resolver';
 import type { InstrumentEngineKind } from './instrument-engine';
 import { glidesByChannel } from '../music/phrase-glides';
 import { createChannelGlideAudio, disposeChannelGlideAudio, scheduleGlideParam } from './channel-glide-audio';
+import { planVoices, type VoiceNote } from '../music/track-voicing';
+import { scheduleVoice } from './schedule-voice';
 
 const SAMPLE_RATE = 48000;
 // Pinned GM timbres include 11s releases, multiplied by TinySynth's 3.5 ratio.
@@ -25,7 +27,7 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
   const timeline = resolveProjectTimeline(project);
   const anySolo = project.tracks.some(track => track.mix.solo);
   const phrases = project.tracks.map(track => {
-    const notes = timeline.notesByTrack[track.id];
+    const notes: readonly VoiceNote[] = planVoices(timeline.notesByTrack[track.id], track, timeline.beatToSeconds);
     return { track, notes: region ? notes.filter(note => note.startBeat < region.endBeat
       && note.startBeat + note.durationBeats > region.startBeat).map(note => ({ ...note,
         startBeat: Math.max(region.startBeat, note.startBeat),
@@ -69,9 +71,10 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
       nodes.push(gain, pan);
       for (const note of notes) {
         const start = timeline.beatToSeconds(note.startBeat) + offsetSeconds;
-        const duration = Math.max(0.035, timeline.beatToSeconds(note.startBeat + note.durationBeats) + offsetSeconds - start);
-        for (const voice of synth.schedule(gain, track.mix.program, track.role === 'drums',
-          note.midi, note.velocity, start, duration, channel?.pitch)) {
+        const duration = Math.max(note.pitchChanges ? 0 : 0.035, timeline.beatToSeconds(note.startBeat + note.durationBeats) + offsetSeconds - start);
+        const cut = note.cutBeat === undefined ? Infinity : timeline.beatToSeconds(note.cutBeat) + offsetSeconds;
+        for (const voice of scheduleVoice(synth, gain, track.mix.program, track.role === 'drums',
+          note, start, duration, timeline.beatToSeconds(note.startBeat), cut, channel?.pitch)) {
           voice.onEnded(() => voice.dispose());
           lastStop = Math.max(lastStop, voice.stopTime);
         }

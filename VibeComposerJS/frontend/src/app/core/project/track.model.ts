@@ -1,4 +1,5 @@
 import type { PhraseNote } from '../music/phrase-note';
+import type { TrackVoicing } from '../music/track-voicing';
 import type { PhraseRangeEdit } from '../music/phrase-range-edit';
 import type { PhraseGlideEdit } from '../music/phrase-glides';
 import type { InstrumentPool } from '../music/generation-policy.model';
@@ -15,7 +16,7 @@ export interface MixChannelSettings {
   readonly solo: boolean;
 }
 
-interface TrackBase {
+interface TrackBase extends TrackVoicing {
   readonly id: string;
   readonly name: string;
   /** Saved Java part-order offset; independent of track ID, display order and pattern seed. */

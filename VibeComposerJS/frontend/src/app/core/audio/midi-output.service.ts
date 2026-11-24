@@ -6,6 +6,7 @@ import type { DrumSlots } from '../music/drum-instruments';
 import { drumInstrumentLabel, mapDrumPitch, resolveDrumMapping } from '../music/drum-instruments';
 import type { GlideLane } from '../music/phrase-glides';
 import { MIDI_EXPRESSION_CC, PITCH_BEND_SENSITIVITY } from '../music/midi-glides';
+import { midiVoicingControls, type VoiceMode } from '../music/track-voicing';
 
 @Injectable({ providedIn: 'root' })
 export class MidiOutputService {
@@ -17,7 +18,8 @@ export class MidiOutputService {
   private readonly message = signal('');
   private readonly channels = new Set<number>();
   private readonly glideValues = new Map<number, Partial<Record<GlideLane, number>>>();
-  private readonly configurations = new Map<number, { trackId: string; program: number | null; volume: number; pan: number }>();
+  private readonly configurations = new Map<number, { trackId: string; program: number | null; volume: number; pan: number;
+    voiceMode: VoiceMode; glideMs: number }>();
   readonly selectedOutput = this.output.asReadonly();
   readonly drumMapping = computed(() => resolveDrumMapping(this.preferences.drumMapping(), this.selectedOutput() !== null));
   drumLabel(pitch: number, slots?: DrumSlots): string { return drumInstrumentLabel(pitch, this.drumMapping(), slots); }
@@ -119,13 +121,27 @@ export class MidiOutputService {
     const volume = audible ? this.channelVolume(track.mix.volumePercent) : 0;
     const pan = midiPanValue(track.mix.panPercent);
     const previous = this.configurations.get(channel);
-    if (previous?.program === program && previous.volume === volume && previous.pan === pan) {
+    const voiceMode = track.voiceMode ?? 'poly', glideMs = voiceMode === 'poly' ? 0 : track.glideMs ?? 0;
+    const sameMix = previous?.program === program && previous.volume === volume && previous.pan === pan;
+    const programChanged = previous?.program !== program;
+    if (program !== null && (programChanged || !sameMix && voiceMode === 'poly')) this.send([0xc0 | channel, program]);
+    if ((track.voiceMode !== undefined || previous?.voiceMode && previous.voiceMode !== 'poly')
+      && (previous?.voiceMode !== voiceMode || previous.glideMs !== glideMs || programChanged)) {
+      const controls = midiVoicingControls({ voiceMode, glideMs });
+      if (!previous || programChanged || (previous.voiceMode === 'poly') !== (voiceMode === 'poly')) {
+        const [controller, value] = controls[0];
+        this.send([0xb0 | channel, controller, value]);
+      }
+      for (const [controller, value] of controls.slice(1)) this.send([0xb0 | channel, controller, value]);
+    }
+    if (sameMix) {
       previous.trackId = track.id;
+      previous.voiceMode = voiceMode;
+      previous.glideMs = glideMs;
       return;
     }
-    this.configurations.set(channel, { trackId: track.id, program, volume, pan });
+    this.configurations.set(channel, { trackId: track.id, program, volume, pan, voiceMode, glideMs });
     this.channels.add(channel);
-    if (program !== null) this.send([0xc0 | channel, program]);
     this.send([0xb0 | channel, 7, volume]);
     if (track.role !== 'drums' || previous?.pan !== pan) this.send([0xb0 | channel, 10, pan]);
   }
@@ -158,6 +174,10 @@ export class MidiOutputService {
             output.send([0xb0 | channel, 120, 0]);
           }
           const glides = this.glideValues.get(channel);
+          const voicing = this.configurations.get(channel)?.voiceMode;
+          if (voicing && voicing !== 'poly') for (const [controller, value] of midiVoicingControls({})) {
+            output.send([0xb0 | channel, controller, value]);
+          }
           if (glides?.pitch !== undefined) output.send([0xe0 | channel, 0, 64]);
           if (glides?.volume !== undefined) output.send([0xb0 | channel, MIDI_EXPRESSION_CC, 127]);
         }

@@ -27,6 +27,7 @@ export class CompactKnobComponent {
   readonly valueToggle = input<{ readonly pressed: boolean; readonly label: string; readonly tooltip: string; readonly disabled?: boolean } | null>(null);
   readonly valueToggleChange = output<boolean>();
   readonly mini = input(false);
+  readonly pill = input(false);
   readonly hoverLabelOnly = input(false);
   readonly showLabel = input(true);
   readonly dense = input(false);

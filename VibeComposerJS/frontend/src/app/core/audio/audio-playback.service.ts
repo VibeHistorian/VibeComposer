@@ -17,9 +17,12 @@ import { beatToSeconds, secondsToBeat, type TempoPoint } from '../music/section-
 import { GLIDE_LANES, glidesByChannel, withGlidePreview, type GlideReplacement, type PhraseGlides } from '../music/phrase-glides';
 import { midiGlideEvents } from '../music/midi-glides';
 import { createChannelGlideAudio, disposeChannelGlideAudio, scheduleGlideParam, type ChannelGlideAudio } from './channel-glide-audio';
+import { planVoices, type VoiceNote } from '../music/track-voicing';
+import { scheduleVoice } from './schedule-voice';
+import { LiveTrackVoicing } from './live-track-voicing';
 
 type PlaybackState = 'stopped' | 'playing' | 'paused';
-interface ScheduledNote extends PhraseNote { readonly trackId: string; readonly role: ArrangedPart; }
+interface ScheduledNote extends VoiceNote { readonly trackId: string; readonly role: ArrangedPart; }
 interface PartBus {
   readonly gain: GainNode;
   readonly pan: StereoPannerNode;
@@ -101,6 +104,7 @@ export class AudioPlaybackService {
   private glideAudio: ReadonlyMap<number, ChannelGlideAudio> = new Map();
   private glidesScheduledTo?: number;
   private readonly activeSources = new Set<InstrumentVoice>();
+  private readonly liveVoicing = new Map<string, LiveTrackVoicing>();
   private scheduledNotes: { trackId: string; noteId: string; startTime: number; endTime: number }[] = [];
   private readonly foreground = () => {
     if (globalThis.document?.visibilityState !== 'hidden') this.tick();
@@ -115,6 +119,7 @@ export class AudioPlaybackService {
       untracked(() => {
         if (this.synth && this.engineKind !== this.instruments.kind()) {
           this.stop();
+          this.disposeLiveVoicing();
           this.synth.dispose();
           this.synth = undefined;
           this.engineKind = undefined;
@@ -123,12 +128,18 @@ export class AudioPlaybackService {
       this.midi.selectedOutput();
       this.midi.drumMapping();
       untracked(() => {
+        if (this.midi.selectedOutput()) this.disposeLiveVoicing();
         if (this.state() === 'playing' && !this.midi.selectedOutput() && !this.synth && this.mixProject) {
           const beat = this.currentSongBeat();
           this.clearScheduler();
           this.stopSources();
           void this.startPlayback(this.mixProject, beat, false);
-        } else if (this.state() === 'playing') this.restartAt(this.currentSongBeat());
+        } else if (this.state() === 'playing' && this.mixProject) {
+          const beat = this.currentSongBeat();
+          this.notes = this.createSchedule(this.mixProject);
+          this.scheduleSignature = this.signature(this.mixProject, this.notes, this.channelGlides);
+          this.restartAt(beat);
+        }
         else this.stopSources();
       });
     });
@@ -137,6 +148,7 @@ export class AudioPlaybackService {
       untracked(() => {
         if (!this.synth || this.engineNormalized === normalize) return;
         if (!this.midi.selectedOutput()) this.stop();
+      this.disposeLiveVoicing();
         this.synth.dispose();
         this.synth = undefined;
         this.engineKind = undefined;
@@ -148,6 +160,7 @@ export class AudioPlaybackService {
     globalThis.document?.removeEventListener('visibilitychange', this.foreground);
     globalThis.removeEventListener?.('focus', this.foreground);
     this.stop();
+    this.disposeLiveVoicing();
     this.synth?.dispose();
     this.context?.removeEventListener('statechange', this.contextChanged);
     void this.context?.close().catch(() => {});
@@ -169,6 +182,18 @@ export class AudioPlaybackService {
         }
         await this.prepareInstrument(context);
         if (cancelled) return;
+        if (track.voiceMode && track.voiceMode !== 'poly') {
+          let voice = this.liveVoicing.get(track.id);
+          if (!voice || voice.engine !== this.synth || voice.mode !== track.voiceMode) {
+            voice?.dispose();
+            voice = new LiveTrackVoicing(this.synth!, track.voiceMode);
+            this.liveVoicing.set(track.id, voice);
+          }
+          release = voice.press(track, note, project.masterVolumePercent ?? 100);
+          return;
+        }
+        this.liveVoicing.get(track.id)?.dispose();
+        this.liveVoicing.delete(track.id);
         const gain = context.createGain(), pan = context.createStereoPanner();
         gain.gain.value = 0.8 * track.mix.volumePercent / 100 * (project.masterVolumePercent ?? 100) / 100;
         pan.pan.value = track.mix.panPercent / 100;
@@ -212,7 +237,9 @@ export class AudioPlaybackService {
       gain.connect(pan);
       pan.connect(protectedAudioOutput(context));
       const pitches = new Set<number>();
-      const voices = notes.filter(note => {
+      const audible = track.voiceMode && track.voiceMode !== 'poly'
+        ? [notes.reduce((highest, note) => note.midi >= highest.midi ? note : highest)] : notes;
+      const voices = audible.filter(note => {
         if (pitches.has(note.midi)) return false;
         pitches.add(note.midi);
         return true;
@@ -487,6 +514,11 @@ export class AudioPlaybackService {
     return withDrumChannelPan(volumePercent === track.mix.volumePercent ? track : { ...track, mix: { ...track.mix, volumePercent } }, this.midiDrumPan);
   }
 
+  private disposeLiveVoicing(): void {
+    for (const voice of this.liveVoicing.values()) voice.dispose();
+    this.liveVoicing.clear();
+  }
+
   updateMix(project: CompositionProject): void {
     this.mixProject = project;
     this.midiDrumPan = drumChannelPan(project.tracks);
@@ -636,7 +668,10 @@ export class AudioPlaybackService {
       const audible = preview?.trackIds.includes(track.id)
         ? [...notes.filter(note => note.startBeat < preview.startBeat || note.startBeat >= preview.endBeat),
           ...preview.notes.filter(note => note.trackId === track.id)] : notes;
-      return audible.map(note => ({ ...note, trackId: track.id, role: track.role }));
+      const constrained = track.voiceMode && track.voiceMode !== 'poly' && !this.midi.selectedOutput();
+      const planned = constrained ? planVoices(audible, track, this.recordingBacking
+        ? beat => beat * 60 / project.tempoBpm : timeline.beatToSeconds) : audible;
+      return planned.map(note => ({ ...note, trackId: track.id, role: track.role }));
     })
       .sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi);
   }
@@ -653,8 +688,8 @@ export class AudioPlaybackService {
       project.drumSlots,
       resolveProjectTimeline(project).tempoMap,
       resolveProjectTimeline(project).arrangementBounds.endBeat,
-      project.tracks.map((track) => [track.id, track.role, track.mix.program, track.midiChannel]),
-      notes.map((note) => [note.trackId, note.role, note.startBeat, note.durationBeats, note.midi, note.velocity]),
+      project.tracks.map((track) => [track.id, track.role, track.mix.program, track.midiChannel, track.voiceMode, track.glideMs]),
+      notes.map((note) => [note.trackId, note.role, note.startBeat, note.durationBeats, note.midi, note.velocity, note.pitchChanges, note.cutBeat]),
       [...glides],
     ]);
   }
@@ -662,14 +697,14 @@ export class AudioPlaybackService {
   private resumeSustainedNotes(beat: number, absoluteBeat = beat, missingOnly = false): void {
     const { endBeat } = this.loopBounds();
     for (const note of this.queuedNotes) {
-      if (note.role === 'drums') continue;
+      if (note.role === 'drums' && !note.pitchChanges) continue;
       const noteEnd = this.loopEnabled() ? Math.min(endBeat, note.startBeat + note.durationBeats)
         : note.startBeat + note.durationBeats;
       const remaining = noteEnd - beat;
       if (note.startBeat < beat && remaining > 0) {
         if (missingOnly && this.scheduledNotes.some(voice => voice.trackId === note.trackId
           && voice.noteId === note.id && voice.startTime <= this.context!.currentTime && voice.endTime > this.context!.currentTime)) continue;
-        this.scheduleNote({ ...note, durationBeats: remaining }, absoluteBeat);
+        this.scheduleNote({ ...note, startBeat: beat, durationBeats: remaining }, absoluteBeat);
       }
     }
   }
@@ -807,7 +842,7 @@ export class AudioPlaybackService {
     const bus = this.buses.get(note.trackId);
     if (!bus) return;
     const startTime = Math.max(context.currentTime + 0.003, this.originTime + this.absoluteSeconds(absoluteBeat));
-    const duration = Math.max(0.035, this.absoluteSeconds(absoluteBeat + note.durationBeats) - this.absoluteSeconds(absoluteBeat));
+    const duration = Math.max(note.pitchChanges ? 0 : 0.035, this.absoluteSeconds(absoluteBeat + note.durationBeats) - this.absoluteSeconds(absoluteBeat));
     if (this.midi.selectedOutput()) {
       const project = this.mixProject;
       const track = project?.tracks.find(track => track.id === note.trackId);
@@ -820,8 +855,11 @@ export class AudioPlaybackService {
       return;
     }
     if (!this.synth) return;
-    const voices = this.synth.schedule(bus.gain, this.programs.get(note.trackId) ?? 0,
-      note.role === 'drums', note.midi, note.velocity, startTime, duration, this.glideAudio.get(bus.track.midiChannel)?.pitch);
+    const songTime = beatToSeconds(this.tempoMap, note.startBeat);
+    const cutBeat = Math.min(note.cutBeat ?? Infinity, this.loopEnabled() ? this.loopBounds().endBeat : Infinity);
+    const cutTime = Number.isFinite(cutBeat) ? startTime + beatToSeconds(this.tempoMap, cutBeat) - songTime : Infinity;
+    const voices = scheduleVoice(this.synth, bus.gain, this.programs.get(note.trackId) ?? 0,
+      note.role === 'drums', note, startTime, duration, songTime, cutTime, this.glideAudio.get(bus.track.midiChannel)?.pitch);
     if (voices.length) this.scheduledNotes.push({ trackId: note.trackId, noteId: note.id, startTime, endTime: startTime + duration });
     for (const voice of voices) {
       this.activeSources.add(voice);
@@ -910,8 +948,12 @@ export class AudioPlaybackService {
 
   private resetQueue(beat: number): void {
     const { startBeat, endBeat } = this.loopBounds();
-    this.queuedNotes = this.loopEnabled()
-      ? this.notes.filter((note) => note.startBeat >= startBeat && note.startBeat < endBeat) : this.notes;
+    this.queuedNotes = this.loopEnabled() ? this.notes.flatMap(note => {
+      if (note.startBeat >= endBeat) return [];
+      if (note.startBeat >= startBeat) return [note];
+      const remaining = note.startBeat + note.durationBeats - startBeat;
+      return note.pitchChanges && remaining > 0 ? [{ ...note, startBeat, durationBeats: remaining }] : [];
+    }).sort((left, right) => left.startBeat - right.startBeat) : this.notes;
     this.nextNote = this.queuedNotes.findIndex((note) => note.startBeat >= beat);
     if (this.nextNote < 0) this.nextNote = this.queuedNotes.length;
     this.cycle = 0;

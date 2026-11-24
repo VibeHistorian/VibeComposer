@@ -274,8 +274,8 @@ test('offline SF2 export bends and fades two sustained voices on the same MIDI c
         trackPhrases: { high: note(69), low: note(57) },
       }] };
       const audio = await renderProjectAudio(project, undefined, 'sf2:1', bank);
-      const evaluate = (channel, from, to) => {
-        const slice = audio.getChannelData(channel).subarray(Math.round(from * rate), Math.round(to * rate));
+      const evaluate = (buffer, channel, from, to) => {
+        const slice = buffer.getChannelData(channel).subarray(Math.round(from * rate), Math.round(to * rate));
         const crossings = [];
         for (let i = 1; i < slice.length; i++) {
           if (slice[i - 1] < 0 && slice[i] >= 0) crossings.push(i - slice[i] / (slice[i] - slice[i - 1]));
@@ -284,8 +284,16 @@ test('offline SF2 export bends and fades two sustained voices on the same MIDI c
           rms: Math.sqrt(slice.reduce((sum, value) => sum + value * value, 0) / slice.length) };
       };
       const data = [0, 1].map(channel => [[.25, .32], [.61, .69], [1.31, 1.39], [1.65, 1.74]]
-        .map(([from, to]) => evaluate(channel, from, to)));
-      await fetch('/result', { method: 'POST', body: JSON.stringify(data) });
+        .map(([from, to]) => evaluate(audio, channel, from, to)));
+      const legato = await renderProjectAudio({ ...project,
+        tracks: [{ ...tracks[0], phraseGlides: undefined, voiceMode: 'legato', glideMs: 200 }],
+        arrangement: [{ ...project.arrangement[0], trackPhrases: { high: [
+          ...note(69), { id: 'upper', midi: 72, startBeat: 1, durationBeats: 2, velocity: 100 },
+        ] } }],
+      }, undefined, 'sf2:1', bank);
+      const transition = [[.45, .49], [.501, .508], [.58, .62], [.77, .88], [1.76, 1.85]]
+        .map(([from, to]) => evaluate(legato, 0, from, to));
+      await fetch('/result', { method: 'POST', body: JSON.stringify({ data, transition }) });
     } catch (error) {
       await fetch('/result', { method: 'POST', body: JSON.stringify({ error: String(error.stack || error) }) });
     }
@@ -298,8 +306,9 @@ test('offline SF2 export bends and fades two sustained voices on the same MIDI c
   const child = launchBrowser(browser, ['--headless', '--disable-gpu', '--no-first-run', 'http://127.0.0.1:' + server.address().port]);
   const watchdog = watchBrowser(child, reject, 25000);
   try {
-    const data = await result;
-    assert.equal(data.error, undefined);
+    const output = await result;
+    assert.equal(output.error, undefined);
+    const { data, transition } = output;
     for (const [channel, [base, early, late, reset]] of data.entries()) {
       assert.ok(Math.abs(base.hz - (channel ? 220 : 440)) < 1);
       assert.ok(early.hz > base.hz * 1.01, 'pitch changes during the original held note');
@@ -308,5 +317,10 @@ test('offline SF2 export bends and fades two sustained voices on the same MIDI c
       assert.ok(early.rms < base.rms * .4 && late.rms > early.rms * 2, 'expression fades both shared voices');
       assert.ok(Math.abs(reset.rms / base.rms - 1) < .05);
     }
+    const [before, handoff, mid, target, returned] = transition;
+    assert.ok(handoff.rms > before.rms * .8, 'the overlapping note does not restart the sample attack');
+    assert.ok(mid.hz > 470 && mid.hz < 490, 'the existing sample glides to the new pitch');
+    assert.ok(Math.abs(target.hz - 523.25) < 1);
+    assert.ok(Math.abs(returned.hz - 440) < 1, 'releasing the overlap returns to the held note');
   } finally { await closeBrowser({ child, server, watchdog }); }
 });

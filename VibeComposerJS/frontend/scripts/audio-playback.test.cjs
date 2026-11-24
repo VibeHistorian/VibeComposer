@@ -62,6 +62,9 @@ function fixture({ loop = false } = {}) {
     '../music/phrase-inputs': require('./music-loader.cjs').loadMusic('phrase-inputs.ts'),
     '../music/phrase-glides': require('./music-loader.cjs').loadMusic('phrase-glides.ts'),
     '../music/midi-glides': require('./music-loader.cjs').loadMusic('midi-glides.ts'),
+    '../music/track-voicing': require('./music-loader.cjs').loadMusic('track-voicing.ts'),
+    './schedule-voice': require('./music-loader.cjs').loadMusic('../audio/schedule-voice.ts'),
+    './live-track-voicing': require('./music-loader.cjs').loadMusic('../audio/live-track-voicing.ts'),
     './channel-glide-audio': require('./music-loader.cjs').loadMusic('../audio/channel-glide-audio.ts'),
     '../music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
     '../music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
@@ -78,7 +81,7 @@ function fixture({ loop = false } = {}) {
   if (!loop) playback.toggleLoop();
   playback.context = context;
   playback.engineKind = 'synth';
-  playback.synth = { schedule(destination, program, percussion, midi, velocity, start, duration, pitchBend) {
+  playback.synth = { context, schedule(destination, program, percussion, midi, velocity, start, duration, pitchBend) {
     const source = context.createOscillator();
     source.program = program;
     source.percussion = percussion;
@@ -97,6 +100,50 @@ function fixture({ loop = false } = {}) {
     ], mix: { program: 32, volumePercent: 80, panPercent: 0, muted: false, solo: false } }] };
   return { playback, context, sources, project, angular, load, midi, instruments, timelineModule };
 }
+
+test('legato keeps a single transport voice through overlaps while mono retriggers and resumes held notes', async () => {
+  const { playback, context, sources, project } = fixture();
+  const { planVoices } = require('./music-loader.cjs').loadMusic('track-voicing.ts');
+  const note = (id, midi, startBeat, durationBeats) => ({ id, midi, startBeat, durationBeats, velocity: 90 });
+  const notes = [note('held', 48, 0, 4), note('second', 60, 1, 2), note('third', 65, 1.25, .25)];
+  const track = { ...project.tracks[0], notes, voiceMode: 'legato', glideMs: 500 };
+  project.tracks[0] = track;
+  const [legato] = planVoices(notes, track, beat => beat / 2);
+  assert.equal(legato.durationBeats, 4);
+  assert.deepEqual(legato.pitchChanges.map(change => [change.from, change.to]),
+    [[48, 48], [48, 60], [51, 65], [54.5, 60], [60, 48]]);
+  const immediate = planVoices(notes, { voiceMode: 'legato', glideMs: 0 }, beat => beat / 2);
+  assert.ok(immediate[0].pitchChanges.every(change => change.time === change.end && change.from === change.to));
+  const mono = planVoices(notes, { voiceMode: 'mono', glideMs: 500 }, beat => beat / 2);
+  assert.deepEqual(mono.map(({ midi, startBeat, durationBeats }) => [midi, startBeat, durationBeats]),
+    [[48, 0, 1], [60, 1, .25], [65, 1.25, .25], [60, 1.5, 1.5], [48, 3, 1]]);
+  await playback.start(project);
+  for (let i = 1; i < 10; i++) { context.currentTime = i * .15; playback.tick(); }
+  assert.equal(sources.length, 1);
+  playback.seek(project, 2);
+  assert.equal(sources.length, 2, 'seeking rebuilds just the active legato voice');
+  playback.pause();
+});
+
+test('live legato retunes held keys without replacing their voice', async () => {
+  const { playback, context, sources, project } = fixture();
+  const track = { ...project.tracks[0], voiceMode: 'legato', glideMs: 0 };
+  const press = async midi => {
+    const release = playback.liveAudition(track, { id: String(midi), midi, velocity: 100, startBeat: 0, durationBeats: 1 }, project);
+    await new Promise(resolve => setImmediate(resolve));
+    return release;
+  };
+  const releaseLow = await press(48);
+  context.currentTime = .1;
+  const releaseHigh = await press(60);
+  assert.equal(sources.length, 1);
+  context.currentTime = .25;
+  releaseHigh();
+  assert.equal(sources.length, 1);
+  assert.ok(sources[0].stopTime > 3600);
+  releaseLow();
+  assert.equal(sources[0].stopTime, .253);
+});
 
 test('shared channel glides reach sustained voices, restart at the seek value and wrap in a partial loop', async () => {
   const { playback, context, sources, project } = fixture({ loop: true });

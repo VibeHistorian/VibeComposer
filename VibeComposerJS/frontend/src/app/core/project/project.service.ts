@@ -18,6 +18,7 @@ import { isPhrase, isPhraseRangeEdits } from './project-track-decoder';
 import { appendPhraseRangeEdit, hasManualPhrase, type PhraseRangeEdit } from '../music/phrase-range-edit';
 import { appendPhraseGlideEdit, type PhraseGlideEdit } from '../music/phrase-glides';
 import { decodePhraseGlideEdits } from './project-glide-decoder';
+import { validTrackVoicing, type TrackVoicing } from '../music/track-voicing';
 import { decodeProject, isProject, validateMelodyGrids } from './project-codec';
 import { formatProjectJson } from './project-json';
 import { encodeProjectStorage } from './project-storage';
@@ -1309,10 +1310,10 @@ export class ProjectService {
     return this.state().tracks.some(track => track.id === id) ? id : undefined;
   }
 
-  updateTrack(trackId: string, patch: { name?: string; midiChannel?: number; mix?: Partial<MixChannelSettings> }): void {
+  updateTrack(trackId: string, patch: TrackVoicing & { name?: string; midiChannel?: number; mix?: Partial<MixChannelSettings> }): void {
     const current = this.state();
     const index = current.tracks.findIndex((track) => track.id === trackId);
-    if (index < 0 || (patch.name !== undefined && (!patch.name.trim() || patch.name.length > 48))
+    if (index < 0 || !validTrackVoicing(patch) || (patch.name !== undefined && (!patch.name.trim() || patch.name.length > 48))
         || (patch.midiChannel !== undefined && (!Number.isInteger(patch.midiChannel) || patch.midiChannel < 1 || patch.midiChannel > 16))
         || (patch.mix?.program !== undefined && (!Number.isInteger(patch.mix.program) || patch.mix.program < 0 || patch.mix.program > 127))
         || (patch.mix?.volumePercent !== undefined && !validVolumePercent(patch.mix.volumePercent))

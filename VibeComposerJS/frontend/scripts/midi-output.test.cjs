@@ -20,6 +20,7 @@ function fixture(request, preferences = { drumMapping: () => 'auto' }) {
   new Function('require', 'module', 'exports', 'navigator', compiled)(name => name.includes('drum-instruments')
     ? require('./music-loader.cjs').loadMusic('drum-instruments.ts')
     : name === '../music/midi-glides' ? require('./music-loader.cjs').loadMusic('midi-glides.ts')
+    : name === '../music/track-voicing' ? require('./music-loader.cjs').loadMusic('track-voicing.ts')
     : name === './mix-values' ? require('./music-loader.cjs').loadMusic('../audio/mix-values.ts') : angular, module, module.exports,
     request ? { requestMIDIAccess: request } : {});
   return new module.exports.MidiOutputService();
@@ -45,6 +46,30 @@ test('expanded drum identities use project slots for both MIDI messages and foll
   await service.select(null);
   assert.equal(service.drumLabel(49, slots), 'Crash cymbal · 49');
   assert.deepEqual(slots, { 49: 37, 64: 50 });
+  service.ngOnDestroy();
+});
+
+test('legato and time controls reach the MIDI device and file before notes, without synthetic bends', async () => {
+  const { parseMidi } = require('midi-file');
+  const { loadMusic } = require('./music-loader.cjs');
+  const { generatePhraseMidi } = loadMusic('midi-export.ts');
+  const { DEFAULT_PROJECT } = loadMusic('../project/project-defaults.ts');
+  const output = port('legato');
+  const service = fixture(async () => ({ outputs: new Map([[output.id, output]]), addEventListener() {}, removeEventListener() {} }));
+  await service.refresh(); await service.select(output.id);
+  const track = { ...DEFAULT_PROJECT.tracks.find(track => track.role === 'bass'), midiChannel: 3, voiceMode: 'legato', glideMs: 1000 };
+  service.schedule(track, 60, 90, 1000, .5);
+  assert.deepEqual(output.messages.slice(1, 5).map(({ data }) => data), [[0xb2, 126, 1], [0xb2, 68, 127], [0xb2, 5, 64], [0xb2, 65, 127]]);
+  service.configure({ ...track, glideMs: 0 });
+  assert.deepEqual(output.messages.at(-1).data, [0xb2, 65, 0]);
+  service.silence();
+  assert.deepEqual(output.messages.slice(-4).map(({ data }) => data), [[0xb2, 127, 0], [0xb2, 68, 0], [0xb2, 5, 0], [0xb2, 65, 0]]);
+  const notes = [{ id: 'note', midi: 60, velocity: 90, startBeat: 0, durationBeats: 1 }];
+  const events = parseMidi(generatePhraseMidi('Voice mode', 120, [{ track, notes }], 4)).tracks[1];
+  const before = events.slice(0, events.findIndex(event => event.type === 'noteOn'));
+  assert.deepEqual(before.filter(event => [126, 68, 5, 65].includes(event.controllerType)).map(event => [event.controllerType, event.value]),
+    [[126, 1], [68, 127], [5, 64], [65, 127]]);
+  assert.ok(events.every(event => event.type !== 'pitchBend'));
   service.ngOnDestroy();
 });
 

@@ -58,6 +58,36 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
       assert.equal(result.exceptionDetails, undefined, JSON.stringify(result.exceptionDetails));
       return result.result.value;
     };
+    const pill = await evaluate(`
+      const mode = await wait(() => document.querySelector('vc-select[aria-label="Voice mode B1"]'));
+      await changeControl(mode, 'legato');
+      const input = await wait(() => document.querySelector('input[aria-label="Glide time B1"]'));
+      input.scrollIntoView({ block: 'nearest' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const rect = input.getBoundingClientRect();
+      const channel = document.querySelector('vc-select[aria-label="MIDI channel B1"]').getBoundingClientRect();
+      const instrument = document.querySelector('vc-menu-select[aria-label="Instrument B1"]').getBoundingClientRect();
+      const lower = mode.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2,
+        hit: document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)?.outerHTML.slice(0, 200),
+        aligned: rect.top >= channel.bottom && lower.top >= instrument.bottom && Math.abs(lower.right - instrument.right) < 1 };
+    `);
+    assert.ok(pill.aligned);
+    assert.match(pill.hit, /Glide time B1/);
+    for (const modifiers of [0, 8]) {
+      await command('Input.dispatchMouseEvent', { type: 'mousePressed', x: pill.x, y: pill.y, button: 'left', buttons: 1, modifiers, clickCount: 1 });
+      await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: pill.x, y: pill.y - 10, button: 'left', buttons: 1, modifiers });
+      await command('Input.dispatchMouseEvent', { type: 'mouseReleased', x: pill.x, y: pill.y - 10, button: 'left', modifiers, clickCount: 1 });
+      const glide = await evaluate(`
+        const input = document.querySelector('input[aria-label="Glide time B1"]');
+        const value = await wait(() => project()?.tracks.find(track => track.id === 'track-bass-1').glideMs);
+        input.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true }));
+        await wait(() => project()?.tracks.find(track => track.id === 'track-bass-1').glideMs === 0);
+        return value;
+      `);
+      assert.ok(modifiers ? glide < 60 : glide > 60, 'the pill uses the existing fine-drag modifier');
+    }
+    await evaluate(`await changeControl(document.querySelector('vc-select[aria-label="Voice mode B1"]'), 'poly');`);
     const geometry = await evaluate(`
       await open();
       const defaultLane = document.querySelector('#phrase-lane').textContent.trim();
