@@ -7,12 +7,13 @@ const test = require('node:test');
 const { DEFAULT_PROJECT } = require('./music-loader.cjs').loadMusic('../project/project-defaults.ts');
 const browser = findBrowser();
 
-for (const { width, missingMethod, sampler, chiptune } of [
+for (const { width, missingMethod, sampler, chiptune, lateClock } of [
   { width: 1440 }, { width: 780 }, { width: 1440, sampler: true },
   { width: 1440, chiptune: true },
   { width: 1440, missingMethod: 'suspend' },
   { width: 1440, missingMethod: 'resume' },
-]) test(`production export menu and offline Opus download at ${width}px${sampler ? ' with GM sampler' : ''}${chiptune ? ' with Chiptune' : ''}${missingMethod ? ` without ${missingMethod}` : ''}`, { skip: !browser }, async () => {
+  { width: 1440, lateClock: true },
+]) test(`production export menu and offline Opus download at ${width}px${sampler ? ' with GM sampler' : ''}${chiptune ? ' with Chiptune' : ''}${missingMethod ? ` without ${missingMethod}` : ''}${lateClock ? ' with a late render clock' : ''}`, { skip: !browser }, async () => {
   const root = requireProductionBuild();
   const sf2Base64 = sampler ? fs.readFileSync(path.join(__dirname, '../../Super_Nintendo_Unofficial_update.sf2')).toString('base64') : '';
   const trackId = 'track-bass-1';
@@ -53,11 +54,18 @@ for (const { width, missingMethod, sampler, chiptune } of [
       addEventListener('unhandledrejection', event => unhandledRejections.push(String(event.reason)));
       let offlineResumes = 0;
       const sourceStartTimes = [];
+      const readClock = Object.getOwnPropertyDescriptor(BaseAudioContext.prototype, 'currentTime').get;
+      if (${Boolean(lateClock)}) Object.defineProperty(OfflineAudioContext.prototype, 'currentTime', {
+        get() {
+          const now = readClock.call(this);
+          return now > 0 ? now + 2 : now;
+        },
+      });
       for (const { prototype } of [AudioBufferSourceNode, OscillatorNode]) {
         const nativeStart = prototype.start;
         prototype.start = function(...args) {
           if (this.context instanceof OfflineAudioContext && this.context.sampleRate === 48000) {
-            sourceStartTimes.push({ now: this.context.currentTime, start: args[0] });
+            sourceStartTimes.push({ now: readClock.call(this.context), start: args[0] });
           }
           return nativeStart.apply(this, args);
         };
@@ -156,6 +164,9 @@ for (const { width, missingMethod, sampler, chiptune } of [
         ensure([...menu().querySelectorAll('button')].some(b=>b.disabled && b.textContent.includes('Audio')),'duplicate audio export disabled');
         key(document.activeElement,'Escape');
         await wait(()=>downloads.length===3,'audio download');
+        const exportMessage = document.querySelector('.project-message span')?.textContent ?? '';
+        ensure(${Boolean(lateClock)} ? exportMessage.includes('Timing may differ from playback. 1 note was scheduled late') : exportMessage === 'Audio exported.',
+          'export reports late scheduling: '+exportMessage);
         ensure(realtimeContexts===0,'offline export never opens audio device');
         const audio=await downloads[2].blob;
         ensure(filenamePattern.test(downloads[2].name) && downloads[2].name.endsWith('.opus') && audio.type.includes('audio/ogg'),'Opus filename and MIME');

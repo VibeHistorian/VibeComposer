@@ -10,7 +10,7 @@ export class AudioExportService {
   readonly status = signal('');
   readonly progress = signal(0);
 
-  async export(project: CompositionProject, region?: AudioExportRegion): Promise<Blob> {
+  async export(project: CompositionProject, region?: AudioExportRegion): Promise<{ blob: Blob; warnings: string[] }> {
     if (this.busy()) throw new Error('An audio export is already running.');
     const { kind, bank } = this.instruments.resolve(project.soundbankName);
     const normalize = this.instruments.normalization();
@@ -20,11 +20,12 @@ export class AudioExportService {
     try {
       // Let the busy state paint before preparing the offline graph.
       await new Promise<void>(resolve => setTimeout(resolve, 0));
+      const warnings: string[] = [];
       const buffer = await renderProjectAudio(project, percent => {
         this.progress.set(percent);
         this.status.set(`Rendering audio: ${percent}%...`);
-      }, kind, bank, region, normalize, message => this.status.set(message));
-      return await this.encode(buffer);
+      }, kind, bank, region, normalize, message => this.status.set(message), warning => warnings.push(warning));
+      return { blob: await this.encode(buffer), warnings };
     } finally {
       this.busy.set(false);
       this.status.set('');

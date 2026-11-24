@@ -246,7 +246,7 @@ test('SF2 GM sampler resolves and renders all 128 programs and Standard drums of
   } finally { await closeBrowser({ child, server, watchdog }); }
 });
 
-test('offline SF2 export bends and fades two sustained voices on the same MIDI channel', { skip: !browser }, async () => {
+test('offline SF2 export preserves shared glides, sustained notes and long releases', { skip: !browser }, async () => {
   const esbuild = require(require.resolve('esbuild', { paths: [path.dirname(require.resolve('@angular/build/package.json'))] }));
   const bundle = esbuild.buildSync({ stdin: {
     contents: 'export { renderProjectAudio } from "./src/app/core/audio/audio-export"; export { DEFAULT_PROJECT } from "./src/app/core/project/project-defaults";',
@@ -293,7 +293,22 @@ test('offline SF2 export bends and fades two sustained voices on the same MIDI c
       }, undefined, 'sf2:1', bank);
       const transition = [[.45, .49], [.501, .508], [.58, .62], [.77, .88], [1.76, 1.85]]
         .map(([from, to]) => evaluate(legato, 0, from, to));
-      await fetch('/result', { method: 'POST', body: JSON.stringify({ data, transition }) });
+
+      // A continuous sample keeps playing well past several render checkpoints.
+      Object.assign(regions[0], { loop: true, loopStart: 0, loopEnd: 4, ampRelease: 40 });
+      const sustained = { ...project, tracks: [track('high', -100)], arrangement: [{
+        ...project.arrangement[0], measures: 6, trackPhrases: { high: [{ ...note(69)[0], durationBeats: 24 }] },
+      }] };
+      const checkpoints = [], warnings = [];
+      const long = await renderProjectAudio(sustained, percent => checkpoints.push(percent), 'sf2:1',
+        bank, undefined, false, undefined, warning => warnings.push(warning));
+      const longVoice = { checkpoints, warnings, seconds: long.duration,
+        rms: [[1, 2], [10, 11], [30, 31], [51.5, 51.9], [52, 52.009]]
+          .map(([from, to]) => evaluate(long, 0, from, to).rms) };
+      regions[0].ampRelease = 41; // Simulate a renderer exceeding the reserved tail.
+      const clipped = [];
+      await renderProjectAudio(sustained, undefined, 'sf2:1', bank, undefined, false, undefined, warning => clipped.push(warning));
+      await fetch('/result', { method: 'POST', body: JSON.stringify({ data, transition, longVoice, clipped }) });
     } catch (error) {
       await fetch('/result', { method: 'POST', body: JSON.stringify({ error: String(error.stack || error) }) });
     }
@@ -308,7 +323,7 @@ test('offline SF2 export bends and fades two sustained voices on the same MIDI c
   try {
     const output = await result;
     assert.equal(output.error, undefined);
-    const { data, transition } = output;
+    const { data, transition, longVoice, clipped } = output;
     for (const [channel, [base, early, late, reset]] of data.entries()) {
       assert.ok(Math.abs(base.hz - (channel ? 220 : 440)) < 1);
       assert.ok(early.hz > base.hz * 1.01, 'pitch changes during the original held note');
@@ -322,5 +337,13 @@ test('offline SF2 export bends and fades two sustained voices on the same MIDI c
     assert.ok(mid.hz > 470 && mid.hz < 490, 'the existing sample glides to the new pitch');
     assert.ok(Math.abs(target.hz - 523.25) < 1);
     assert.ok(Math.abs(returned.hz - 440) < 1, 'releasing the overlap returns to the held note');
+    assert.ok(longVoice.checkpoints.length > 10);
+    assert.deepEqual(longVoice.warnings, []);
+    assert.ok(Math.abs(longVoice.seconds - 52.01) < .001);
+    const [attack, held, release, ending, silence] = longVoice.rms;
+    assert.ok(attack > .01 && Math.abs(attack - held) < .00001, 'sustain stays steady across checkpoints');
+    assert.ok(release > .4 * held && release < .6 * held, 'the long release continues across checkpoints');
+    assert.ok(ending > 0 && ending < .02 * held && silence === 0, 'the tail reaches silence before the file ends');
+    assert.deepEqual(clipped, ['A release tail extended past the end of the render and may be clipped.']);
   } finally { await closeBrowser({ child, server, watchdog }); }
 });

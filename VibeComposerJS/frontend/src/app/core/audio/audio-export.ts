@@ -13,6 +13,8 @@ import { scheduleVoice } from './schedule-voice';
 const SAMPLE_RATE = 48000;
 const RENDER_QUANTUM = 128;
 const SCHEDULE_WINDOW_FRAMES = 4 * SAMPLE_RATE;
+const MIN_NOTE_SECONDS = 0.035;
+const END_PADDING_SECONDS = 0.01;
 // Pinned GM timbres include 11s releases, multiplied by TinySynth's 3.5 ratio.
 // Reserve enough render space, then trim to the actual scheduled voice endings.
 const MAX_RELEASE_TAIL_SECONDS = 40;
@@ -21,7 +23,7 @@ export interface AudioExportRegion { readonly startBeat: number; readonly endBea
 
 /** Render the arrangement or a bounded region with the playback instruments, tempo map and mix. */
 export async function renderProjectAudio(project: CompositionProject, onProgress?: (percent: number) => void, kind: InstrumentEngineKind = 'synth', bank?: Sf2Bank, region?: AudioExportRegion,
-  normalize = false, calibrationProgress?: (message: string) => void): Promise<AudioBuffer> {
+  normalize = false, calibrationProgress?: (message: string) => void, onWarning?: (message: string) => void): Promise<AudioBuffer> {
   if (!globalThis.OfflineAudioContext) throw new Error('This browser does not support offline audio export.');
   if (region && (!Number.isFinite(region.startBeat) || !Number.isFinite(region.endBeat) || region.endBeat <= region.startBeat)) {
     throw new Error('The audio export region is invalid.');
@@ -43,7 +45,9 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
   const { startBeat, endBeat } = region ?? timeline.soundingBounds;
   const offsetSeconds = -timeline.beatToSeconds(startBeat);
   const songSeconds = timeline.beatToSeconds(endBeat) + offsetSeconds;
-  const length = Math.ceil((songSeconds + (region ? 0 : MAX_RELEASE_TAIL_SECONDS)) * SAMPLE_RATE);
+  // A short final note can be extended by the minimum duration before its release.
+  const tail = region ? 0 : MAX_RELEASE_TAIL_SECONDS + MIN_NOTE_SECONDS + END_PADDING_SECONDS;
+  const length = Math.ceil((songSeconds + tail) * SAMPLE_RATE);
   const context = new OfflineAudioContext(2, length, SAMPLE_RATE);
   const synth = await createInstrumentEngine(context, kind, bank, normalize, calibrationProgress);
   const master = context.createGain();
@@ -63,6 +67,8 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
     }
     let nextEvent = 0;
     let lastStop = songSeconds;
+    let lateNotes = 0;
+    let maxLateness = 0;
     const events = tracks.flatMap(({ track, notes }) => {
       const gain = context.createGain(), pan = context.createStereoPanner();
       gain.gain.value = track.mix.volumePercent / 100;
@@ -82,10 +88,16 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
       for (; nextEvent < events.length; nextEvent++) {
         const { track, note, gain, pitch, start } = events[nextEvent];
         if (start >= end) break;
-        const duration = Math.max(note.pitchChanges ? 0 : 0.035, timeline.beatToSeconds(note.startBeat + note.durationBeats) + offsetSeconds - start);
+        const duration = Math.max(note.pitchChanges ? 0 : MIN_NOTE_SECONDS, timeline.beatToSeconds(note.startBeat + note.durationBeats) + offsetSeconds - start);
         const cut = note.cutBeat === undefined ? Infinity : timeline.beatToSeconds(note.cutBeat) + offsetSeconds;
-        for (const voice of scheduleVoice(synth, gain, track.mix.program, track.role === 'drums',
-          note, start, duration, timeline.beatToSeconds(note.startBeat), cut, pitch)) {
+        const lateness = context.currentTime - start;
+        const voices = scheduleVoice(synth, gain, track.mix.program, track.role === 'drums',
+          note, start, duration, timeline.beatToSeconds(note.startBeat), cut, pitch);
+        if (voices.length && lateness >= 1 / SAMPLE_RATE) {
+          lateNotes++;
+          maxLateness = Math.max(maxLateness, lateness);
+        }
+        for (const voice of voices) {
           voice.onEnded(() => voice.dispose());
           lastStop = Math.max(lastStop, voice.stopTime);
         }
@@ -131,9 +143,15 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
     await scheduleBefore(checkpoints[0]?.frame ?? length);
     const advancing = advance(0);
     const [rendered] = await Promise.all([context.startRendering(), advancing]);
-    const trimmed = context.createBuffer(2, Math.min(length, Math.ceil((lastStop + 0.01) * SAMPLE_RATE)), SAMPLE_RATE);
+    const trimmed = context.createBuffer(2, Math.min(length, Math.ceil((lastStop + END_PADDING_SECONDS) * SAMPLE_RATE)), SAMPLE_RATE);
     for (let channel = 0; channel < 2; channel++) {
       trimmed.copyToChannel(rendered.getChannelData(channel).subarray(0, trimmed.length), channel);
+    }
+    if (lateNotes) {
+      onWarning?.(`Timing may differ from playback. ${lateNotes} ${lateNotes === 1 ? 'note was' : 'notes were'} scheduled late (up to ${Math.ceil(maxLateness * 1000)} ms).`);
+    }
+    if (!region && lastStop > rendered.duration + 1 / SAMPLE_RATE) {
+      onWarning?.('A release tail extended past the end of the render and may be clipped.');
     }
     onProgress?.(100);
     return trimmed;

@@ -141,9 +141,9 @@ export class AppComponent {
     const project = this.project();
     this.projectMessage.set('');
     try {
-      const blob = await this.audioExport.export(project, region);
+      const { blob, warnings } = await this.audioExport.export(project, region);
       downloadProjectFile(blob, exportFilename(project, this.preferences.exportNameFields()), 'opus');
-      this.projectMessage.set('Audio exported.');
+      this.projectMessage.set(['Audio exported.', ...warnings].join(' '));
     } catch (error) {
       this.projectMessage.set(error instanceof Error ? `Could not export audio: ${error.message}` : 'Could not export audio.');
     }
