@@ -244,6 +244,10 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 .score-lane-controls { display: flex; align-items: center; flex-wrap: wrap; flex-shrink: 0; gap: 4px; padding-top: 6px; }
 .score-lane-controls vc-select { min-width: 112px; }
 .score-lane-hint { padding-inline: 4px; color: var(--text-secondary); font: 10px var(--font-mono); }
+.glide-legend { display: inline-flex; gap: 10px; }
+.glide-legend span::before { content: ''; display: inline-block; width: 12px; margin-right: 4px; vertical-align: middle; }
+.glide-legend-ghost::before { border-top: 2px dashed var(--text-secondary); }
+.glide-legend-output::before { border-top: 2px solid var(--text-primary); }
 .score-display-header .export-phrase { margin-right: auto; }
 .score-display-header :is(button, vc-select), .score-lane-controls :is(button, vc-select) { padding: 3px 7px; font: 10px var(--font-ui); }
 .score-display-header button { display: flex; align-items: center; gap: 5px; }

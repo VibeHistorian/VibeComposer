@@ -25,7 +25,7 @@
 <div class="score-canvas-host" #rendererHost>
   @if (glideLane(); as lane) {
     <vc-score-glide-lane [lane]="lane" [geometry]="glideTime()" [bounds]="glideBounds()" [segments]="glideSegments()"
-      [snapBeats]="snapBeats()" [playheadBeat]="glidePlayhead()" [disabled]="glideDisabled()"
+      [reference]="glideReference()" [snapBeats]="snapBeats()" [playheadBeat]="glidePlayhead()" [disabled]="glideDisabled()"
       (stroke)="glideStroke.emit($event)" (wheel)="onCanvasWheel($event)" />
   }
   @if (noteTooltip(); as tooltip) {

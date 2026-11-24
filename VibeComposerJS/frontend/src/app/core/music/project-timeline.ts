@@ -1,4 +1,6 @@
 import type { CompositionProject } from '../project/project.model';
+import type { ArrangementSection } from '../project/arrangement.model';
+import type { CompositionTrack } from '../project/track.model';
 import { resolvedTrackPhrase, type PhraseSource } from './phrase';
 import type { PhraseNote } from './phrase-note';
 import { noteTimelineBounds, sectionPhraseBounds } from './phrase-bounds';
@@ -63,17 +65,10 @@ export function resolveProjectTimeline(project: CompositionProject): ResolvedPro
   const glidesByTrack = Object.freeze(Object.fromEntries(project.tracks.flatMap(track => {
     let glides = EMPTY_PHRASE_GLIDES;
     for (const [index, section] of project.arrangement.entries()) {
-      const local = Object.hasOwn(section.trackGlides ?? {}, track.id) ? section.trackGlides![track.id] : undefined;
-      if (!track.phraseGlides?.length && !local?.length) continue;
-      const present = track.role === 'drums'
-        ? project.tracks.some(candidate => candidate.role === 'drums' && shouldGenerateTrackInSection(section, candidate))
-        : shouldGenerateTrackInSection(section, track);
-      if (!present) continue;
-      const { startBeat, endBeat } = sections[index];
-      const phrase = applyPhraseGlideEdits(track.phraseGlides, local, endBeat - startBeat, sectionPhraseBounds(project, section));
+      const phrase = resolveSectionTrackGlides(project, track, section, sections[index]);
       glides = {
-        pitch: overlayGlideSegments(glides.pitch, shiftGlideSegments(phrase.pitch, startBeat)),
-        volume: overlayGlideSegments(glides.volume, shiftGlideSegments(phrase.volume, startBeat)),
+        pitch: overlayGlideSegments(glides.pitch, phrase.pitch),
+        volume: overlayGlideSegments(glides.volume, phrase.volume),
       };
     }
     return glides.pitch.length || glides.volume.length ? [[track.id, freezeGlides(glides)] as const] : [];
@@ -83,6 +78,19 @@ export function resolveProjectTimeline(project: CompositionProject): ResolvedPro
   timelines.set(project, timeline);
   previous = { project, timeline };
   return timeline;
+}
+
+/** Resolve a section's contribution in song beats before overlapping phrases are combined. */
+export function resolveSectionTrackGlides(project: CompositionProject, track: CompositionTrack, section: ArrangementSection,
+  { startBeat, endBeat }: TimelineBounds): PhraseGlides {
+  const local = Object.hasOwn(section.trackGlides ?? {}, track.id) ? section.trackGlides![track.id] : undefined;
+  if (!track.phraseGlides?.length && !local?.length) return EMPTY_PHRASE_GLIDES;
+  const present = track.role === 'drums'
+    ? project.tracks.some(candidate => candidate.role === 'drums' && shouldGenerateTrackInSection(section, candidate))
+    : shouldGenerateTrackInSection(section, track);
+  if (!present) return EMPTY_PHRASE_GLIDES;
+  const phrase = applyPhraseGlideEdits(track.phraseGlides, local, endBeat - startBeat, sectionPhraseBounds(project, section));
+  return { pitch: shiftGlideSegments(phrase.pitch, startBeat), volume: shiftGlideSegments(phrase.volume, startBeat) };
 }
 
 /** Draft playback derives its own bounds without changing the committed timeline or cache. */

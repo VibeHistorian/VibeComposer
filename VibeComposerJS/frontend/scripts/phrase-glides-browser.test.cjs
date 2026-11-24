@@ -4,10 +4,25 @@ const path = require('node:path');
 const test = require('node:test');
 const { closeBrowser, connectToPage, createBrowserServer, findBrowser, launchBrowser, listen, requireProductionBuild } = require('./support/browser-harness.cjs');
 const { readSessionProject } = require('./support/workspace-browser.cjs');
+const { DEFAULT_PROJECT } = require('./music-loader.cjs').loadMusic('../project/project-defaults.ts');
 
 const browser = findBrowser();
 test('phrase lanes draw and save one undoable controller stroke through the score UI', { skip: !browser, timeout: 45000 }, async () => {
-  const server = createBrowserServer({ root: requireProductionBuild() });
+  const root = requireProductionBuild();
+  const bass = DEFAULT_PROJECT.tracks.find(track => track.role === 'bass');
+  const volume = value => [{ lane: 'volume', startBeat: 0, endBeat: 8,
+    segments: [{ startBeat: 0, endBeat: 8, startValue: value, endValue: value }] }];
+  const shared = { ...bass, id: 'shared-channel', name: 'Shared voice', phraseGlides: volume(.25) };
+  const unrelated = { ...bass, id: 'different-channel', name: 'Different channel', midiChannel: 16, phraseGlides: volume(.7) };
+  const fixture = { ...DEFAULT_PROJECT, tracks: [...DEFAULT_PROJECT.tracks, shared, unrelated],
+    arrangement: DEFAULT_PROJECT.arrangement.map((section, index) => ({ ...section,
+      trackPresence: { ...section.trackPresence, [bass.id]: true, [shared.id]: true, [unrelated.id]: true },
+      ...(index === 1 ? { trackGlides: { [bass.id]: [{ lane: 'volume', startBeat: 0, endBeat: 4, pickupBeats: 2,
+        segments: [{ startBeat: -2, endBeat: 0, startValue: .6, endValue: .6 }] }] } } : {}),
+    })) };
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8').replace('</head>',
+    `<script>sessionStorage.setItem('vibecomposer.project.v12', ${JSON.stringify(JSON.stringify(fixture))})</script></head>`);
+  const server = createBrowserServer({ root, html });
   await listen(server);
   const child = launchBrowser(browser, ['--headless', '--disable-gpu', '--no-first-run', '--disable-background-networking',
     '--remote-debugging-port=0', '--window-size=1280,940', 'http://127.0.0.1:' + server.address().port]);
@@ -47,8 +62,11 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
       await open();
       const defaultLane = document.querySelector('#phrase-lane').textContent.trim();
       await choose('pitch');
-      const rect = (await wait(lane)).getBoundingClientRect();
+      await wait(lane);
       await wait(() => ink() > 0);
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      lane().scrollIntoView({ block: 'nearest' });
+      const rect = lane().getBoundingClientRect();
       return { defaultLane, initialInk: ink(), x0: rect.left + rect.width * .25, x1: rect.left + rect.width * .6,
         y0: rect.bottom - 5, y1: rect.top + 5 };
     `);
@@ -73,12 +91,26 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
       await wait(() => tool('Fade in') && tool('Clear lane').disabled);
       tool('Fade in').click();
       await wait(() => !tool('Clear lane').disabled);
+      await wait(() => document.querySelector('.glide-legend'));
+      const sectionRect = document.querySelector('.score-ruler-section').getBoundingClientRect();
+      const laneRect = lane().getBoundingClientRect();
+      const hoverAt = fraction => lane().dispatchEvent(new PointerEvent('pointermove', {
+        clientX: sectionRect.left + sectionRect.width * fraction, clientY: laneRect.top + laneRect.height / 2,
+      }));
+      hoverAt(.5);
+      const hover = await wait(() => document.querySelector('.glide-cursor')?.textContent);
+      if (!hover.includes('Channel 25% · Shared voice') || hover.includes('Different channel')) {
+        throw Error('Wrong shared MIDI channel output shown: ' + hover);
+      }
+      hoverAt(.875);
+      await wait(() => document.querySelector('.glide-cursor')?.textContent.includes('VERSE1 · bar 3 60%'));
       edit('Local Apply').click();
-      const section = await wait(() => project()?.arrangement.find(section => section.trackGlides?.['track-bass-1']));
+      const section = await wait(() => project()?.arrangement.find(section => section.trackGlides?.['track-bass-1']
+        ?.some(edit => edit.lane === 'pitch')));
       const glides = section.trackGlides['track-bass-1'];
-      if (section.trackPhrases?.['track-bass-1'] || glides.length !== 2) return false;
+      if (section.trackPhrases?.['track-bass-1'] || glides.length !== 2) throw Error('Unexpected saved edits ' + JSON.stringify(glides));
       const stroke = glides.find(edit => edit.lane === 'pitch').segments;
-      if (!(stroke[0].startValue < 0 && stroke.at(-1).endValue > 0)) return false;
+      if (!(stroke[0].startValue < 0 && stroke.at(-1).endValue > 0)) throw Error('Unexpected stroke ' + JSON.stringify(stroke));
       await open();
       await choose('volume');
       await wait(() => !tool('Clear lane').disabled);

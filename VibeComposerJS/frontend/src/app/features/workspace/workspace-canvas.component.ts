@@ -17,8 +17,9 @@ import type { VariationScope } from '../../core/project/arrangement-variation-dr
 import { isScaleMode } from '../../core/music/scales';
 import { NgTemplateOutlet } from '@angular/common';
 import { SectionContextEditorComponent } from '../arrangement/section-context-editor.component';
-import { resolveProjectTimeline } from '../../core/music/project-timeline';
-import { shiftGlideSegments } from '../../core/music/phrase-glides';
+import { resolveProjectTimeline, resolveSectionTrackGlides } from '../../core/music/project-timeline';
+import { clipGlideSegments, glidesByChannel, shiftGlideSegments, withGlidePreview, type GlideSegment } from '../../core/music/phrase-glides';
+import type { ScoreGlideReference } from '../score/score-glide-lane.component';
 import { sectionDurationBeats } from '../../core/music/section-context';
 import { sectionHarmonyDisplay } from '../../core/music/harmony-display';
 import { MAX_VOLUME_PERCENT, mixEnabled, validVolumePercent } from '../../core/audio/mix-values';
@@ -490,10 +491,9 @@ export class WorkspaceCanvasComponent {
     const bounds = this.editor()?.editBounds() ?? { startBeat: 0, endBeat: this.editPhraseLength() };
     return { startBeat: this.editStartBeat() + bounds.startBeat, endBeat: this.editStartBeat() + bounds.endBeat };
   });
-  private readonly phrasePlaybackEffect = effect(() => {
-    this.projects.projectWithoutVolumeChanges();
+  private readonly phrasePreview = computed(() => {
     const editor = this.editing() ? this.editor() : undefined;
-    const preview = editor?.draftReady() ? {
+    return editor?.draftReady() ? {
       ...this.scoreEditBounds(),
       trackIds: editor.editedTrackIds(),
       notes: editor.notes().map(note => ({ ...note, startBeat: note.startBeat + this.editStartBeat() })),
@@ -501,6 +501,10 @@ export class WorkspaceCanvasComponent {
         segments: shiftGlideSegments(change.segments, this.editStartBeat()),
       })),
     } : null;
+  });
+  private readonly phrasePlaybackEffect = effect(() => {
+    this.projects.projectWithoutVolumeChanges();
+    const preview = this.phrasePreview();
     untracked(() => this.playback.setPhrasePreview(this.project(), preview));
   });
   readonly scoreTimelineBounds = computed(() => {
@@ -520,6 +524,38 @@ export class WorkspaceCanvasComponent {
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
   readonly selectedSectionBeats = computed(() => { const section = this.selectedSection(); return section ? sectionDurationBeats(this.project(), section) : 0; });
   readonly timeline = computed(() => resolveProjectTimeline(this.phraseProject()));
+  readonly glideReference = computed<ScoreGlideReference | null>(() => {
+    const editor = this.editor();
+    const lane = editor?.glideLane(), owner = editor?.glideTrack();
+    if (!this.editing() || !lane || !owner) return null;
+    const project = this.projects.projectWithoutVolumeChanges();
+    const timeline = resolveProjectTimeline(project);
+    const tracks = project.tracks.filter(track => track.midiChannel === owner.midiChannel);
+    const byTrack = withGlidePreview(timeline.glidesByTrack, this.phrasePreview());
+    const origin = this.editStartBeat();
+    const relative = (segments: readonly GlideSegment[]) => shiftGlideSegments(segments, -origin);
+    const sources = tracks.flatMap(track => {
+      const segments = Object.hasOwn(byTrack, track.id) ? byTrack[track.id][lane] : [];
+      return segments.length ? [{ label: track.name, segments: relative(segments) }] : [];
+    }).reverse();
+    const ghosts = tracks.flatMap(track => {
+      if (track.id !== owner.id) {
+        const segments = Object.hasOwn(byTrack, track.id) ? byTrack[track.id][lane] : [];
+        return segments.length ? [{ label: track.name, segments: relative(segments) }] : [];
+      }
+      const bounds = this.scoreEditBounds();
+      return timeline.sections.flatMap((section, index) => {
+        const item = project.arrangement[index];
+        const curves = resolveSectionTrackGlides(project, track, item, section)[lane];
+        const segments = section.sectionId === this.editSectionId()
+          ? [...clipGlideSegments(curves, -Infinity, bounds.startBeat), ...clipGlideSegments(curves, bounds.endBeat, Infinity)] : curves;
+        return segments.length ? [{ label: `${track.name} · ${this.sectionLabel(item.type)} · bar ${section.startMeasure}`,
+          segments: relative(segments) }] : [];
+      });
+    });
+    const effective = relative(glidesByChannel(tracks, byTrack).get(owner.midiChannel)?.[lane] ?? []);
+    return ghosts.length ? { ghosts, sources, effective } : null;
+  });
   readonly totalBeats = computed(() => this.timeline().arrangementBounds.endBeat);
   readonly loopRange = computed(() => this.playback.loopEnabled()
     ? this.workspaceUi.sectionRange() ?? this.timeline().soundingBounds : null);

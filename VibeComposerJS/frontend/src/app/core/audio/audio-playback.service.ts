@@ -14,8 +14,7 @@ import type { InstrumentEngine, InstrumentVoice, InstrumentEngineKind } from './
 import { createInstrumentEngine } from './create-instrument-engine';
 import { InstrumentSettingsService } from './instrument-settings.service';
 import { beatToSeconds, secondsToBeat, type TempoPoint } from '../music/section-context';
-import { EMPTY_PHRASE_GLIDES, GLIDE_LANES, glidesByChannel, replaceGlideSegments,
-  type GlideLane, type GlideSegment, type PhraseGlides, type TrackGlides } from '../music/phrase-glides';
+import { GLIDE_LANES, glidesByChannel, withGlidePreview, type GlideReplacement, type PhraseGlides } from '../music/phrase-glides';
 import { midiGlideEvents } from '../music/midi-glides';
 import { createChannelGlideAudio, disposeChannelGlideAudio, scheduleGlideParam, type ChannelGlideAudio } from './channel-glide-audio';
 
@@ -30,11 +29,10 @@ interface PartBus {
 export interface RecordingBackingContext { readonly project: CompositionProject; readonly startBeat: number; readonly captureBeat?: () => number; readonly trackIds: readonly string[]; }
 export interface RecordingBackingSession { readonly ready: Promise<void>; beat(): number; active(): boolean; stop(): void; }
 export interface PlaybackRange { readonly startBeat: number; readonly endBeat: number; }
-export interface PlaybackPhrasePreview extends PlaybackRange {
+export interface PlaybackPhrasePreview extends PlaybackRange, GlideReplacement {
   readonly trackIds: readonly string[];
   /** Absolute song beats and sounding pitches, matching the editor canvas. */
   readonly notes: readonly (PhraseNote & { readonly trackId: string })[];
-  readonly glides?: readonly { readonly trackId: string; readonly lane: GlideLane; readonly segments: readonly GlideSegment[] }[];
 }
 
 const SCHEDULER_INTERVAL_MS = 25;
@@ -621,7 +619,7 @@ export class AudioPlaybackService {
     if (this.phrasePreview) {
       const notesByTrack: Record<string, ScheduledNote[]> = Object.fromEntries(project.tracks.map(track => [track.id, []]));
       for (const note of notes) notesByTrack[note.trackId].push(note);
-      timeline = withTimelineNotes(base, notesByTrack, this.previewGlides(base.glidesByTrack));
+      timeline = withTimelineNotes(base, notesByTrack, withGlidePreview(base.glidesByTrack, this.phrasePreview));
     }
     this.scheduledTimeline.set(timeline);
     const bounds = timeline.soundingBounds;
@@ -645,18 +643,7 @@ export class AudioPlaybackService {
 
   private resolveChannelGlides(project: CompositionProject): ReadonlyMap<number, PhraseGlides> {
     const tracks = project.tracks.filter(track => !this.recordingBacking?.excluded.has(track.id));
-    return glidesByChannel(tracks, this.previewGlides(resolveProjectTimeline(project).glidesByTrack));
-  }
-
-  private previewGlides(committed: TrackGlides): TrackGlides {
-    const preview = this.phrasePreview;
-    if (!preview?.glides?.length) return committed;
-    const byTrack = { ...committed };
-    for (const { trackId, lane, segments } of preview.glides) {
-      const current = Object.hasOwn(byTrack, trackId) ? byTrack[trackId] : EMPTY_PHRASE_GLIDES;
-      byTrack[trackId] = { ...current, [lane]: replaceGlideSegments(current[lane], preview.startBeat, preview.endBeat, segments) };
-    }
-    return byTrack;
+    return glidesByChannel(tracks, withGlidePreview(resolveProjectTimeline(project).glidesByTrack, this.phrasePreview));
   }
 
   private signature(project: CompositionProject, notes: readonly ScheduledNote[], glides: ReadonlyMap<number, PhraseGlides>): string {

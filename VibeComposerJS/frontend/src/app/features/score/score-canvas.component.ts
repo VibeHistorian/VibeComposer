@@ -21,7 +21,7 @@ import { snapMidiToScale, type PhraseDragMode } from '../../core/music/phrase-ed
 import type { ArrangedPart } from '../../core/music/part-role';
 import type { PhraseNote } from '../../core/music/phrase-note';
 import type { GlideLane, GlideSegment } from '../../core/music/phrase-glides';
-import { ScoreGlideLaneComponent } from './score-glide-lane.component';
+import { ScoreGlideLaneComponent, type ScoreGlideReference } from './score-glide-lane.component';
 import {
   canvasPoint, clampViewport, contentHeight, harmonicNotePitchBounds, laneHeight, maxVerticalScale, overviewPitchRange, pitchAt,
   scoreBeat, scoreHeight, scoreX, sectionViewport, VELOCITY_HEIGHT,
@@ -133,6 +133,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly velocityVisible = input(false);
   readonly glideLane = input<GlideLane | null>(null);
   readonly glideSegments = input<readonly GlideSegment[]>([]);
+  readonly glideReference = input<ScoreGlideReference | null>(null);
   readonly glideOrigin = input(0);
   readonly glideDisabled = input(false);
   readonly glideStroke = output<readonly GlideSegment[]>();

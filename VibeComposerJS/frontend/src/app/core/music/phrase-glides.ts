@@ -131,6 +131,22 @@ export function glideSpans(segments: readonly GlideSegment[], start: number, end
 
 export type TrackGlides = Readonly<Record<string, PhraseGlides>>;
 
+export interface GlideReplacement {
+  readonly startBeat: number;
+  readonly endBeat: number;
+  readonly glides?: readonly { readonly trackId: string; readonly lane: GlideLane; readonly segments: readonly GlideSegment[] }[];
+}
+
+export function withGlidePreview(committed: TrackGlides, preview: GlideReplacement | null): TrackGlides {
+  if (!preview?.glides?.length) return committed;
+  const byTrack = { ...committed };
+  for (const { trackId, lane, segments } of preview.glides) {
+    const current = Object.hasOwn(byTrack, trackId) ? byTrack[trackId] : EMPTY_PHRASE_GLIDES;
+    byTrack[trackId] = { ...current, [lane]: replaceGlideSegments(current[lane], preview.startBeat, preview.endBeat, segments) };
+  }
+  return byTrack;
+}
+
 /** Tracks retain ownership. On a shared MIDI channel the last overlapping track in project order supplies the value. */
 export function glidesByChannel(tracks: readonly { id: string; midiChannel: number }[],
   byTrack: TrackGlides): ReadonlyMap<number, PhraseGlides> {

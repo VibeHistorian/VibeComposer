@@ -318,7 +318,7 @@
                   [canRemoveTrack]="project().tracks.length > 1" (noteRemoveRequested)="removeScoreTrack($event)"
                   [hiddenTrackIds]="editing() ? editingHiddenTracks : hiddenTracks()" [editable]="editing()" [editBounds]="editing() ? scoreEditBounds() : null" [velocityVisible]="editing()"
                   [glideLane]="editor()?.glideLane() ?? null" [glideSegments]="editor()?.laneSegments() ?? []" [glideOrigin]="editStartBeat()"
-                  [glideDisabled]="!editor()?.canDrawGlides()" (glideStroke)="editor()?.drawGlide($event)"
+                  [glideReference]="glideReference()" [glideDisabled]="!editor()?.canDrawGlides()" (glideStroke)="editor()?.drawGlide($event)"
                   (noteSelected)="canvasNoteSelected($event)" (noteTrackSelected)="selectNoteTrack($event)" (noteChanged)="canvasNoteChanged($event)"
                   [selectedNoteIds]="editor()?.canvasSelectedNoteIds() ?? []" [snapBeats]="editor()?.snapBeats() ?? 0.25" [placementDuration]="editor()?.placementDuration ?? 0.5"
                   [snapToScale]="editor()?.snapToScale() ?? true" [scalePitchClasses]="editor()?.scalePitchClasses() ?? []"
@@ -342,6 +342,11 @@
               <button type="button" class="vc-button" [disabled]="!edit.canDrawGlides() || !edit.laneSegments().length"
                 (click)="edit.clearGlideLane()">Clear lane</button>
               <span class="score-lane-hint">MIDI ch. {{ edit.glideTrack()?.midiChannel }} · Drag to draw</span>
+              @if (glideReference()) {
+                <span class="score-lane-hint glide-legend">
+                  <span class="glide-legend-ghost">Other phrases</span><span class="glide-legend-output">Channel output</span>
+                </span>
+              }
             }
           </div>
         }
