@@ -33,7 +33,7 @@ export class Sf2InstrumentEngine implements InstrumentEngine {
     return result;
   }
   schedule(destination: AudioNode, program: number, percussion: boolean, midi: number,
-    velocity: number, start: number, duration: number): InstrumentVoice[] {
+    velocity: number, start: number, duration: number, pitchBend?: AudioNode): InstrumentVoice[] {
     if (this.disposed || !this.bank) throw new Error('Soundfont engine is not ready.');
     if (velocity <= 0) return [];
     // This bank supplies only the Standard kit. Percussion program changes use that kit.
@@ -63,7 +63,7 @@ export class Sf2InstrumentEngine implements InstrumentEngine {
     const id = ++this.nextId;
     const pending = sampler.ready.then(() => {
       if (cancelled || this.disposed) { finish(); return; }
-      stopNote = sampler.start({ note: midi, velocity, time: start, duration, stopId: id,
+      stopNote = sampler.start({ note: midi, velocity, time: start, duration, stopId: id, pitchBend,
         onEnded: () => { if (--remaining === 0) finish(); } });
       if (stopAt !== undefined) stopNote(stopAt);
     }).catch(error => { this.failure = error; finish(); });

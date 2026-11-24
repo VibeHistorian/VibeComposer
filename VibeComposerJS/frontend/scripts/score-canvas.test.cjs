@@ -184,7 +184,8 @@ function fixture(reactivity) {
   const helperSource = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/phrase-edit.ts'), 'utf8'),
     { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
   new Function('module', 'exports', helperSource)(helperModule, helperModule.exports);
-  new Function('require', 'module', 'exports', compiled)(name => name.startsWith('./score-') ? scoreHelper(name.slice(2))
+  new Function('require', 'module', 'exports', compiled)(name => name === './score-glide-lane.component' ? {}
+    : name.startsWith('./score-') ? scoreHelper(name.slice(2))
     : name.includes('musical-time') ? loadHelper(path.resolve(__dirname, '../src/app/core/ui/musical-time.ts'))
     : name.includes('track-color') ? loadHelper(path.resolve(__dirname, '../src/app/core/ui/track-color.ts'))
     : name.includes('phrase-edit') ? helperModule.exports

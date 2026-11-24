@@ -3,6 +3,8 @@ import { type ArrangementSection, type SectionType, SECTION_TYPES } from './arra
 import type { CompositionTrack } from './track.model';
 import type { PartSettingsPatch } from '../music/part-settings.model';
 import type { PhraseNote } from '../music/phrase-note';
+import type { PhraseGlideEdit } from '../music/phrase-glides';
+import { decodePhraseGlideEdits } from './project-glide-decoder';
 import { DEFAULT_SECTION_TYPE_CHANCES } from './section-type-chances';
 import type { SectionTypeChanceSettings } from './section-type-chances';
 import { generateTrackPresence, legacyTrackPresence } from '../music/arrangement-generator';
@@ -88,6 +90,17 @@ export function decodeArrangement(value: unknown, tracks: readonly CompositionTr
         trackPhrases[trackId] = notes.map(note => ({ ...note }));
       }
     }
+    let trackGlides: Record<string, readonly PhraseGlideEdit[]> | undefined;
+    if (section.trackGlides !== undefined) {
+      if (!section.trackGlides || typeof section.trackGlides !== 'object' || Array.isArray(section.trackGlides)) return undefined;
+      const entries: [string, PhraseGlideEdit[]][] = [];
+      for (const [id, raw] of Object.entries(section.trackGlides)) {
+        const edits = decodePhraseGlideEdits(raw);
+        if (!trackIds.has(id) || !edits) return undefined;
+        entries.push([id, edits]);
+      }
+      trackGlides = Object.fromEntries(entries);
+    }
     const effectiveSection = { rolePartOverrides, trackPartOverrides } as ArrangementSection;
     if (tracks.some((track) => !validVelocityRange(resolvePartTrack(track, effectiveSection).generatorSettings, track.role))) return undefined;
     ids.add(section.id);
@@ -127,6 +140,7 @@ export function decodeArrangement(value: unknown, tracks: readonly CompositionTr
       rolePartOverrides: rolePartOverrides as NonNullable<ArrangementSection['rolePartOverrides']>,
       trackPartOverrides,
       ...(section.trackPhrases !== undefined ? { trackPhrases } : {}),
+      ...(trackGlides !== undefined ? { trackGlides } : {}),
       ...(section.generatedTrackIds !== undefined ? { generatedTrackIds: [...section.generatedTrackIds] } : {}),
     });
   }

@@ -19,6 +19,10 @@
 
 /* Condensed pitch and drum labels */
 .score-gutter { position: relative; grid-column: 1; grid-row: 1; overflow: hidden; border-right: 1px solid var(--border-default); background: var(--surface-low); }
+.glide-scale { position: absolute; z-index: 3; inset: auto 0 0; box-sizing: border-box;
+  display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end;
+  padding: 1px 7px; border-top: 1px solid var(--border-default);
+  background: var(--surface-low); color: var(--text-secondary); font: 9px/1 var(--font-mono); }
 .pitch-key { position: absolute; left: 0; right: 0; overflow: hidden; box-sizing: border-box; color: var(--text-secondary); font: 9px var(--font-mono); padding-left: 4px; }
 .pitch-key.black-key { right: 18px; background: var(--surface-score); }
 .pitch-key.out-of-scale { background: var(--score-out-of-scale); }

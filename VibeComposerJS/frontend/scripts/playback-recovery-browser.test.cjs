@@ -43,6 +43,17 @@ test('realtime audio survives delays and fractional loops without hidden playhea
             sectionChordDurations: () => [(window.testDurationBeats ?? 16) / 4],
             sectionDurationBeats: () => window.testDurationBeats ?? 16 },
         };
+        const glideModules = [
+          ['../music/phrase-glides', ${JSON.stringify(compile('../music/phrase-glides.ts'))}],
+          ['../music/midi-glides', ${JSON.stringify(compile('../music/midi-glides.ts'))}],
+          ['./channel-glide-audio', ${JSON.stringify(compile('channel-glide-audio.ts'))}],
+        ];
+        for (const [id, code] of glideModules) {
+          const module = { exports: {} };
+          new Function('require', 'module', 'exports', code)(
+            name => dependencies[name === './phrase-glides' ? '../music/phrase-glides' : name], module, module.exports);
+          dependencies[id] = module.exports;
+        }
         const timelineModule = { exports: {} };
         new Function('require', 'module', 'exports', ${JSON.stringify(compile('../music/project-timeline.ts'))})(
           name => dependencies['../music/' + name.slice(2)], timelineModule, timelineModule.exports);

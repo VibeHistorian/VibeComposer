@@ -30,15 +30,16 @@ function fixture({ loop = false } = {}) {
   });
   const sources = [];
   const node = () => ({ gain: parameter(), pan: parameter(), frequency: parameter(),
-    connect() {}, disconnect() {},
+    connect(destination) { this.connectedTo = destination; }, disconnect() {},
     start(time) { this.startTime = time; }, stop(time) { this.stopTime = time; },
   });
   const context = { currentTime: 0, state: 'running', destination: {},
     createGain: node, createStereoPanner: node, createWaveShaper: node,
+    createConstantSource: () => ({ ...node(), offset: parameter() }),
     createOscillator() { const source = node(); sources.push(source); return source; },
   };
   const instruments = { kind: signal('synth'), normalization: signal(false), calibrationStatus: signal(''), selectedBank: () => undefined };
-  const midi = { selectedOutput: signal(null), drumMapping: signal('general-midi'), schedule() {}, configure() {}, updateVolume() {}, silence() {} };
+  const midi = { selectedOutput: signal(null), drumMapping: signal('general-midi'), schedule() {}, scheduleGlide() {}, configure() {}, updateVolume() {}, silence() {} };
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type,
     signal, effect, untracked, inject: (token) => token.name === 'InstrumentSettingsService' ? instruments : midi, computed: (read) => read, ChangeDetectionStrategy: { OnPush: 0 } };
   const load = (file, dependencies) => {
@@ -59,6 +60,9 @@ function fixture({ loop = false } = {}) {
     '../music/arrangement-generator': require('./music-loader.cjs').loadMusic('arrangement-generator.ts'),
     '../project/project-drum-kit': require('./music-loader.cjs').loadMusic('../project/project-drum-kit.ts'),
     '../music/phrase-inputs': require('./music-loader.cjs').loadMusic('phrase-inputs.ts'),
+    '../music/phrase-glides': require('./music-loader.cjs').loadMusic('phrase-glides.ts'),
+    '../music/midi-glides': require('./music-loader.cjs').loadMusic('midi-glides.ts'),
+    './channel-glide-audio': require('./music-loader.cjs').loadMusic('../audio/channel-glide-audio.ts'),
     '../music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
     '../music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
@@ -74,11 +78,12 @@ function fixture({ loop = false } = {}) {
   if (!loop) playback.toggleLoop();
   playback.context = context;
   playback.engineKind = 'synth';
-  playback.synth = { schedule(destination, program, percussion, midi, velocity, start, duration) {
+  playback.synth = { schedule(destination, program, percussion, midi, velocity, start, duration, pitchBend) {
     const source = context.createOscillator();
     source.program = program;
     source.percussion = percussion;
     source.destination = destination;
+    source.pitchBend = pitchBend;
     source.frequency.value = 440 * 2 ** ((midi - 69) / 12);
     source.start(start);
     source.stop(start + duration + 0.02);
@@ -92,6 +97,33 @@ function fixture({ loop = false } = {}) {
     ], mix: { program: 32, volumePercent: 80, panPercent: 0, muted: false, solo: false } }] };
   return { playback, context, sources, project, angular, load, midi, instruments, timelineModule };
 }
+
+test('shared channel glides reach sustained voices, restart at the seek value and wrap in a partial loop', async () => {
+  const { playback, context, sources, project } = fixture({ loop: true });
+  const bend = { lane: 'pitch', startBeat: 0, endBeat: 8,
+    segments: [{ startBeat: 1, endBeat: 5, startValue: -2, endValue: 2 }] };
+  const expression = { lane: 'volume', startBeat: 0, endBeat: 8,
+    segments: [{ startBeat: 1, endBeat: 5, startValue: .2, endValue: 1 }] };
+  project.tracks[0] = { ...project.tracks[0], midiChannel: 3, phraseGlides: [bend, expression] };
+  project.arrangement[0].trackPresence.bass = true;
+  project.tracks.push({ ...project.tracks[0], id: 'shared', phraseGlides: undefined,
+    notes: [{ id: 'other', midi: 55, startBeat: 0, durationBeats: 8, velocity: 100 }] });
+  playback.setLoopRange({ startBeat: 0, endBeat: 3 });
+  await playback.start(project, 2);
+  const routes = playback.glideAudio.get(3);
+  const first = routes.pitch.offset.events[0], gain = routes.volume.gain.events[0];
+  assert.equal(first.value, -100, 'seek starts halfway from -2 to center');
+  assert.ok(Math.abs(gain.value - .4) < 1e-9);
+  assert.equal(sources.length, 2, 'both sustained notes resume after the seek');
+  assert.ok(sources.every(source => source.pitchBend === routes.pitch));
+  assert.ok([...playback.buses.values()].every(bus => bus.pan.connectedTo === routes.volume));
+  for (const time of [.15, .3, .45]) { context.currentTime = time; playback.tick(); }
+  assert.ok(routes.pitch.offset.events.some(({ time, value }) => Math.abs(time - .5) < 1e-8 && value === 0),
+    'the loop begins at neutral again');
+  assert.ok(routes.volume.gain.events.some(({ time, value }) => Math.abs(time - .5) < 1e-8 && value === 1));
+  playback.pause();
+  assert.ok(playback.glideAudio.size === 0);
+});
 
 test('routing from MIDI to the app prepares an unused engine and keeps the musical position', async () => {
   const { playback, context, project, midi } = fixture();

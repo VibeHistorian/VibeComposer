@@ -18,6 +18,7 @@ import { isScaleMode } from '../../core/music/scales';
 import { NgTemplateOutlet } from '@angular/common';
 import { SectionContextEditorComponent } from '../arrangement/section-context-editor.component';
 import { resolveProjectTimeline } from '../../core/music/project-timeline';
+import { shiftGlideSegments } from '../../core/music/phrase-glides';
 import { sectionDurationBeats } from '../../core/music/section-context';
 import { sectionHarmonyDisplay } from '../../core/music/harmony-display';
 import { MAX_VOLUME_PERCENT, mixEnabled, validVolumePercent } from '../../core/audio/mix-values';
@@ -496,6 +497,9 @@ export class WorkspaceCanvasComponent {
       ...this.scoreEditBounds(),
       trackIds: editor.editedTrackIds(),
       notes: editor.notes().map(note => ({ ...note, startBeat: note.startBeat + this.editStartBeat() })),
+      glides: editor.changedGlides().map(change => ({ ...change,
+        segments: shiftGlideSegments(change.segments, this.editStartBeat()),
+      })),
     } : null;
     untracked(() => this.playback.setPhrasePreview(this.project(), preview));
   });

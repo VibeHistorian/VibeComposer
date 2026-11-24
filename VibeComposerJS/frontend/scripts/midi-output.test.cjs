@@ -19,6 +19,7 @@ function fixture(request, preferences = { drumMapping: () => 'auto' }) {
   const module = { exports: {} };
   new Function('require', 'module', 'exports', 'navigator', compiled)(name => name.includes('drum-instruments')
     ? require('./music-loader.cjs').loadMusic('drum-instruments.ts')
+    : name === '../music/midi-glides' ? require('./music-loader.cjs').loadMusic('midi-glides.ts')
     : name === './mix-values' ? require('./music-loader.cjs').loadMusic('../audio/mix-values.ts') : angular, module, module.exports,
     request ? { requestMIDIAccess: request } : {});
   return new module.exports.MidiOutputService();
@@ -45,6 +46,52 @@ test('expanded drum identities use project slots for both MIDI messages and foll
   assert.equal(service.drumLabel(49, slots), 'Crash cymbal · 49');
   assert.deepEqual(slots, { 49: 37, 64: 50 });
   service.ngOnDestroy();
+});
+
+test('channel glides send pitch bend and expression, then reset the touched channel on stop', async () => {
+  const output = port('glides');
+  const service = fixture(async () => ({ outputs: new Map([[output.id, output]]), addEventListener() {}, removeEventListener() {} }));
+  await service.refresh(); await service.select(output.id);
+  service.scheduleGlide(3, 'pitch', -4096, 10);
+  service.scheduleGlide(3, 'pitch', -4096, 20);
+  service.scheduleGlide(3, 'volume', 64, 20);
+  assert.deepEqual(output.messages.map(message => message.data), [
+    [0xb2, 101, 0], [0xb2, 100, 0], [0xb2, 6, 2], [0xb2, 38, 0], [0xb2, 101, 127], [0xb2, 100, 127],
+    [0xe2, 0, 32], [0xb2, 11, 64],
+  ]);
+  service.silence();
+  assert.deepEqual(output.messages.slice(-2).map(message => message.data), [[0xe2, 0, 64], [0xb2, 11, 127]]);
+  service.ngOnDestroy();
+});
+
+test('phrase export orders one set of shared channel controls before note-on and resets both lanes', () => {
+  const { parseMidi } = require('midi-file');
+  const { loadMusic } = require('./music-loader.cjs');
+  const { generatePhraseMidi } = loadMusic('midi-export.ts');
+  const { DEFAULT_PROJECT } = loadMusic('../project/project-defaults.ts');
+  const track = { ...DEFAULT_PROJECT.tracks.find(track => track.role === 'bass'), midiChannel: 3 };
+  const notes = [{ id: 'hold', midi: 48, startBeat: 0, durationBeats: 4, velocity: 100 }];
+  const glides = { pitch: [{ startBeat: 0, endBeat: 2, startValue: -2, endValue: 2 }],
+    volume: [{ startBeat: 0, endBeat: 2, startValue: 0, endValue: 1 }] };
+  const file = parseMidi(generatePhraseMidi('Glides', 120, [
+    { track, notes }, { track: { ...track, id: 'other' }, notes, glides },
+  ], 4, 'general-midi', 480));
+  assert.equal(file.tracks.length, 3);
+  const events = file.tracks[1];
+  const firstNote = events.findIndex(event => event.type === 'noteOn');
+  const firstPitch = events.findIndex(event => event.type === 'pitchBend');
+  const expressions = events.filter(event => event.type === 'controller' && event.controllerType === 11);
+  assert.ok(firstPitch < firstNote);
+  assert.deepEqual(events.filter(event => event.type === 'controller' && [101, 100, 6, 38].includes(event.controllerType))
+    .map(({ controllerType, value }) => [controllerType, value]), [[101, 0], [100, 0], [6, 2], [38, 0], [101, 127], [100, 127]]);
+  const bends = events.filter(event => event.type === 'pitchBend').map(event => event.value);
+  assert.equal(bends[0], -8192);
+  assert.ok(bends.some(value => value >= 4096));
+  assert.equal(bends.at(-1), 0);
+  assert.equal(expressions[0].value, 0);
+  assert.equal(expressions.at(-1).value, 127);
+  assert.ok(file.tracks[2].every(event => event.type !== 'pitchBend'));
+  assert.ok(file.tracks.slice(1).every(track => track.find(event => event.type === 'noteOn').velocity === 100));
 });
 
 test('permission is requested on demand without SysEx, ports update, selection opens and disconnect resets routing', async () => {

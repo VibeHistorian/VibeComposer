@@ -11,7 +11,7 @@ export interface InstrumentEngine {
   /** Await pending sample routing before starting an offline render. */
   flush(): Promise<void>;
   schedule(destination: AudioNode, program: number, percussion: boolean,
-    midi: number, velocity: number, start: number, duration: number): InstrumentVoice[];
+    midi: number, velocity: number, start: number, duration: number, pitchBend?: AudioNode): InstrumentVoice[];
   dispose(): void;
 }
 export type InstrumentEngineKind = 'synth' | 'chiptune' | `sf2:${number}`;

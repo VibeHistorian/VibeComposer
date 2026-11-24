@@ -14,6 +14,10 @@ import type { InstrumentEngine, InstrumentVoice, InstrumentEngineKind } from './
 import { createInstrumentEngine } from './create-instrument-engine';
 import { InstrumentSettingsService } from './instrument-settings.service';
 import { beatToSeconds, secondsToBeat, type TempoPoint } from '../music/section-context';
+import { EMPTY_PHRASE_GLIDES, GLIDE_LANES, glidesByChannel, replaceGlideSegments,
+  type GlideLane, type GlideSegment, type PhraseGlides, type TrackGlides } from '../music/phrase-glides';
+import { midiGlideEvents } from '../music/midi-glides';
+import { createChannelGlideAudio, disposeChannelGlideAudio, scheduleGlideParam, type ChannelGlideAudio } from './channel-glide-audio';
 
 type PlaybackState = 'stopped' | 'playing' | 'paused';
 interface ScheduledNote extends PhraseNote { readonly trackId: string; readonly role: ArrangedPart; }
@@ -30,6 +34,7 @@ export interface PlaybackPhrasePreview extends PlaybackRange {
   readonly trackIds: readonly string[];
   /** Absolute song beats and sounding pitches, matching the editor canvas. */
   readonly notes: readonly (PhraseNote & { readonly trackId: string })[];
+  readonly glides?: readonly { readonly trackId: string; readonly lane: GlideLane; readonly segments: readonly GlideSegment[] }[];
 }
 
 const SCHEDULER_INTERVAL_MS = 25;
@@ -94,6 +99,9 @@ export class AudioPlaybackService {
   private scheduleSignature = '';
   private readonly buses = new Map<string, PartBus>();
   private readonly programs = new Map<string, number>();
+  private channelGlides: ReadonlyMap<number, PhraseGlides> = new Map();
+  private glideAudio: ReadonlyMap<number, ChannelGlideAudio> = new Map();
+  private glidesScheduledTo?: number;
   private readonly activeSources = new Set<InstrumentVoice>();
   private scheduledNotes: { trackId: string; noteId: string; startTime: number; endTime: number }[] = [];
   private readonly foreground = () => {
@@ -280,6 +288,7 @@ export class AudioPlaybackService {
       this.pendingTrackVolumes = undefined;
       this.clearScheduler();
       this.stopSources();
+      this.channelGlides = this.resolveChannelGlides(project);
       this.prepareMix(project, context);
       this.scheduleAheadSeconds = SCHEDULE_AHEAD_SECONDS;
       this.lastDelayedTickTime = context.currentTime;
@@ -288,14 +297,13 @@ export class AudioPlaybackService {
       this.notes = this.createSchedule(project);
       this.setTimelineBounds(project, this.notes);
       this.scheduledProject = project;
-      this.scheduleSignature = this.signature(project, this.notes);
+      this.scheduleSignature = this.signature(project, this.notes, this.channelGlides);
       const safeStart = this.safeStartBeat((typeof startBeat === 'function' ? startBeat() : startBeat) ?? this.timelineStart());
       this.position.set(safeStart);
       this.originTime = context.currentTime - this.absoluteSeconds(safeStart);
       this.resetQueue(safeStart);
       this.playbackState.set('playing');
-      this.resumeSustainedNotes(safeStart);
-      this.scheduleAhead();
+      this.scheduleAhead(() => this.resumeSustainedNotes(safeStart));
       this.startScheduler();
     } catch (error: unknown) {
       if (request !== this.startRequest) return;
@@ -406,7 +414,8 @@ export class AudioPlaybackService {
     }
     // Build first so generation time does not leave a gap in the old audio.
     const notes = this.createSchedule(project);
-    const signature = this.signature(project, notes);
+    const glides = this.resolveChannelGlides(project);
+    const signature = this.signature(project, notes, glides);
     this.scheduledProject = project;
     this.updateMix(project);
     if (signature === this.scheduleSignature) return;
@@ -423,6 +432,7 @@ export class AudioPlaybackService {
     this.tempoMap = this.recordingBacking ? [{ beat: 0, bpm: project.tempoBpm, seconds: 0 }] : resolveProjectTimeline(project).tempoMap;
     this.duration.set(duration);
     this.notes = notes;
+    this.channelGlides = glides;
     this.scheduleSignature = signature;
     const start = this.timelineStart();
     this.restartAt(this.safeStartBeat(this.loopEnabled() ? start + (beat - start) % (duration - start) : beat));
@@ -557,12 +567,14 @@ export class AudioPlaybackService {
     this.midiDrumPan = drumChannelPan(project.tracks);
     const oldBuses = [...this.buses.values()];
     const oldMixBus = this.mixBus;
+    const oldGlideAudio = this.glideAudio;
     const disconnect = () => {
       for (const bus of oldBuses) {
         bus.pan.disconnect();
         bus.gain.disconnect();
       }
       oldMixBus?.disconnect();
+      disposeChannelGlideAudio(oldGlideAudio);
     };
     if (crossfade && oldMixBus) {
       oldMixBus.gain.cancelScheduledValues(context.currentTime);
@@ -584,6 +596,8 @@ export class AudioPlaybackService {
     this.mixBus.gain.value = crossfade ? 0 : 1;
     if (crossfade) this.mixBus.gain.linearRampToValueAtTime(1, context.currentTime + RELOAD_FADE_SECONDS);
     this.mixBus.connect(this.master);
+    const midiOutput = this.midi.selectedOutput();
+    this.glideAudio = midiOutput ? new Map() : createChannelGlideAudio(context, this.mixBus, this.channelGlides);
     const anySolo = project.tracks.some((track) => track.mix.solo);
 
     for (const track of project.tracks) {
@@ -595,7 +609,8 @@ export class AudioPlaybackService {
       const pan = context.createStereoPanner();
       pan.pan.value = settings.panPercent / 100;
       gain.connect(pan);
-      pan.connect(this.mixBus);
+      pan.connect(this.glideAudio.get(track.midiChannel)?.volume ?? this.mixBus);
+      if (midiOutput && audible && this.channelGlides.has(track.midiChannel)) this.midi.configure(this.midiTrack(track));
       this.buses.set(track.id, { gain, pan, track, audible });
     }
   }
@@ -606,7 +621,7 @@ export class AudioPlaybackService {
     if (this.phrasePreview) {
       const notesByTrack: Record<string, ScheduledNote[]> = Object.fromEntries(project.tracks.map(track => [track.id, []]));
       for (const note of notes) notesByTrack[note.trackId].push(note);
-      timeline = withTimelineNotes(base, notesByTrack);
+      timeline = withTimelineNotes(base, notesByTrack, this.previewGlides(base.glidesByTrack));
     }
     this.scheduledTimeline.set(timeline);
     const bounds = timeline.soundingBounds;
@@ -628,15 +643,32 @@ export class AudioPlaybackService {
       .sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi);
   }
 
-  private signature(project: CompositionProject, notes: readonly ScheduledNote[]): string {
+  private resolveChannelGlides(project: CompositionProject): ReadonlyMap<number, PhraseGlides> {
+    const tracks = project.tracks.filter(track => !this.recordingBacking?.excluded.has(track.id));
+    return glidesByChannel(tracks, this.previewGlides(resolveProjectTimeline(project).glidesByTrack));
+  }
+
+  private previewGlides(committed: TrackGlides): TrackGlides {
+    const preview = this.phrasePreview;
+    if (!preview?.glides?.length) return committed;
+    const byTrack = { ...committed };
+    for (const { trackId, lane, segments } of preview.glides) {
+      const current = Object.hasOwn(byTrack, trackId) ? byTrack[trackId] : EMPTY_PHRASE_GLIDES;
+      byTrack[trackId] = { ...current, [lane]: replaceGlideSegments(current[lane], preview.startBeat, preview.endBeat, segments) };
+    }
+    return byTrack;
+  }
+
+  private signature(project: CompositionProject, notes: readonly ScheduledNote[], glides: ReadonlyMap<number, PhraseGlides>): string {
     // Compare audible events, ignoring labels and note IDs; mix controls already update their buses.
     return JSON.stringify([
       project.tempoBpm,
       project.drumSlots,
       resolveProjectTimeline(project).tempoMap,
       resolveProjectTimeline(project).arrangementBounds.endBeat,
-      project.tracks.map((track) => [track.id, track.role, track.mix.program]),
+      project.tracks.map((track) => [track.id, track.role, track.mix.program, track.midiChannel]),
       notes.map((note) => [note.trackId, note.role, note.startBeat, note.durationBeats, note.midi, note.velocity]),
+      [...glides],
     ]);
   }
 
@@ -711,15 +743,17 @@ export class AudioPlaybackService {
     const beat = absoluteBeat - cycle * length;
     this.resetQueue(beat);
     this.cycle = cycle;
-    this.resumeSustainedNotes(beat, absoluteBeat, true);
-    this.scheduleAhead();
+    this.scheduleAhead(() => this.resumeSustainedNotes(beat, absoluteBeat, true));
   }
 
-  private scheduleAhead(): void {
+  private scheduleAhead(beforeNotes?: () => void): void {
     if (!this.context || !this.master || this.duration() <= 0) return;
     this.lastScheduleTime = this.context.currentTime;
     const currentBeat = this.currentAbsoluteBeat();
-    const horizonSeconds = this.absoluteSeconds(currentBeat) + this.scheduleAheadSeconds;
+    const currentSeconds = this.absoluteSeconds(currentBeat);
+    const horizonSeconds = currentSeconds + this.scheduleAheadSeconds;
+    this.scheduleGlides(currentSeconds, horizonSeconds);
+    beforeNotes?.();
     const { startBeat, endBeat } = this.loopBounds();
     const cycleBeats = endBeat - startBeat;
     let scheduled = 0;
@@ -738,6 +772,46 @@ export class AudioPlaybackService {
       this.scheduleNote(this.loopEnabled()
         ? { ...note, durationBeats: Math.min(note.durationBeats, endBeat - note.startBeat) } : note, absoluteStartBeat);
     }
+  }
+
+  /** Schedule controllers independently of note onsets, including silent gaps and loop wraps. */
+  private scheduleGlides(current: number, horizon: number): void {
+    if (!this.context || !this.channelGlides.size) return;
+    const tempo = this.tempoMap;
+    const secondsAt = (beat: number) => beatToSeconds(tempo, beat);
+    const beatAt = (seconds: number) => secondsToBeat(tempo, seconds);
+    const { startBeat, endBeat } = this.loopBounds();
+    const loopStart = secondsAt(startBeat), loopEnd = secondsAt(endBeat), length = loopEnd - loopStart;
+    const loop = this.loopEnabled() && length > 0;
+    if (!loop) horizon = Math.min(horizon, secondsAt(this.duration()));
+    const midiOutput = this.midi.selectedOutput();
+    const midiOffset = performance.now() - this.context.currentTime * 1000;
+    let from = Math.max(current, this.glidesScheduledTo ?? current);
+    let cycle = loop ? Math.max(0, Math.floor((from - loopStart) / length)) : 0;
+    while (from < horizon) {
+      const shift = loop ? cycle++ * length : 0;
+      const to = loop ? Math.min(horizon, loopEnd + shift) : horizon;
+      if (to <= from) continue;
+      const start = loop ? Math.max(startBeat, beatAt(from - shift)) : beatAt(from);
+      const end = loop ? Math.min(endBeat, beatAt(to - shift)) : beatAt(to);
+      const offset = this.originTime + shift;
+      for (const [channel, curves] of this.channelGlides) {
+        const audio = this.glideAudio.get(channel);
+        for (const lane of GLIDE_LANES) {
+          const segments = curves[lane];
+          if (!segments.length) continue;
+          if (midiOutput) {
+            midiGlideEvents(lane, segments, start, end, secondsAt, beatAt, (time, value) =>
+              this.midi.scheduleGlide(channel, lane, value, midiOffset + (time + offset) * 1000));
+          } else {
+            const param = lane === 'pitch' ? audio?.pitch?.offset : audio?.volume?.gain;
+            if (param) scheduleGlideParam(param, lane, segments, start, end, tempo, offset);
+          }
+        }
+      }
+      from = to;
+    }
+    this.glidesScheduledTo = from;
   }
 
   private scheduleNote(note: ScheduledNote, absoluteBeat: number): void {
@@ -760,7 +834,7 @@ export class AudioPlaybackService {
     }
     if (!this.synth) return;
     const voices = this.synth.schedule(bus.gain, this.programs.get(note.trackId) ?? 0,
-      note.role === 'drums', note.midi, note.velocity, startTime, duration);
+      note.role === 'drums', note.midi, note.velocity, startTime, duration, this.glideAudio.get(bus.track.midiChannel)?.pitch);
     if (voices.length) this.scheduledNotes.push({ trackId: note.trackId, noteId: note.id, startTime, endTime: startTime + duration });
     for (const voice of voices) {
       this.activeSources.add(voice);
@@ -866,8 +940,7 @@ export class AudioPlaybackService {
     if (this.recordingBacking) this.recordingBacking.offset = elapsed - (beat - this.recordingBacking.range.startBeat);
     this.position.set(beat);
     this.resetQueue(beat);
-    this.resumeSustainedNotes(beat);
-    this.scheduleAhead();
+    this.scheduleAhead(() => this.resumeSustainedNotes(beat));
   }
 
   private clearScheduler(): void {
@@ -886,12 +959,15 @@ export class AudioPlaybackService {
 
   private stopSources(stopTime?: number): void {
     this.scheduledNotes = [];
+    this.glidesScheduledTo = undefined;
     this.midi.silence();
     for (const source of this.activeSources) {
       try { source.stop(stopTime); } catch { /* It may have ended between scheduler ticks. */ }
     }
     if (stopTime === undefined) {
       this.activeSources.clear();
+      disposeChannelGlideAudio(this.glideAudio);
+      this.glideAudio = new Map();
     }
   }
 }

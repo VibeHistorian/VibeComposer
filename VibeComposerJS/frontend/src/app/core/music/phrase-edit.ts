@@ -1,4 +1,5 @@
 import type { PhraseNote } from './phrase-note';
+import type { TrackGlides } from './phrase-glides';
 
 export type PhraseDragMode = 'move' | 'start' | 'duration' | 'pitch' | 'velocity';
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
@@ -64,6 +65,7 @@ export interface PhraseEditSnapshot<T extends PhraseNote = PhraseNote> {
   readonly restore: boolean;
   readonly phraseTranspose?: number;
   readonly restoredTrackIds?: readonly string[];
+  readonly glides?: TrackGlides;
 }
 
 /** Draft history is independent of project history; a completed gesture records once. */
@@ -76,7 +78,8 @@ export class PhraseEditHistory<T extends PhraseNote = PhraseNote> {
   record(snapshot: PhraseEditSnapshot<T>): void {
     const current = this.entries[this.index];
     if (current && current.restore === snapshot.restore && (current.phraseTranspose ?? 0) === (snapshot.phraseTranspose ?? 0) && JSON.stringify(current.restoredTrackIds) === JSON.stringify(snapshot.restoredTrackIds)
-      && JSON.stringify(current.notes) === JSON.stringify(snapshot.notes)) return;
+      && JSON.stringify(current.notes) === JSON.stringify(snapshot.notes)
+      && JSON.stringify(current.glides) === JSON.stringify(snapshot.glides)) return;
     this.entries = this.entries.slice(0, this.index + 1);
     this.entries.push(this.copy(snapshot));
     this.index++;
@@ -85,6 +88,7 @@ export class PhraseEditHistory<T extends PhraseNote = PhraseNote> {
   redo(): PhraseEditSnapshot<T> | undefined { return this.canRedo ? this.copy(this.entries[++this.index]) : undefined; }
   private copy(snapshot: PhraseEditSnapshot<T>): PhraseEditSnapshot<T> {
     return { phraseTranspose: snapshot.phraseTranspose, notes: snapshot.notes.map(n => ({ ...n })), selection: [...snapshot.selection], restore: snapshot.restore,
-      ...(snapshot.restoredTrackIds ? { restoredTrackIds: [...snapshot.restoredTrackIds] } : {}) };
+      ...(snapshot.restoredTrackIds ? { restoredTrackIds: [...snapshot.restoredTrackIds] } : {}),
+      ...(snapshot.glides ? { glides: snapshot.glides } : {}) };
   }
 }

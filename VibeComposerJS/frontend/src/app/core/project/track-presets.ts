@@ -102,6 +102,7 @@ function loadRolePreset(project: CompositionProject, role: ArrangedPart, sources
     trackPartOverrides: prune(section.trackPartOverrides),
     ...(section.variations ? { variations: pruneVariations(section.variations, removed) } : {}),
     ...(section.trackPhrases !== undefined ? { trackPhrases: prune(section.trackPhrases) } : {}),
+    ...(section.trackGlides !== undefined ? { trackGlides: prune(section.trackGlides) } : {}),
     ...(section.generatedTrackIds ? { generatedTrackIds: section.generatedTrackIds.filter(id => !removed.has(id)) } : {}),
   }));
   return fitVariationCapacity({ ...project, tracks, arrangement });

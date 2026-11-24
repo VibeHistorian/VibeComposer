@@ -16,7 +16,10 @@ import type { CompositionTrack } from '../../core/project/track.model';
 import type { CompositionProject } from '../../core/project/project.model';
 import type { PhraseNote } from '../../core/music/phrase-note';
 import { generateTrackPhrase, phraseForTrack, layOutTrackPhrase } from '../../core/music/phrase';
-import { hasManualPhrase } from '../../core/music/phrase-range-edit';
+import { hasManualPhrase, type PhraseRangeEdit } from '../../core/music/phrase-range-edit';
+import { applyPhraseGlideEdits, clipGlideSegments, EMPTY_PHRASE_GLIDES, GLIDE_LANES, glideNeutral, glidesEqual,
+  PITCH_GLIDE_SEMITONES, replaceGlideSegments, shiftGlideSegments, type GlideLane, type GlideSegment,
+  type TrackGlides } from '../../core/music/phrase-glides';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 import { PhraseEditHistory, phraseNotesEqual, snapMidiToScale, type PhraseEditSnapshot } from '../../core/music/phrase-edit';
 import { BASE_KEY, getDiatonicChords, getPitchClass } from '../../core/music/harmony';
@@ -223,7 +226,9 @@ export class EditWorkspaceComponent {
     const label = this.selectedPart() === 'drums' ? 'Drums' : this.selectedTrack().name;
     const name = `${exportFilename(context, this.preferences.exportNameFields())}_${safeExportName(label) || 'Phrase'}_phrase`;
     const notes = this.notes();
-    const tracks = this.editedTracks().map(track => ({ track, notes: notes.filter(note => note.trackId === track.id) }));
+    const tracks = this.editedTracks().map(track => ({ track,
+      notes: notes.filter(note => note.trackId === track.id), glides: this.draftGlides()[track.id],
+    }));
     return { name, bytes: new Uint8Array(generatePhraseMidi(name, context.tempoBpm, tracks, this.phraseBeats(), this.midi.drumMapping(), this.preferences.midiPpq(), resolvedDrumSlots(project, tracks.filter(({ track }) => track.role === 'drums').flatMap(({ notes }) => notes.map(note => note.midi))))) };
   }
 
@@ -414,7 +419,7 @@ export class EditWorkspaceComponent {
   });
   readonly hasChanges = computed(() => {
     this.historyRevision();
-    return this.changedTracks().length > 0;
+    return this.changedTracks().length > 0 || this.changedGlides().length > 0;
   });
   readonly changedTracks = computed(() => {
     this.historyRevision();
@@ -460,6 +465,74 @@ export class EditWorkspaceComponent {
   });
   readonly draftNotes = signal<PhraseDraftNote[]>([]);
   readonly draftReady = signal(false);
+  readonly laneOptions = [
+    { value: 'velocity', label: 'Note velocity' },
+    { value: 'pitch', label: 'Pitch glide' },
+    { value: 'volume', label: 'Volume glide' },
+  ] as const;
+  readonly lane = signal('velocity');
+  readonly glideLane = computed<GlideLane | null>(() => {
+    const lane = this.lane();
+    return lane === 'pitch' || lane === 'volume' ? lane : null;
+  });
+  readonly glideTrack = signal<CompositionTrack | null>(null);
+  readonly canDrawGlides = computed(() => this.draftReady() && !this.recorder()?.running());
+  readonly draftGlides = signal<TrackGlides>({});
+  private baselineGlides: TrackGlides = {};
+  readonly laneSegments = computed(() => {
+    const lane = this.glideLane(), track = this.glideTrack();
+    return lane && track ? this.draftGlides()[track.id]?.[lane] ?? [] : [];
+  });
+  readonly changedGlides = computed(() => {
+    const track = this.glideTrack();
+    if (!track) return [];
+    const draft = this.draftGlides()[track.id];
+    if (!draft) return [];
+    const baseline = this.baselineGlides[track.id] ?? EMPTY_PHRASE_GLIDES;
+    return GLIDE_LANES.flatMap(lane => glidesEqual(baseline[lane], draft[lane]) ? []
+      : [{ trackId: track.id, lane, segments: draft[lane] }]);
+  });
+
+  setLane(value: string): void {
+    if (this.laneOptions.some(option => option.value === value)) this.lane.set(value);
+  }
+
+  drawGlide(segments: readonly GlideSegment[]): void {
+    const lane = this.glideLane();
+    if (!lane || !segments.length) return;
+    const neutral = glideNeutral(lane);
+    const replacement = segments.filter(segment => segment.startValue !== neutral || segment.endValue !== neutral);
+    this.setGlideSegments(lane, replaceGlideSegments(this.laneSegments(), segments[0].startBeat, segments.at(-1)!.endBeat, replacement));
+  }
+
+  addGlideRamp(up: boolean): void {
+    const lane = this.glideLane();
+    if (!lane) return;
+    const selected = this.notes().filter(note => this.selectedNoteIds().includes(note.id));
+    const bounds = this.editBounds();
+    const startBeat = selected.length ? Math.max(bounds.startBeat, Math.min(...selected.map(note => note.startBeat))) : 0;
+    const endBeat = selected.length ? Math.min(bounds.endBeat, Math.max(...selected.map(note => note.startBeat + note.durationBeats))) : this.phraseBeats();
+    if (endBeat <= startBeat) return;
+    this.drawGlide([{ startBeat, endBeat,
+      startValue: lane === 'pitch' || up ? 0 : 1,
+      endValue: lane === 'pitch' ? (up ? PITCH_GLIDE_SEMITONES : -PITCH_GLIDE_SEMITONES) : up ? 1 : 0,
+    }]);
+  }
+
+  clearGlideLane(): void {
+    const lane = this.glideLane();
+    if (lane) this.setGlideSegments(lane, []);
+  }
+
+  private setGlideSegments(lane: GlideLane, segments: readonly GlideSegment[]): void {
+    const track = this.glideTrack();
+    if (!track || !this.canDrawGlides()) return;
+    const current = this.draftGlides()[track.id];
+    if (glidesEqual(current[lane], segments)) return;
+    this.draftGlides.update(draft => ({ ...draft, [track.id]: { ...current, [lane]: segments } }));
+    this.record();
+  }
+
   // Draft history stores pitches before section and project transpose.
   private readonly localTranspose = computed(() => sectionTranspose(this.section(), this.selectedPart()));
   private readonly globalTranspose = computed(() => this.selectedPart() === 'drums' ? 0 : this.project().transposeSemitones ?? 0);
@@ -483,7 +556,7 @@ export class EditWorkspaceComponent {
   ngOnInit(): void {
     this.loadTrackDraft(this.selectedTrack());
     if (this.initialNoteId()) this.selectNote(this.initialNoteId()!);
-    this.history.reset({ notes: this.draftNotes(), selection: this.selectedNoteIds(), restore: false });
+    this.history.reset({ notes: this.draftNotes(), glides: this.draftGlides(), selection: this.selectedNoteIds(), restore: false });
     this.draftReady.set(true);
   }
 
@@ -512,6 +585,7 @@ export class EditWorkspaceComponent {
   private loadHistory(snapshot?: PhraseEditSnapshot<PhraseDraftNote>): void {
     if (!snapshot) return;
     this.draftNotes.set([...snapshot.notes]);
+    this.draftGlides.set(snapshot.glides ?? this.baselineGlides);
     this.selectNotes(snapshot.selection);
     this.restoredTrackIds.set(snapshot.restoredTrackIds ?? []);
     this.freeTranspose.set(snapshot.phraseTranspose ?? 0);
@@ -520,7 +594,7 @@ export class EditWorkspaceComponent {
   }
   private record(): void {
     if (this.recordingActive) return;
-    this.history.record({ notes: this.draftNotes(), selection: this.selectedNoteIds(), restore: this.restoredTrackIds().length > 0, restoredTrackIds: this.restoredTrackIds(), phraseTranspose: this.freeTranspose() });
+    this.history.record({ notes: this.draftNotes(), glides: this.draftGlides(), selection: this.selectedNoteIds(), restore: this.restoredTrackIds().length > 0, restoredTrackIds: this.restoredTrackIds(), phraseTranspose: this.freeTranspose() });
     this.historyRevision.update(value => value + 1);
     this.applyError.set(null);
   }
@@ -658,11 +732,20 @@ export class EditWorkspaceComponent {
   }
   applyLocalChanges(): void { if (this.sectionId()) this.commitChanges('local'); }
   applyChanges(): void { this.commitChanges('global'); }
+  private phraseRange(): Omit<PhraseRangeEdit, 'notes'> {
+    const startBeat = this.section() ? this.phraseStartBeat() : 0;
+    const bounds = this.editBounds();
+    return { startBeat, endBeat: startBeat + this.phraseBeats(),
+      ...(bounds.startBeat < 0 ? { pickupBeats: -bounds.startBeat } : {}),
+      ...(bounds.endBeat > this.phraseBeats() ? { tailBeats: bounds.endBeat - this.phraseBeats() } : {}),
+    };
+  }
   private commitChanges(destination: 'local' | 'global' | 'smart'): void {
     this.recorder()?.stop();
     if (!this.hasChanges()) return;
     const section = this.project().arrangement.find(section => section.id === this.sectionId());
     const sourceProject = withoutManualAdjustments(this.project());
+    const range = this.phraseRange();
     const edits = this.changedTracks().map(track => {
       const local = destination === 'local' || destination === 'smart' && section?.trackPhrases?.[track.id] !== undefined;
       const mode = !local && track.role !== 'drums' ? section?.manualPhraseMode : undefined;
@@ -681,15 +764,20 @@ export class EditWorkspaceComponent {
           durationBeats: note.durationBeats, velocity: note.velocity };
       });
       return { trackId: track.id, ...(local && section ? { sectionId: section.id } : {}), notes,
-        ...(!local ? { range: {
-          startBeat: section ? this.phraseStartBeat() : 0,
-          endBeat: (section ? this.phraseStartBeat() : 0) + this.phraseBeats(),
-          ...(this.editBounds().startBeat < 0 ? { pickupBeats: -this.editBounds().startBeat } : {}),
-          ...(this.editBounds().endBeat > this.phraseBeats() ? { tailBeats: this.editBounds().endBeat - this.phraseBeats() } : {}),
-        } } : {}) };
+        ...(!local ? { range } : {}) };
     });
-    if (!this.projects.applyPhraseEdits(edits)) {
-      this.applyError.set(`Cannot save these phrases. Check the ${MAX_DRUM_SOUNDS} distinct drum sounds per project, note timings, and the 2048-note limit per track.`);
+    const glides = this.changedGlides().map(({ trackId, lane, segments }) => {
+      const scoped = Object.hasOwn(section?.trackGlides ?? {}, trackId) ? section!.trackGlides![trackId] : undefined;
+      const local = destination === 'local' || destination === 'smart' && (section?.trackPhrases?.[trackId] !== undefined
+        || scoped?.some(edit => edit.lane === lane));
+      return { trackId, sectionId: local ? section?.id : undefined, edit: { ...range, lane,
+        segments: clipGlideSegments(shiftGlideSegments(segments, range.startBeat),
+          range.startBeat - (range.pickupBeats ?? 0), range.endBeat + (range.tailBeats ?? 0)),
+      } };
+    });
+    if (!this.projects.applyPhraseEdits(edits, glides)) {
+      this.applyError.set(glides.length ? 'Cannot save these phrase edits. Check note timings and simplify the glide curves.'
+        : `Cannot save these phrases. Check the ${MAX_DRUM_SOUNDS} distinct drum sounds per project, note timings, and the 2048-note limit per track.`);
       return;
     }
     this.applied.emit();
@@ -743,9 +831,27 @@ export class EditWorkspaceComponent {
       });
     });
     this.draftNotes.set([...this.baselineNotes]);
+    this.loadGlideDraft(tracks, section);
     this.restoredTrackIds.set([]);
     this.selectedNoteIds.set([]);
-    this.history.reset({ notes: this.draftNotes(), selection: [], restore: false });
+    this.history.reset({ notes: this.draftNotes(), glides: this.draftGlides(), selection: [], restore: false });
     this.historyRevision.update(value => value + 1);
+  }
+
+  private loadGlideDraft(tracks: readonly CompositionTrack[], section: ReturnType<typeof this.section>): void {
+    const start = this.phraseStartBeat(), bounds = this.editBounds();
+    const end = section ? sectionDurationBeats(this.project(), section) : this.phraseBeats();
+    const phraseBounds = section ? sectionPhraseBounds(this.project(), section) : bounds;
+    const local = section?.trackGlides ?? {};
+    this.baselineGlides = Object.fromEntries(tracks.map(track => {
+      const glides = applyPhraseGlideEdits(track.phraseGlides, Object.hasOwn(local, track.id) ? local[track.id] : undefined, end, phraseBounds);
+      const inDraft = (lane: GlideLane) => shiftGlideSegments(clipGlideSegments(glides[lane], start + bounds.startBeat, start + bounds.endBeat), -start);
+      return [track.id, { pitch: inDraft('pitch'), volume: inDraft('volume') }];
+    }));
+    // The grouped drum editor keeps one channel lane when a different drum note is selected.
+    const owner = tracks[0].role === 'drums' ? this.project().tracks.find(track => track.role === 'drums'
+      && (track.phraseGlides?.length || Object.hasOwn(local, track.id))) ?? this.project().tracks.find(track => track.role === 'drums') : tracks[0];
+    this.glideTrack.set(owner ?? null);
+    this.draftGlides.set(this.baselineGlides);
   }
 }

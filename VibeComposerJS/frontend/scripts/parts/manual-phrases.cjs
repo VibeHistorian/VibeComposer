@@ -28,6 +28,52 @@ test('workspace publishes sounding draft notes at song positions and clears them
   assert.equal(service.exportProjectJson(), before);
 });
 
+test('glide-only Apply preserves generated notes, and a local clear masks the inherited curve in one section', () => {
+  const { service, ui, load, midi } = fixture();
+  const id = 'track-bass-1';
+  service.updateSection(0, { measures: 1 });
+  service.updateSection(1, { measures: 1 });
+  service.setSectionTrackPresence(0, id, true);
+  service.setSectionTrackPresence(1, id, true);
+  const { resolveProjectTimeline } = load('core/music/project-timeline.ts');
+  const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
+  const open = index => {
+    ui.selectedTrackId.set(id);
+    const editor = new Editor();
+    editor.sectionId.set(service.project().arrangement[index].id);
+    editor.ngOnInit(); editor.setLane('pitch');
+    return editor;
+  };
+  const editor = open(0);
+  const before = service.exportProjectJson();
+  const originalNotes = resolveProjectTimeline(service.project()).notesByTrack[id];
+  editor.drawGlide([{ startBeat: 1, endBeat: 3, startValue: 0, endValue: 2 }]);
+  assert.ok(editor.hasChanges());
+  assert.equal(editor.changedTracks().length, 0);
+  editor.undo(); assert.equal(editor.hasChanges(), false);
+  editor.redo(); assert.equal(editor.hasChanges(), true);
+  assert.equal(service.exportProjectJson(), before);
+  editor.applyChanges(); assert.equal(editor.applyError(), null);
+  const global = service.exportProjectJson();
+  const timeline = () => resolveProjectTimeline(service.project());
+  assert.deepEqual(timeline().notesByTrack[id], originalNotes);
+  const globalStarts = timeline().glidesByTrack[id].pitch.map(segment => segment.startBeat);
+  assert.deepEqual(globalStarts.slice(0, 2), [1, 5]);
+  const local = open(0);
+  local.clearGlideLane();
+  local.applyLocalChanges(); assert.equal(local.applyError(), null);
+  assert.deepEqual(timeline().glidesByTrack[id].pitch.map(segment => segment.startBeat), globalStarts.slice(1));
+  const saved = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), global);
+  service.redo(); assert.equal(service.exportProjectJson(), saved);
+  assert.ok(service.importProjectJson(saved));
+  const project = service.project();
+  const padded = { ...project, midiPadding: { melody: project.tracks.filter(track => track.role === 'melody').length + 1 } };
+  assert.ok(new Midi(midi.generateCompositionMidi(padded)).tracks.find(track => track.name === 'B1').pitchBends.length,
+    'pitch automation uses the instrument track even when an earlier padding track shares its channel');
+  assert.deepEqual(timeline().notesByTrack[id], originalNotes);
+});
+
 test('global range Apply from a short section preserves each longer section continuation through history, reload and MIDI', () => {
   const { service, ui, phrase, midi, load } = fixture();
   const id = 'track-bass-1';

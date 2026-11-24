@@ -1,5 +1,6 @@
 import type { PhraseNote } from '../music/phrase-note';
 import type { PhraseRangeEdit } from '../music/phrase-range-edit';
+import type { PhraseGlideEdit } from '../music/phrase-glides';
 import type { InstrumentPool } from '../music/generation-policy.model';
 import type { MelodySettings, BassSettings, ChordSettings, ArpeggioSettings, DrumSettings } from '../music/part-settings.model';
 
@@ -25,6 +26,7 @@ interface TrackBase {
   readonly editedPhrase?: readonly PhraseNote[];
   /** Track-owned replacements layered over each section's resolved phrase. */
   readonly phraseEdits?: readonly PhraseRangeEdit[];
+  readonly phraseGlides?: readonly PhraseGlideEdit[];
   /** Parameters preserved during reroll and Compose. */
   readonly parameterLocks?: readonly string[];
   readonly rerollLocked?: boolean;

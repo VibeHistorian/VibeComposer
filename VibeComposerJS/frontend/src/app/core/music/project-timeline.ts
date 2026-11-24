@@ -1,7 +1,9 @@
 import type { CompositionProject } from '../project/project.model';
 import { resolvedTrackPhrase, type PhraseSource } from './phrase';
 import type { PhraseNote } from './phrase-note';
-import { noteTimelineBounds } from './phrase-bounds';
+import { noteTimelineBounds, sectionPhraseBounds } from './phrase-bounds';
+import { applyPhraseGlideEdits, EMPTY_PHRASE_GLIDES, overlayGlideSegments, shiftGlideSegments, type TrackGlides, type PhraseGlides } from './phrase-glides';
+import { shouldGenerateTrackInSection } from './arrangement-generator';
 import { samePhraseInputs } from './phrase-inputs';
 import { beatToSeconds, secondsToBeat, projectTempoMap, sectionChordDurations, type TempoPoint } from './section-context';
 
@@ -21,6 +23,7 @@ export interface ResolvedProjectTimeline {
   readonly arrangementBounds: TimelineBounds;
   readonly soundingBounds: TimelineBounds;
   readonly notesByTrack: TimelineNotes;
+  readonly glidesByTrack: TrackGlides;
   readonly tempoMap: readonly TempoPoint[];
   readonly durationSeconds: number;
   beatToSeconds(beat: number): number;
@@ -57,29 +60,55 @@ export function resolveProjectTimeline(project: CompositionProject): ResolvedPro
   const tempoMap = Object.freeze(projectTempoMap(project).map(point => Object.freeze(point)));
   const notesByTrack = Object.freeze(Object.fromEntries(project.tracks.map(track => [track.id,
     resolvedTrackPhrase(project, track)])));
+  const glidesByTrack = Object.freeze(Object.fromEntries(project.tracks.flatMap(track => {
+    let glides = EMPTY_PHRASE_GLIDES;
+    for (const [index, section] of project.arrangement.entries()) {
+      const local = Object.hasOwn(section.trackGlides ?? {}, track.id) ? section.trackGlides![track.id] : undefined;
+      if (!track.phraseGlides?.length && !local?.length) continue;
+      const present = track.role === 'drums'
+        ? project.tracks.some(candidate => candidate.role === 'drums' && shouldGenerateTrackInSection(section, candidate))
+        : shouldGenerateTrackInSection(section, track);
+      if (!present) continue;
+      const { startBeat, endBeat } = sections[index];
+      const phrase = applyPhraseGlideEdits(track.phraseGlides, local, endBeat - startBeat, sectionPhraseBounds(project, section));
+      glides = {
+        pitch: overlayGlideSegments(glides.pitch, shiftGlideSegments(phrase.pitch, startBeat)),
+        volume: overlayGlideSegments(glides.volume, shiftGlideSegments(phrase.volume, startBeat)),
+      };
+    }
+    return glides.pitch.length || glides.volume.length ? [[track.id, freezeGlides(glides)] as const] : [];
+  })));
   const timeline = createTimeline(Object.freeze(sections), Object.freeze({ startBeat: 0, endBeat: beat }),
-    tempoMap, notesByTrack);
+    tempoMap, notesByTrack, glidesByTrack);
   timelines.set(project, timeline);
   previous = { project, timeline };
   return timeline;
 }
 
 /** Draft playback derives its own bounds without changing the committed timeline or cache. */
-export function withTimelineNotes(timeline: ResolvedProjectTimeline, notes: TimelineNotes): ResolvedProjectTimeline {
+export function withTimelineNotes(timeline: ResolvedProjectTimeline, notes: TimelineNotes,
+  glides: TrackGlides = timeline.glidesByTrack): ResolvedProjectTimeline {
   const notesByTrack = Object.freeze(Object.fromEntries(Object.entries(notes).map(([id, values]) =>
     [id, Object.freeze(values.map(note => Object.freeze({ ...note })))])));
-  return createTimeline(timeline.sections, timeline.arrangementBounds, timeline.tempoMap, notesByTrack);
+  const glidesByTrack = glides === timeline.glidesByTrack ? glides
+    : Object.freeze(Object.fromEntries(Object.entries(glides).map(([id, curves]) => [id, freezeGlides(curves)])));
+  return createTimeline(timeline.sections, timeline.arrangementBounds, timeline.tempoMap, notesByTrack, glidesByTrack);
+}
+
+function freezeGlides(glides: PhraseGlides): PhraseGlides {
+  return Object.freeze({ pitch: Object.freeze(glides.pitch.map(segment => Object.freeze({ ...segment }))),
+    volume: Object.freeze(glides.volume.map(segment => Object.freeze({ ...segment }))) });
 }
 
 function createTimeline(sections: readonly TimelineSection[], arrangementBounds: TimelineBounds,
-  tempoMap: readonly TempoPoint[], notesByTrack: TimelineNotes): ResolvedProjectTimeline {
+  tempoMap: readonly TempoPoint[], notesByTrack: TimelineNotes, glidesByTrack: TrackGlides): ResolvedProjectTimeline {
   // Accumulate track bounds without allocating a flattened copy of every note.
   const soundingBounds = Object.freeze(Object.values(notesByTrack).reduce((bounds, notes) => {
     const track = noteTimelineBounds(notes, arrangementBounds.endBeat);
     return { startBeat: Math.min(bounds.startBeat, track.startBeat), endBeat: Math.max(bounds.endBeat, track.endBeat) };
   }, { ...arrangementBounds }));
   const startSeconds = beatToSeconds(tempoMap, soundingBounds.startBeat);
-  return Object.freeze({ sections, arrangementBounds, soundingBounds, notesByTrack, tempoMap,
+  return Object.freeze({ sections, arrangementBounds, soundingBounds, notesByTrack, glidesByTrack, tempoMap,
     durationSeconds: beatToSeconds(tempoMap, soundingBounds.endBeat) - startSeconds,
     beatToSeconds: (beat: number) => beatToSeconds(tempoMap, beat),
     secondsToBeat: (seconds: number) => secondsToBeat(tempoMap, seconds),

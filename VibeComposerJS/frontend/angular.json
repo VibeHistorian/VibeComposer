@@ -23,7 +23,7 @@
               }
             ],
             "styles": ["src/styles.css"],
-            "allowedCommonJsDependencies": ["@tonejs/midi", "webaudio-tinysynth"]
+            "allowedCommonJsDependencies": ["@tonejs/midi", "midi-file", "webaudio-tinysynth"]
           },
           "configurations": {
             "production": {

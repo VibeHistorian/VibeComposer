@@ -67,6 +67,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
     const boundsCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/phrase-bounds.ts'), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
     const timelineCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/project-timeline.ts'), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
     const rangeCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/phrase-range-edit.ts'), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
+    const glideCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/phrase-glides.ts'), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
     const contextCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/section-context.ts'), 'utf8'), {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
     }).outputText;
@@ -101,6 +102,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
     const dependencies = { '@angular/core': angular,
       '../../shared/context-menu.component': { ContextMenuComponent: class ContextMenuComponent {} },
       '../../core/music/phrase-range-edit': (() => { const module={exports:{}}; const exports=module.exports; ${rangeCode}; return module.exports; })(),
+      '../../core/music/phrase-glides': (() => { const module={exports:{}}; const exports=module.exports; ${glideCode}; return module.exports; })(),
       '../../core/music/phrase-inputs': (() => { const module={exports:{}}; const exports=module.exports; ${phraseInputsCode}; return module.exports; })(),
       '../../core/ui/modifier-keys.service': { ModifierKeysService: class ModifierKeysService {} },
       '../../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },

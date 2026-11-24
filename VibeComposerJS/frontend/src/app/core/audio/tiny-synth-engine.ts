@@ -83,7 +83,7 @@ export class TinySynthEngine implements InstrumentEngine {
   }
 
   schedule(destination: AudioNode, program: number, percussion: boolean,
-    midi: number, velocity: number, start: number, duration: number): InstrumentVoice[] {
+    midi: number, velocity: number, start: number, duration: number, pitchBend?: AudioNode): InstrumentVoice[] {
     if (velocity <= 0) return [];
     // TinySynth has no shaker (82); approximate it with maracas (70) for internal audio only.
     if (percussion && midi === 82) midi = 70;
@@ -152,7 +152,11 @@ export class TinySynthEngine implements InstrumentEngine {
     tail.gain.setValueAtTime(1, Math.max(start, stopTime - 0.005));
     tail.gain.linearRampToValueAtTime(0, stopTime);
     let remaining = voice.o.length;
-    for (const source of voice.o) source.stop(stopTime);
+    for (const source of voice.o) {
+      const detune = (source as OscillatorNode | AudioBufferSourceNode).detune;
+      if (detune) pitchBend?.connect(detune);
+      source.stop(stopTime);
+    }
     return voice.o.map((source, index) => ({ stopTime,
       stop: (time?: number) => source.stop(time),
       onEnded: (callback: () => void) => { source.onended = callback; },
@@ -163,6 +167,7 @@ export class TinySynthEngine implements InstrumentEngine {
         const detune = (source as OscillatorNode | AudioBufferSourceNode).detune;
         if (detune) {
           try { this.synth.chmod[0].disconnect(detune); } catch { /* Already detached. */ }
+          try { pitchBend?.disconnect(detune); } catch { /* Channel was already disconnected. */ }
         }
       },
     }));

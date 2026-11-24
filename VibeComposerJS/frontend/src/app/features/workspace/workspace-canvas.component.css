@@ -241,10 +241,13 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 
 /* Score display and contextual edit actions */
 .score-display-header { min-height: 28px; padding-top: 6px; flex-shrink: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.score-lane-controls { display: flex; align-items: center; flex-wrap: wrap; flex-shrink: 0; gap: 4px; padding-top: 6px; }
+.score-lane-controls vc-select { min-width: 112px; }
+.score-lane-hint { padding-inline: 4px; color: var(--text-secondary); font: 10px var(--font-mono); }
 .score-display-header .export-phrase { margin-right: auto; }
-.score-display-header :is(button, vc-select) { padding: 3px 7px; font: 10px var(--font-ui); }
+.score-display-header :is(button, vc-select), .score-lane-controls :is(button, vc-select) { padding: 3px 7px; font: 10px var(--font-ui); }
 .score-display-header button { display: flex; align-items: center; gap: 5px; }
-.score-display-header button:disabled { background: var(--surface-input); color: var(--text-disabled); border-color: var(--border-subtle); cursor: default; }
+.score-display-header button:disabled, .score-lane-controls button:disabled { background: var(--surface-input); color: var(--text-disabled); border-color: var(--border-subtle); cursor: default; }
 .score-display-header button.active { background: var(--surface-accent); color: var(--text-primary); border-color: var(--accent-primary); }
 .score-display-header button:focus-visible { outline: 2px solid var(--border-focus); }
 /* Quick settings customization focus */

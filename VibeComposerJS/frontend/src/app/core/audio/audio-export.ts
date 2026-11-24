@@ -5,6 +5,8 @@ import { mixEnabled } from './mix-values';
 import { createInstrumentEngine } from './create-instrument-engine';
 import type { Sf2Bank } from './sf2-resolver';
 import type { InstrumentEngineKind } from './instrument-engine';
+import { glidesByChannel } from '../music/phrase-glides';
+import { createChannelGlideAudio, disposeChannelGlideAudio, scheduleGlideParam } from './channel-glide-audio';
 
 const SAMPLE_RATE = 48000;
 // Pinned GM timbres include 11s releases, multiplied by TinySynth's 3.5 ratio.
@@ -44,7 +46,17 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
   master.gain.value = 0.8 * (project.masterVolumePercent ?? 100) / 100;
   master.connect(protectedAudioOutput(context));
   const nodes: AudioNode[] = [master];
+  const glides = glidesByChannel(project.tracks, timeline.glidesByTrack);
+  const channels = createChannelGlideAudio(context, master, glides);
   try {
+    for (const [channel, { pitch, volume }] of channels) {
+      const curves = glides.get(channel)!;
+      if (pitch) scheduleGlideParam(pitch.offset, 'pitch', curves.pitch, startBeat, endBeat, timeline.tempoMap, offsetSeconds);
+      if (volume) scheduleGlideParam(volume.gain, 'volume', curves.volume, startBeat, endBeat, timeline.tempoMap, offsetSeconds);
+      // Release tails beyond the song end play at the channel's default settings.
+      pitch?.offset.setValueAtTime(0, songSeconds);
+      volume?.gain.setValueAtTime(1, songSeconds);
+    }
     let scheduled = 0;
     let lastStop = songSeconds;
     for (const { track, notes } of tracks) {
@@ -52,13 +64,14 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
       gain.gain.value = track.mix.volumePercent / 100;
       pan.pan.value = track.mix.panPercent / 100;
       gain.connect(pan);
-      pan.connect(master);
+      const channel = channels.get(track.midiChannel);
+      pan.connect(channel?.volume ?? master);
       nodes.push(gain, pan);
       for (const note of notes) {
         const start = timeline.beatToSeconds(note.startBeat) + offsetSeconds;
         const duration = Math.max(0.035, timeline.beatToSeconds(note.startBeat + note.durationBeats) + offsetSeconds - start);
         for (const voice of synth.schedule(gain, track.mix.program, track.role === 'drums',
-          note.midi, note.velocity, start, duration)) {
+          note.midi, note.velocity, start, duration, channel?.pitch)) {
           voice.onEnded(() => voice.dispose());
           lastStop = Math.max(lastStop, voice.stopTime);
         }
@@ -87,6 +100,7 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
     return trimmed;
   } finally {
     synth.dispose();
+    disposeChannelGlideAudio(channels);
     for (const node of nodes) node.disconnect();
   }
 }

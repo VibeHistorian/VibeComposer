@@ -12,6 +12,7 @@ import { decodeHarmonySettings } from '../music/harmony-voicing';
 import { DEFAULT_TRACK_POLICIES, decodeTrackGenerationPolicy, validTrackGenerationMetadata } from '../music/track-generation';
 import { DEFAULT_INSTRUMENT_POLICIES, decodeInstrumentPolicy, validInstrumentPolicies } from '../music/instrument-generation';
 import { decodeTracks, decodeEditedPhrases, isPhrase } from './project-track-decoder';
+import { decodePhraseGlideEdits } from './project-glide-decoder';
 import { decodeArrangement, MAX_ARRANGEMENT_SECTIONS, MAX_ARRANGEMENT_MEASURES } from './project-arrangement-decoder';
 import type { SectionTypeChanceSettings } from './section-type-chances';
 import { decodeStoredArrangement, decodeStoredTrackPresence } from './project-storage';
@@ -83,7 +84,7 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
     if (Array.isArray(tracks)) tracks.forEach((raw, index) => {
       const path = `project.tracks[${index}]`;
       const keys = ['id', 'role', 'name', 'midiChannel', 'mix', 'generatorSettings'];
-      const track = object(raw, path, keys, [...keys, 'editedPhrase', 'phraseEdits', 'rerollLocked', 'parameterLocks', 'instrumentLocked', 'instrumentPool', 'orderOffset', 'drumPan']);
+      const track = object(raw, path, keys, [...keys, 'editedPhrase', 'phraseEdits', 'phraseGlides', 'rerollLocked', 'parameterLocks', 'instrumentLocked', 'instrumentPool', 'orderOffset', 'drumPan']);
       if (!track) return;
       mix(track['mix'], `${path}.mix`);
       const role = track['role'] as ArrangedPart;
@@ -95,6 +96,8 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
       check(`${path}.name`, typeof track['name'] === 'string' && !!track['name'].trim() && track['name'].length <= 48, 'expected a nonempty name of at most 48 characters');
       check(`${path}.midiChannel`, Number.isInteger(track['midiChannel']) && (track['midiChannel'] as number) >= 1 && (track['midiChannel'] as number) <= 16 && (role !== 'drums' || track['midiChannel'] === 10), 'expected channel 1–16 (10 for drums)');
       if (ARRANGED_PARTS.includes(role)) settings(role, track['generatorSettings'], `${path}.generatorSettings`);
+      if (track['phraseGlides'] !== undefined) check(`${path}.phraseGlides`, !!decodePhraseGlideEdits(track['phraseGlides']),
+        'invalid controller lane, beat range, or glide segments');
       check(path, !!decodeTracks([raw]), 'invalid track identity, name, channel, locks, instrument pool, settings, or phrase');
       check(`${path}.id`, !tracks.slice(0, index).some(previous => previous?.id === track['id']), 'duplicate track ID');
     });
@@ -131,13 +134,19 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
     if (Array.isArray(arrangement)) arrangement.forEach((raw, index) => {
       const path = `project.arrangement[${index}]`;
       const section = object(raw, path, ['id', 'type', 'measures'], ['id', 'type', 'measures', 'context', 'manualPhraseMode', 'customChords', 'customDurations', 'chordDegrees',
-        'useMelodyHarmony', 'variations', 'trackPresence', 'rolePartOverrides', 'trackPartOverrides', 'trackPhrases', 'generatedTrackIds', 'parts', 'partChances', 'trackParts', 'trackPartChances']);
+        'useMelodyHarmony', 'variations', 'trackPresence', 'rolePartOverrides', 'trackPartOverrides', 'trackPhrases', 'trackGlides', 'generatedTrackIds', 'parts', 'partChances', 'trackParts', 'trackPartChances']);
       if (!section) return;
       check(`${path}.type`, SECTION_TYPES.includes(section['type'] as SectionType), `expected one of ${SECTION_TYPES.join(', ')}`);
       check(`${path}.measures`, Number.isInteger(section['measures']) && (section['measures'] as number) >= 1 && (section['measures'] as number) <= 32, 'expected an integer from 1 to 32');
       for (const [role, patch] of Object.entries(section['rolePartOverrides'] ?? {})) if (ARRANGED_PARTS.includes(role as ArrangedPart)) settings(role as ArrangedPart, patch, `${path}.rolePartOverrides.${role}`, true);
       const decodedTracks = decodeTracks(tracks);
       if (decodedTracks) {
+        if (section['trackGlides'] !== undefined) {
+          const ids = decodedTracks.map(track => track.id);
+          const glides = object(section['trackGlides'], `${path}.trackGlides`, [], ids);
+          for (const [id, edits] of Object.entries(glides ?? {})) check(`${path}.trackGlides.${id}`, !!decodePhraseGlideEdits(edits),
+            'invalid controller lane, beat range, or glide segments');
+        }
         if (section['variations'] !== undefined) check(`${path}.variations`, validSectionVariations(section['variations'], decodedTracks),
           'expected an exact Java long seed, valid policy, and up to four unique role-compatible track choices');
         if (section['trackPresence'] !== undefined) check(`${path}.trackPresence`,

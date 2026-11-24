@@ -245,3 +245,68 @@ test('SF2 GM sampler resolves and renders all 128 programs and Standard drums of
     assert.equal(e.end, 0);
   } finally { await closeBrowser({ child, server, watchdog }); }
 });
+
+test('offline SF2 export bends and fades two sustained voices on the same MIDI channel', { skip: !browser }, async () => {
+  const esbuild = require(require.resolve('esbuild', { paths: [path.dirname(require.resolve('@angular/build/package.json'))] }));
+  const bundle = esbuild.buildSync({ stdin: {
+    contents: 'export { renderProjectAudio } from "./src/app/core/audio/audio-export"; export { DEFAULT_PROJECT } from "./src/app/core/project/project-defaults";',
+    resolveDir: path.join(__dirname, '..'), loader: 'ts',
+  }, bundle: true, write: false, format: 'iife', globalName: 'TestExport', platform: 'browser' }).outputFiles[0].text;
+  const render = async () => {
+    try {
+      const { DEFAULT_PROJECT, renderProjectAudio } = TestExport;
+      const rate = 48000, base = DEFAULT_PROJECT.tracks.find(track => track.role === 'bass');
+      const pcm = Float32Array.from({ length: 4 * rate }, (_, i) => .15 * Math.sin(2 * Math.PI * 440 * i / rate));
+      const regions = [{ sample: 'sine', sampleRate: rate, keyRange: [0, 127], velRange: [0, 127],
+        pitch: 69, ampAttack: .01, ampSustain: 1, ampRelease: .03 }];
+      const bank = { resolve: () => ({ program: 0, regions }), pcm: () => pcm,
+        toSmplr: () => ({ samples: { baseUrl: '', formats: [] }, groups: [{ regions }] }) };
+      const edit = (lane, startValue, endValue) => ({ lane, startBeat: 0, endBeat: 4,
+        segments: [{ startBeat: 1, endBeat: 3, startValue, endValue }] });
+      const track = (id, panPercent) => ({ ...base, id, mix: { ...base.mix, panPercent } });
+      const tracks = [
+        { ...track('high', -100), phraseGlides: [edit('pitch', 0, 2), edit('volume', .15, .8)] },
+        track('low', 100),
+      ];
+      const note = midi => [{ id: 'held', midi, startBeat: 0, durationBeats: 3.8, velocity: 100 }];
+      const project = { ...DEFAULT_PROJECT, tempoBpm: 120, tracks, arrangement: [{
+        id: 'glides', type: 'VERSE1', measures: 1, trackPresence: { high: true, low: true },
+        trackPhrases: { high: note(69), low: note(57) },
+      }] };
+      const audio = await renderProjectAudio(project, undefined, 'sf2:1', bank);
+      const evaluate = (channel, from, to) => {
+        const slice = audio.getChannelData(channel).subarray(Math.round(from * rate), Math.round(to * rate));
+        const crossings = [];
+        for (let i = 1; i < slice.length; i++) {
+          if (slice[i - 1] < 0 && slice[i] >= 0) crossings.push(i - slice[i] / (slice[i] - slice[i - 1]));
+        }
+        return { hz: rate * (crossings.length - 1) / (crossings.at(-1) - crossings[0]),
+          rms: Math.sqrt(slice.reduce((sum, value) => sum + value * value, 0) / slice.length) };
+      };
+      const data = [0, 1].map(channel => [[.25, .32], [.61, .69], [1.31, 1.39], [1.65, 1.74]]
+        .map(([from, to]) => evaluate(channel, from, to)));
+      await fetch('/result', { method: 'POST', body: JSON.stringify(data) });
+    } catch (error) {
+      await fetch('/result', { method: 'POST', body: JSON.stringify({ error: String(error.stack || error) }) });
+    }
+  };
+  let resolve, reject;
+  const result = new Promise((done, fail) => { resolve = done; reject = fail; });
+  result.catch(() => {});
+  const server = createBrowserServer({ html: `<!doctype html><script>${bundle}</script><script>(${render})();</script>`, resolve, reject });
+  await listen(server);
+  const child = launchBrowser(browser, ['--headless', '--disable-gpu', '--no-first-run', 'http://127.0.0.1:' + server.address().port]);
+  const watchdog = watchBrowser(child, reject, 25000);
+  try {
+    const data = await result;
+    assert.equal(data.error, undefined);
+    for (const [channel, [base, early, late, reset]] of data.entries()) {
+      assert.ok(Math.abs(base.hz - (channel ? 220 : 440)) < 1);
+      assert.ok(early.hz > base.hz * 1.01, 'pitch changes during the original held note');
+      assert.ok(late.hz > base.hz * 1.09, 'the bend approaches two semitones before resetting');
+      assert.ok(Math.abs(reset.hz - base.hz) < 1);
+      assert.ok(early.rms < base.rms * .4 && late.rms > early.rms * 2, 'expression fades both shared voices');
+      assert.ok(Math.abs(reset.rms / base.rms - 1) < .05);
+    }
+  } finally { await closeBrowser({ child, server, watchdog }); }
+});

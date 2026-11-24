@@ -1,4 +1,4 @@
-const { clearWorkspace, readSessionProject, observeSettings } = require('./support/workspace-browser.cjs');
+const { arrangementPoint, clearWorkspace, readSessionProject, observeSettings } = require('./support/workspace-browser.cjs');
 const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild, readBrowserDownload } = require('./support/browser-harness.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -184,9 +184,11 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       document.querySelector('[aria-label="Undo"]').click();
       await wait(() => JSON.stringify(read()) === beforeQuickPreset, 'undo quick factory preset');
       const overview = document.querySelector('vc-arrangement-overview canvas[tabindex]');
-      const cellBounds = overview.getBoundingClientRect();
+      overview.scrollIntoView({ block: 'nearest' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const cell = (${arrangementPoint})(overview, 'Select Bass settings in ' + read().arrangement[0].type.replaceAll('_', ' ') + ',');
       const roleCellClick = (type, shiftKey = false) => overview.dispatchEvent(new MouseEvent(type, {
-        bubbles: true, cancelable: true, button: 2, shiftKey, clientX: cellBounds.left + 30, clientY: cellBounds.top + 201,
+        bubbles: true, cancelable: true, button: 2, shiftKey, clientX: cell.x, clientY: cell.y,
       }));
       for (const [source, preset, noteVariation] of [
         ['User', 'Browser bass (1)', undefined],

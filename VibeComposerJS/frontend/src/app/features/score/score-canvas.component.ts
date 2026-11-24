@@ -20,6 +20,8 @@ import type { PhraseSource } from '../../core/music/phrase';
 import { snapMidiToScale, type PhraseDragMode } from '../../core/music/phrase-edit';
 import type { ArrangedPart } from '../../core/music/part-role';
 import type { PhraseNote } from '../../core/music/phrase-note';
+import type { GlideLane, GlideSegment } from '../../core/music/phrase-glides';
+import { ScoreGlideLaneComponent } from './score-glide-lane.component';
 import {
   canvasPoint, clampViewport, contentHeight, harmonicNotePitchBounds, laneHeight, maxVerticalScale, overviewPitchRange, pitchAt,
   scoreBeat, scoreHeight, scoreX, sectionViewport, VELOCITY_HEIGHT,
@@ -97,7 +99,7 @@ const COLORS: Readonly<Record<ArrangedPart, { note: string; velocity: string; gl
 
 @Component({
   selector: 'vc-score-canvas',
-  imports: [ContextMenuComponent],
+  imports: [ContextMenuComponent, ScoreGlideLaneComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './score-canvas.component.html',
   styleUrl: './score-canvas.component.css',
@@ -129,6 +131,26 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly editBounds = input<ScoreSectionFocus | null>(null);
   readonly editable = input(false);
   readonly velocityVisible = input(false);
+  readonly glideLane = input<GlideLane | null>(null);
+  readonly glideSegments = input<readonly GlideSegment[]>([]);
+  readonly glideOrigin = input(0);
+  readonly glideDisabled = input(false);
+  readonly glideStroke = output<readonly GlideSegment[]>();
+  readonly glideLaneHeight = VELOCITY_HEIGHT;
+  private readonly viewportTime = signal<ScoreTimeGeometry>({ width: 0, horizontalScale: 1, horizontalOffset: 0, totalBeats: 1 });
+  readonly glideTime = computed(() => {
+    const time = this.viewportTime();
+    return { ...time, startBeat: (time.startBeat ?? 0) - this.glideOrigin() };
+  });
+  readonly glideBounds = computed(() => {
+    const bounds = this.editBounds();
+    const origin = this.glideOrigin();
+    return bounds ? { startBeat: bounds.startBeat - origin, endBeat: bounds.endBeat - origin } : { startBeat: 0, endBeat: 0 };
+  }, { equal: (left, right) => left.startBeat === right.startBeat && left.endBeat === right.endBeat });
+  readonly glidePlayhead = computed(() => {
+    const geometry = this.glideTime();
+    return (geometry.startBeat ?? 0) + this.playheadPercent() / 100 * Math.max(1, geometry.totalBeats);
+  });
   readonly selectedNoteIds = input<readonly string[]>([]);
   readonly snapBeats = input(0.25);
   readonly placementDuration = input(0.5);
@@ -265,6 +287,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     }
     this.wasEditable = editable;
     this.velocityVisible();
+    this.glideLane();
     this.snapBeats();
     this.snapToScale();
     this.scalePitchClasses();
@@ -412,7 +435,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private readonly onCanvasWheel = (event: WheelEvent): void => {
+  readonly onCanvasWheel = (event: WheelEvent): void => {
     this.noteTooltip.set(null); this.timeTooltip.set(null);
     event.preventDefault();
     event.stopPropagation();
@@ -469,6 +492,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     }
     this.viewportChanged.emit({ scale: this.horizontalScale, offsetPercent: this.horizontalOffset * 100,
       width: this.width, laneHeight: this.laneHeight, verticalOffset: this.verticalOffset, scoreHeight: this.scoreHeight });
+    if (this.glideLane()) this.viewportTime.set(this.timeGeometry);
   }
 
   private get timeGeometry(): ScoreTimeGeometry {
@@ -726,7 +750,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     return hitAreaAt(canvasPoint(event.clientX, event.clientY, bounds, { width: this.width, height: this.height }), {
       width: this.width, height: this.height, scoreHeight: this.scoreHeight, harmonicHeight: this.harmonicHeight,
       drumHeight: this.drumHeight, trackCount: this.model?.tracks.length ?? 0,
-      editable: this.editable(), velocityVisible: this.velocityVisible(), selectedIds: this.selectedNoteIds(),
+      editable: this.editable(), velocityVisible: this.velocityVisible() && !this.glideLane(), selectedIds: this.selectedNoteIds(),
       areas: this.hitAreas, columnCount: this.hitColumnCount, buckets: this.hitAreaBuckets,
     });
   }
@@ -1356,7 +1380,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
             .stroke(outline);
         }
       }
-      if (this.velocityVisible()) {
+      if (this.velocityVisible() && !this.glideLane()) {
         const velocityColor = parsedNote;
         const velocityHeight = Math.max(2, note.velocity / 127 * VELOCITY_HEIGHT);
         graphics.rect(x, this.height - velocityHeight, 2, velocityHeight)
@@ -1461,7 +1485,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         const accentHeight = velocityPreview ? noteHeight * Math.max(0, Math.min(127, note.velocity)) / 127 : noteHeight;
         graphics.roundRect(this.scoreX(note.startBeat), centerY + noteHeight / 2 - accentHeight, Math.max(3, note.durationBeats / (this.model?.totalBeats ?? 1) * this.width * this.horizontalScale), accentHeight, Math.min(3, accentHeight / 2))
           .fill({ color: accent.toNumber(), alpha: 0.9 });
-        if (this.velocityVisible()) {
+        if (this.velocityVisible() && !this.glideLane()) {
           const velocityHeight = note.velocity / 127 * (VELOCITY_HEIGHT - 6);
           graphics.rect(this.scoreX(note.startBeat), this.height - velocityHeight, 3, velocityHeight)
             .fill({ color: accent.toNumber(), alpha: 0.9 });

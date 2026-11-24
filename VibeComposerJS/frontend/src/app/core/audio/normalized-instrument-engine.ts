@@ -15,9 +15,9 @@ export class NormalizedInstrumentEngine implements InstrumentEngine {
   prepare(): Promise<void> { return this.engine.prepare(); }
   flush(): Promise<void> { return this.engine.flush(); }
   schedule(destination: AudioNode, program: number, percussion: boolean, midi: number,
-    velocity: number, start: number, duration: number): InstrumentVoice[] {
+    velocity: number, start: number, duration: number, pitchBend?: AudioNode): InstrumentVoice[] {
     const correction = (percussion ? this.profile.drums[midi] : this.profile.melodic[program]) ?? 1;
-    if (velocity <= 0 || correction === 1) return this.engine.schedule(destination, program, percussion, midi, velocity, start, duration);
+    if (velocity <= 0 || correction === 1) return this.engine.schedule(destination, program, percussion, midi, velocity, start, duration, pitchBend);
     const key = percussion ? 128 + midi : program;
     let routes = this.routes.get(destination);
     if (!routes) { routes = new Map(); this.routes.set(destination, routes); }
@@ -37,7 +37,7 @@ export class NormalizedInstrumentEngine implements InstrumentEngine {
       if (!activeRoutes.size) this.routes.delete(destination);
     };
     let voices: InstrumentVoice[];
-    try { voices = this.engine.schedule(active.gain, program, percussion, midi, velocity, start, duration); }
+    try { voices = this.engine.schedule(active.gain, program, percussion, midi, velocity, start, duration, pitchBend); }
     catch (error) { releaseRoute(); throw error; }
     active.voices += voices.length;
     if (!voices.length) releaseRoute();

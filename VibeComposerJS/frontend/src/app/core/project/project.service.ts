@@ -16,6 +16,8 @@ import { assignTrackMidiChannel } from './track-midi-channel';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
 import { isPhrase, isPhraseRangeEdits } from './project-track-decoder';
 import { appendPhraseRangeEdit, hasManualPhrase, type PhraseRangeEdit } from '../music/phrase-range-edit';
+import { appendPhraseGlideEdit, type PhraseGlideEdit } from '../music/phrase-glides';
+import { decodePhraseGlideEdits } from './project-glide-decoder';
 import { decodeProject, isProject, validateMelodyGrids } from './project-codec';
 import { formatProjectJson } from './project-json';
 import { encodeProjectStorage } from './project-storage';
@@ -492,6 +494,7 @@ export class ProjectService {
         trackPresence: Object.fromEntries(Object.entries(section.trackPresence).filter(([id]) => !removed.has(id))),
         ...(section.generatedTrackIds ? { generatedTrackIds: section.generatedTrackIds.filter(id => !removed.has(id)) } : {}),
         ...(section.trackPhrases !== undefined ? { trackPhrases: Object.fromEntries(Object.entries(section.trackPhrases).filter(([id]) => !removed.has(id))) } : {}),
+        ...(section.trackGlides !== undefined ? { trackGlides: Object.fromEntries(Object.entries(section.trackGlides).filter(([id]) => !removed.has(id))) } : {}),
         ...(section.trackPartOverrides !== undefined ? { trackPartOverrides: Object.fromEntries(
           Object.entries(section.trackPartOverrides).filter(([id]) => !removed.has(id))) } : {}),
       })) }));
@@ -515,6 +518,7 @@ export class ProjectService {
         midiChannel: assignTrackMidiChannel(role, tracks),
         generatorSettings: copyPartSettings(source.generatorSettings),
         mix: { ...source.mix, muted: false, solo: false }, rerollLocked: false, instrumentLocked: false, editedPhrase: undefined, phraseEdits: undefined,
+        phraseGlides: undefined,
         ...(role === 'drums' && this.uiPreferences.drumRerollMode() === 'kit' ? {
           drumPan: undefined, parameterLocks: undefined, mix: { ...source.mix, muted: false, solo: false, panPercent: 0 },
         } : {}) } as CompositionTrack;
@@ -1229,6 +1233,7 @@ export class ProjectService {
       instrumentLocked: false,
       ...(kit ? { drumPan: undefined, parameterLocks: undefined, mix: { ...source.mix, muted: false, solo: false, panPercent: 0 } } : {}),
       editedPhrase: role === 'drums' ? undefined : source.editedPhrase?.map((note) => ({ ...note })),
+      phraseGlides: undefined,
       phraseEdits: role === 'drums' ? undefined : source.phraseEdits?.map(edit => ({ ...edit, notes: edit.notes.map(note => ({ ...note })) })) } as CompositionTrack;
     if (scorePoint && !kit) {
       track = { ...track, editedPhrase: undefined, phraseEdits: undefined } as CompositionTrack;
@@ -1285,7 +1290,8 @@ export class ProjectService {
       mix: { ...source.mix, muted: false, solo: false },
       generatorSettings: copyPartSettings(source.generatorSettings),
       editedPhrase: !options || options.manualNotes ? source.editedPhrase?.map((note) => ({ ...note })) : undefined,
-      phraseEdits: !options || options.manualNotes ? source.phraseEdits?.map(edit => ({ ...edit, notes: edit.notes.map(note => ({ ...note })) })) : undefined } as CompositionTrack;
+      phraseEdits: !options || options.manualNotes ? source.phraseEdits?.map(edit => ({ ...edit, notes: edit.notes.map(note => ({ ...note })) })) : undefined,
+      phraseGlides: !options || options.manualNotes ? source.phraseGlides : undefined } as CompositionTrack;
     const tracks = [...current.tracks];
     tracks.splice(options ? tracks.length : sourceIndex + 1, 0, duplicate);
     this.commit({ ...current, tracks, arrangement: current.arrangement.map((section) => ({
@@ -1293,6 +1299,7 @@ export class ProjectService {
       trackPresence: { ...section.trackPresence, [id]: (!options || options.presences) && (section.trackPresence[source.id] ?? false) },
       ...((!options || options.manualNotes) && section.generatedTrackIds?.includes(source.id) ? { generatedTrackIds: [...section.generatedTrackIds, id] } : {}),
       ...((!options || options.manualNotes) && section.trackPhrases?.[source.id] !== undefined ? { trackPhrases: { ...section.trackPhrases, [id]: section.trackPhrases[source.id].map(note => ({ ...note })) } } : {}),
+      ...((!options || options.manualNotes) && section.trackGlides?.[source.id] !== undefined ? { trackGlides: { ...section.trackGlides, [id]: section.trackGlides[source.id] } } : {}),
       ...(options?.presences && options.variations && section.variations ? { variations: { ...section.variations,
         choices: [...section.variations.choices, ...section.variations.choices.filter(choice => choice.trackId === source.id)
           .map(choice => ({ ...structuredClone(choice), trackId: id }))] } } : {}),
@@ -1368,10 +1375,13 @@ export class ProjectService {
 
   /** Apply a multi-track phrase draft atomically, including mixed global and section destinations. */
   applyPhraseEdits(edits: readonly { trackId: string; sectionId?: string; notes: readonly PhraseNote[] | null;
-    range?: Omit<PhraseRangeEdit, 'notes'> }[]): boolean {
+    range?: Omit<PhraseRangeEdit, 'notes'> }[],
+    glides: readonly { trackId: string; sectionId?: string; edit: PhraseGlideEdit }[] = []): boolean {
     const current = this.state();
-    if (!edits.length || edits.some(edit => !current.tracks.some(track => track.id === edit.trackId)
-      || edit.sectionId !== undefined && !current.arrangement.some(section => section.id === edit.sectionId)
+    const validTarget = (target: { trackId: string; sectionId?: string }) => current.tracks.some(track => track.id === target.trackId)
+      && (target.sectionId === undefined || current.arrangement.some(section => section.id === target.sectionId));
+    if ((!edits.length && !glides.length) || glides.some(change => !validTarget(change) || !decodePhraseGlideEdits([change.edit]))
+      || edits.some(edit => !validTarget(edit)
       || edit.range !== undefined && (edit.sectionId !== undefined || edit.notes === null
         || !isPhraseRangeEdits([{ ...edit.range, notes: edit.notes }]))
       || edit.notes !== null && !edit.range && !isPhrase(edit.notes, edit.sectionId ? 2112 : undefined, edit.sectionId ? -64 : undefined))) return false;
@@ -1404,6 +1414,18 @@ export class ProjectService {
           if (track.editedPhrase === undefined) delete editedPhrases[track.role];
           else editedPhrases[track.role] = track.editedPhrase;
         }
+      }
+    }
+    for (const { trackId, sectionId, edit } of glides) {
+      if (sectionId !== undefined) {
+        arrangement = arrangement.map(section => {
+          if (section.id !== sectionId) return section;
+          const previous = Object.hasOwn(section.trackGlides ?? {}, trackId) ? section.trackGlides![trackId] : undefined;
+          return { ...section, trackGlides: { ...section.trackGlides, [trackId]: appendPhraseGlideEdit(previous, edit) } };
+        });
+      } else {
+        tracks = tracks.map(track => track.id === trackId
+          ? { ...track, phraseGlides: appendPhraseGlideEdit(track.phraseGlides, edit) } : track);
       }
     }
     const next = { ...current, tracks, arrangement, editedPhrases };
@@ -1490,9 +1512,12 @@ export class ProjectService {
       delete trackPartOverrides[trackId];
       const trackPhrases = { ...section.trackPhrases };
       delete trackPhrases[trackId];
+      const trackGlides = { ...section.trackGlides };
+      delete trackGlides[trackId];
       return { ...section, trackPresence, trackPartOverrides,
         ...(section.variations ? { variations: pruneVariations(section.variations, new Set([trackId])) } : {}),
         ...(section.trackPhrases !== undefined ? { trackPhrases } : {}),
+        ...(section.trackGlides !== undefined ? { trackGlides } : {}),
         ...(section.generatedTrackIds ? { generatedTrackIds: section.generatedTrackIds.filter(id => id !== trackId) } : {}) };
     });
     this.commit(fitVariationCapacity({ ...current, tracks: current.tracks.filter((candidate) => candidate.id !== trackId), arrangement }));

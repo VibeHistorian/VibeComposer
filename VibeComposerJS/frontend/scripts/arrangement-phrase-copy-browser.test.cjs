@@ -1,4 +1,4 @@
-const { clearWorkspace } = require('./support/workspace-browser.cjs');
+const { arrangementPoint, clearWorkspace } = require('./support/workspace-browser.cjs');
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
@@ -35,8 +35,17 @@ for (const width of [1440, 780]) test('real Ctrl mouse copy drag at '+width+'px'
     // Wait for a new document: sessionStorage already contains the fixture before reload starts.
     await wait(`!window.copyDragReloadPending&&JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')||'null')?.arrangement[0].id==='copy-section-0'&&!!document.querySelector('vc-arrangement-overview canvas[tabindex]')`);
     await evaluate(`new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))`);
-    const points=await evaluate(`(()=>{const c=document.querySelector('vc-arrangement-overview canvas[tabindex]');c.scrollIntoView({block:'center'});const b=c.getBoundingClientRect();
-      return {source:{x:b.left+24+(b.width-24)/4,y:b.top+55},track:{x:b.left+32,y:b.top+84},target:{x:b.left+24+(b.width-24)/2+8,y:b.top+84}};})()`);
+    const points = await evaluate(`(async () => {
+      const canvas = document.querySelector('vc-arrangement-overview canvas[tabindex]');
+      canvas.scrollIntoView({ block: 'center' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const point = ${arrangementPoint};
+      return {
+        source: point(canvas, 'Select Melody settings in INTRO,'),
+        track: point(canvas, 'Select M1 in INTRO. Present.'),
+        target: point(canvas, 'Select M1 in VERSE1. Absent.'),
+      };
+    })()`);
     // Keep the pressed button on movement events so Chromium retains pointer capture.
     const mouse=(type,point,pressed=false)=>command('Input.dispatchMouseEvent',{type,...point,button:type==='mouseMoved'&&!pressed?'none':'left',buttons:pressed?1:0,modifiers:2,clickCount:type==='mouseMoved'?0:1});
     for (const source of [points.source,points.track]) {
@@ -47,7 +56,8 @@ for (const width of [1440, 780]) test('real Ctrl mouse copy drag at '+width+'px'
       await evaluate(`new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))`);
       await mouse('mouseMoved',points.target,true);
       await evaluate(`new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))`);
-      assert.ok(await evaluate(`document.querySelector('vc-arrangement-overview canvas[tabindex]').getAttribute('data-copy-target')`),'real mouse movement highlights the destination');
+      assert.equal(await evaluate(`document.querySelector('vc-arrangement-overview canvas[tabindex]').getAttribute('data-copy-target')`),
+        'toggle:copy-section-1:track-melody-1', 'real mouse movement highlights the destination track');
       await mouse('mouseReleased',points.target);
       await wait(`Object.keys(JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).arrangement[1].trackPhrases??{}).length===1`);
       const saved=await evaluate(`(()=>{const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));return Object.values(p.arrangement[1].trackPhrases)[0]})()`);

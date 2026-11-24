@@ -317,6 +317,8 @@
                   (trackAddRequested)="addScoreTrack($event)"
                   [canRemoveTrack]="project().tracks.length > 1" (noteRemoveRequested)="removeScoreTrack($event)"
                   [hiddenTrackIds]="editing() ? editingHiddenTracks : hiddenTracks()" [editable]="editing()" [editBounds]="editing() ? scoreEditBounds() : null" [velocityVisible]="editing()"
+                  [glideLane]="editor()?.glideLane() ?? null" [glideSegments]="editor()?.laneSegments() ?? []" [glideOrigin]="editStartBeat()"
+                  [glideDisabled]="!editor()?.canDrawGlides()" (glideStroke)="editor()?.drawGlide($event)"
                   (noteSelected)="canvasNoteSelected($event)" (noteTrackSelected)="selectNoteTrack($event)" (noteChanged)="canvasNoteChanged($event)"
                   [selectedNoteIds]="editor()?.canvasSelectedNoteIds() ?? []" [snapBeats]="editor()?.snapBeats() ?? 0.25" [placementDuration]="editor()?.placementDuration ?? 0.5"
                   [snapToScale]="editor()?.snapToScale() ?? true" [scalePitchClasses]="editor()?.scalePitchClasses() ?? []"
@@ -328,6 +330,21 @@
           </div>
         </div>
         @if (editing()) {
+        @if (editor(); as edit) {
+          <div class="score-lane-controls" role="group" aria-label="Phrase lanes">
+            <vc-select id="phrase-lane" aria-label="Phrase lane" [options]="edit.laneOptions"
+              [value]="edit.lane()" (valueChange)="edit.setLane($event)" />
+            @if (edit.glideLane(); as lane) {
+              <button type="button" class="vc-button" [disabled]="!edit.canDrawGlides()" (click)="edit.addGlideRamp(true)"
+                title="Add a rising glide across selected notes or the phrase">{{ lane === 'pitch' ? 'Bend up' : 'Fade in' }}</button>
+              <button type="button" class="vc-button" [disabled]="!edit.canDrawGlides()" (click)="edit.addGlideRamp(false)"
+                title="Add a falling glide across selected notes or the phrase">{{ lane === 'pitch' ? 'Bend down' : 'Fade out' }}</button>
+              <button type="button" class="vc-button" [disabled]="!edit.canDrawGlides() || !edit.laneSegments().length"
+                (click)="edit.clearGlideLane()">Clear lane</button>
+              <span class="score-lane-hint">MIDI ch. {{ edit.glideTrack()?.midiChannel }} · Drag to draw</span>
+            }
+          </div>
+        }
         <footer class="score-display-header" aria-label="Score edit actions">
             <button type="button" class="export-phrase vc-button" [disabled]="!editor()?.draftReady()"
               title="Download the current phrase as a MIDI file, including unapplied edits."

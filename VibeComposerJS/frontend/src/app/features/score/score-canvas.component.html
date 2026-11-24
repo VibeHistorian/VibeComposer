@@ -13,9 +13,21 @@
     <span class="octave-boundary" aria-hidden="true" [style.top.px]="line.y"
       [style.height.px]="line.height" [style.opacity]="line.opacity"></span>
   }
+  @if (glideLane(); as lane) {
+    <div class="glide-scale" aria-hidden="true" [style.height.px]="glideLaneHeight">
+      <span>{{ lane === 'pitch' ? '+2 st' : '100%' }}</span>
+      <span>{{ lane === 'pitch' ? '0' : '50%' }}</span>
+      <span>{{ lane === 'pitch' ? '−2 st' : '0%' }}</span>
+    </div>
+  }
 </div>
 <vc-context-menu [items]="contextItems()" (action)="contextAction($event.id)">
 <div class="score-canvas-host" #rendererHost>
+  @if (glideLane(); as lane) {
+    <vc-score-glide-lane [lane]="lane" [geometry]="glideTime()" [bounds]="glideBounds()" [segments]="glideSegments()"
+      [snapBeats]="snapBeats()" [playheadBeat]="glidePlayhead()" [disabled]="glideDisabled()"
+      (stroke)="glideStroke.emit($event)" (wheel)="onCanvasWheel($event)" />
+  }
   @if (noteTooltip(); as tooltip) {
     <div class="note-tooltip" role="tooltip" [style.left.px]="tooltip.x" [style.top.px]="tooltip.y">
       <span class="note-tooltip-values"><span>{{ tooltip.pitch }}</span><span>V{{ tooltip.velocity }}</span></span>

@@ -4,6 +4,8 @@ import type { CompositionTrack } from '../project/track.model';
 import { UiPreferencesService } from '../ui/ui-preferences.service';
 import type { DrumSlots } from '../music/drum-instruments';
 import { drumInstrumentLabel, mapDrumPitch, resolveDrumMapping } from '../music/drum-instruments';
+import type { GlideLane } from '../music/phrase-glides';
+import { MIDI_EXPRESSION_CC, PITCH_BEND_SENSITIVITY } from '../music/midi-glides';
 
 @Injectable({ providedIn: 'root' })
 export class MidiOutputService {
@@ -14,6 +16,7 @@ export class MidiOutputService {
   private readonly pending = signal(false);
   private readonly message = signal('');
   private readonly channels = new Set<number>();
+  private readonly glideValues = new Map<number, Partial<Record<GlideLane, number>>>();
   private readonly configurations = new Map<number, { trackId: string; program: number | null; volume: number; pan: number }>();
   readonly selectedOutput = this.output.asReadonly();
   readonly drumMapping = computed(() => resolveDrumMapping(this.preferences.drumMapping(), this.selectedOutput() !== null));
@@ -86,6 +89,22 @@ export class MidiOutputService {
     this.send([0x80 | channel, pitch, 0], start + duration * 1000);
   }
 
+  scheduleGlide(channelNumber: number, lane: GlideLane, value: number, timestamp: number): void {
+    const channel = channelNumber - 1;
+    const values = this.glideValues.get(channel) ?? {};
+    if (values[lane] === value) return;
+    const firstPitch = lane === 'pitch' && values.pitch === undefined;
+    values[lane] = value;
+    this.glideValues.set(channel, values);
+    if (firstPitch) for (const [controller, setting] of PITCH_BEND_SENSITIVITY) {
+      this.send([0xb0 | channel, controller, setting], timestamp);
+    }
+    if (lane === 'pitch') {
+      const unsigned = value + 8192;
+      this.send([0xe0 | channel, unsigned & 127, unsigned >> 7], timestamp);
+    } else this.send([0xb0 | channel, MIDI_EXPRESSION_CC, value], timestamp);
+  }
+
   hold(track: CompositionTrack, pitch: number, velocity: number, slots?: DrumSlots): () => void {
     if (track.role === 'drums') pitch = mapDrumPitch(pitch, this.drumMapping(), slots);
     const output = this.output(), channel = track.midiChannel - 1;
@@ -132,15 +151,21 @@ export class MidiOutputService {
       try {
         // TypeScript's DOM declarations omit this standard Web MIDI method.
         (output as MIDIOutput & { clear(): void }).clear();
-        for (const channel of this.channels) {
-          output.send([0xb0 | channel, 64, 0]);
-          output.send([0xb0 | channel, 123, 0]);
-          output.send([0xb0 | channel, 120, 0]);
+        for (const channel of new Set([...this.channels, ...this.glideValues.keys()])) {
+          if (this.channels.has(channel)) {
+            output.send([0xb0 | channel, 64, 0]);
+            output.send([0xb0 | channel, 123, 0]);
+            output.send([0xb0 | channel, 120, 0]);
+          }
+          const glides = this.glideValues.get(channel);
+          if (glides?.pitch !== undefined) output.send([0xe0 | channel, 0, 64]);
+          if (glides?.volume !== undefined) output.send([0xb0 | channel, MIDI_EXPRESSION_CC, 127]);
         }
       } catch { /* A removed port may no longer accept messages. */ }
     }
     this.channels.clear();
     this.configurations.clear();
+    this.glideValues.clear();
   };
 
   ngOnDestroy(): void {
