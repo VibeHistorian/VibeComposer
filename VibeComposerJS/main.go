@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"log"
 
-	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 )
@@ -19,7 +18,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = wails.Run(&options.App{
+	err = runDesktop(&options.App{
 		Title:     "VibeComposer",
 		Width:     1920,
 		Height:    960,
