@@ -44,6 +44,7 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
         const buttons = (selector, label) => [...document.querySelectorAll(selector)].find(button => button.textContent.trim() === label);
         const edit = label => buttons('.score-display-header button', label);
         const tool = label => buttons('.score-lane-controls button', label);
+        const channel = name => document.querySelector('vc-select[aria-label="MIDI channel ' + name + '"]');
         const lane = () => document.querySelector('vc-score-glide-lane canvas');
         const choose = async value => changeControl(await wait(() => document.querySelector('#phrase-lane')), value);
         const open = async () => {
@@ -58,6 +59,28 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
       assert.equal(result.exceptionDetails, undefined, JSON.stringify(result.exceptionDetails));
       return result.result.value;
     };
+    const hoverChannel = async name => {
+      const point = await evaluate(`
+        const trigger = await wait(() => channel(${JSON.stringify(name)}));
+        if (trigger.hasAttribute('title')) throw Error('MIDI channel still has a native tooltip');
+        trigger.scrollIntoView({ block: 'nearest' });
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const rect = trigger.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      `);
+      await command('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point });
+      return evaluate(`return (await wait(() => [...document.querySelectorAll('.vc-instant-tooltip')]
+        .find(tip => tip.textContent.includes('MIDI channel')))).textContent.trim();`);
+    };
+    assert.equal(await hoverChannel('M1'), 'MIDI channel 4');
+    assert.equal(await hoverChannel('B1'), 'MIDI channel 1 · Volume glide');
+    assert.deepEqual(await evaluate(`
+      const dot = (name, pseudo) => {
+        const style = getComputedStyle(channel(name), pseudo);
+        return [style.content, style.top, style.left, style.right, style.backgroundColor];
+      };
+      return [dot('M1', '::before')[0], dot('B1', '::after')[0], dot('B1', '::before').slice(0, 3)];
+    `), ['none', 'none', ['""', '-1px', '-1px']]);
     const knob = await evaluate(`
       const input = await wait(() => document.querySelector('input[aria-label="Decay B1"]'));
       input.scrollIntoView({ block: 'nearest' });
@@ -90,12 +113,12 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
       input.scrollIntoView({ block: 'nearest' });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       const rect = input.getBoundingClientRect();
-      const channel = document.querySelector('vc-select[aria-label="MIDI channel B1"]').getBoundingClientRect();
+      const channelRect = channel('B1').getBoundingClientRect();
       const instrument = document.querySelector('vc-menu-select[aria-label="Instrument B1"]').getBoundingClientRect();
       const lower = mode.getBoundingClientRect();
       return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2,
         hit: document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)?.outerHTML.slice(0, 200),
-        aligned: rect.top >= channel.bottom && lower.top >= instrument.bottom && Math.abs(lower.right - instrument.right) < 1 };
+        aligned: rect.top >= channelRect.bottom && lower.top >= instrument.bottom && Math.abs(lower.right - instrument.right) < 1 };
     `);
     assert.ok(pill.aligned);
     assert.match(pill.hit, /Glide time B1/);
@@ -135,6 +158,7 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
       await wait(() => !edit('Apply').disabled && !tool('Clear lane').disabled);
       return ink();
     `) > initialInk + 30);
+    assert.equal(await evaluate(`return channel('B1').classList.contains('has-pitch-glide');`), false, 'drafts leave the committed indicator unchanged');
     const screenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/phrase-glides.png'), Buffer.from(screenshot.data, 'base64'));
     assert.equal(await evaluate(`
@@ -174,8 +198,41 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
       await open();
       await choose('volume');
       await wait(() => !tool('Clear lane').disabled);
-      return edit('Apply').disabled;
+      const clean = edit('Apply').disabled;
+      edit('Cancel').click();
+      return clean;
     `), true, 'local save kept both controllers and cancel discarded the cleared lane');
+    assert.equal(await hoverChannel('B1'), 'MIDI channel 1 · Pitch glide · Volume glide');
+    assert.equal(await hoverChannel('Shared voice'), 'MIDI channel 1 · Pitch glide · Volume glide');
+    assert.equal(await hoverChannel('Different channel'), 'MIDI channel 16 · Volume glide');
+    assert.ok(await evaluate(`
+      await document.fonts.ready;
+      return ['M1', 'B1', 'Different channel'].every(name => {
+        const trigger = channel(name);
+        const button = trigger.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(trigger.querySelector('.select-value'));
+        const label = range.getBoundingClientRect();
+        return Math.abs((label.left + label.right) - (button.left + button.right)) <= 1
+          && Math.abs((label.top + label.bottom) - (button.top + button.bottom)) <= 1
+          && label.left >= button.left + 6 && label.right <= button.right - 6;
+      });
+    `), 'channel labels are centered on both axes and clear the corner dots');
+    assert.deepEqual(await evaluate(`
+      const trigger = channel('B1');
+      const pitch = getComputedStyle(trigger, '::after'), volume = getComputedStyle(trigger, '::before');
+      const laneColor = property => {
+        const swatch = document.createElement('span');
+        swatch.style.color = 'var(' + property + ')';
+        trigger.append(swatch);
+        const color = getComputedStyle(swatch).color;
+        swatch.remove();
+        return color;
+      };
+      return [pitch.top, pitch.right, volume.top, volume.left,
+        pitch.backgroundColor === laneColor('--pitch-glide-color'),
+        volume.backgroundColor === laneColor('--volume-glide-color')];
+    `), ['-1px', '-1px', '-1px', '-1px', true, true]);
   } finally {
     await closeBrowser({ child, server, socket });
   }

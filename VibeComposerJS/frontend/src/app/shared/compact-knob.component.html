@@ -33,7 +33,7 @@
 @if (letter() && instantTooltip()) {
   <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="element.nativeElement"
     [cdkConnectedOverlayOpen]="true" [cdkConnectedOverlayPositions]="tooltipPositions" [cdkConnectedOverlayPush]="true"
-    [cdkConnectedOverlayViewportMargin]="4" [cdkConnectedOverlayDisableClose]="true" cdkConnectedOverlayPanelClass="knob-tooltip-pane">
-    <span class="knob-tooltip" role="tooltip">{{ label() }} · {{ letterValue() }}{{ atDefault() ? ' · Default' : '' }}</span>
+    [cdkConnectedOverlayViewportMargin]="4" [cdkConnectedOverlayDisableClose]="true" cdkConnectedOverlayPanelClass="instant-tooltip-pane">
+    <span class="knob-tooltip vc-instant-tooltip" role="tooltip">{{ label() }} · {{ letterValue() }}{{ atDefault() ? ' · Default' : '' }}</span>
   </ng-template>
 }

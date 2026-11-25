@@ -551,6 +551,13 @@ export class WorkspaceCanvasComponent {
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
   readonly selectedSectionBeats = computed(() => { const section = this.selectedSection(); return section ? sectionDurationBeats(this.project(), section) : 0; });
   readonly timeline = computed(() => resolveProjectTimeline(this.phraseProject()));
+  readonly channelGlides = computed(() => glidesByChannel(this.phraseProject().tracks, this.timeline().glidesByTrack));
+
+  channelTooltip(track: TrackRow, pitchGlide: boolean, volumeGlide: boolean): string {
+    const channel = track.role === 'drums' ? 'Percussion uses MIDI channel 10' : `MIDI channel ${track.midiChannel}`;
+    return channel + (pitchGlide ? ' · Pitch glide' : '') + (volumeGlide ? ' · Volume glide' : '');
+  }
+
   readonly glideReference = computed<ScoreGlideReference | null>(() => {
     const editor = this.editor();
     const lane = editor?.glideLane(), owner = editor?.glideTrack();

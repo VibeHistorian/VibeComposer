@@ -87,9 +87,13 @@
                       [selectDefault]="defaultMix[track.role].program" [value]="track.mix.program" [title]="'Instrument: ' + instrumentName(track)" [disabled]="editing()"
                       (click)="$event.stopPropagation()" (valueChange)="updateInstrument(track, $event)"></vc-menu-select>
                   }
+                  @let glides = channelGlides().get(track.midiChannel);
+                  @let pitchGlide = !!glides?.pitch?.length;
+                  @let volumeGlide = !!glides?.volume?.length;
                   <vc-select [options]="channelSelectOptions()" class="track-inline-select track-channel" [attr.aria-label]="'MIDI channel ' + track.name"
                     [selectDefault]="defaultChannel(track)" [value]="track.midiChannel" [disabled]="editing() || track.role === 'drums'"
-                    [title]="track.role === 'drums' ? 'Percussion uses MIDI channel 10' : 'MIDI channel ' + track.midiChannel"
+                    [class.has-pitch-glide]="pitchGlide" [class.has-volume-glide]="volumeGlide"
+                    [instantTooltip]="channelTooltip(track, pitchGlide, volumeGlide)"
                     (click)="$event.stopPropagation()" (valueChange)="updateChannel(track, $event)"></vc-select>
                   <div class="track-routing-details">
                     @if (track.role !== 'drums') {

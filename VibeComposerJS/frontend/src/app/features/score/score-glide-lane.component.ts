@@ -187,7 +187,7 @@ export class ScoreGlideLaneComponent {
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
     context.clearRect(0, 0, geometry.width, VELOCITY_HEIGHT);
     const style = getComputedStyle(canvas);
-    const color = style.getPropertyValue(lane === 'pitch' ? '--accent-primary' : '--role-arpeggio-strong').trim();
+    const color = style.getPropertyValue(lane === 'pitch' ? '--pitch-glide-color' : '--volume-glide-color').trim();
     const y = (value: number) => PADDING + HEIGHT * (lane === 'pitch' ? (1 - value / PITCH_GLIDE_SEMITONES) / 2 : 1 - value);
     const neutral = y(glideNeutral(lane));
     const leftBeat = scoreBeat(0, geometry), rightBeat = scoreBeat(geometry.width, geometry);

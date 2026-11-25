@@ -86,5 +86,3 @@
 .letter .knob-face > span { width: auto; height: auto; padding: 0; border: 0; background: none; font: 9px var(--font-mono); }
 .letter input { inset: 0; width: 100%; height: 100%; transform: none; }
 .letter:has(input:focus-visible) .knob-face { border-color: transparent; box-shadow: 0 0 0 1px var(--border-focus); }
-.knob-tooltip { display: block; padding: 3px 5px; border: 1px solid var(--border-strong); border-radius: var(--radius-tight);
-  background: var(--surface-base); color: var(--text-primary); font: 10px var(--font-mono); white-space: nowrap; pointer-events: none; }

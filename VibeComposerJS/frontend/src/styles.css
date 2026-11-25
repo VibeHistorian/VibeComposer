@@ -6,7 +6,9 @@
 
 /* Appearance preview backdrop */
 .cdk-overlay-backdrop.appearance-preview { background: transparent; }
-.cdk-overlay-pane.knob-tooltip-pane { pointer-events: none; }
+.cdk-overlay-pane.instant-tooltip-pane { pointer-events: none; }
+.vc-instant-tooltip { display: block; padding: 3px 5px; border: 1px solid var(--border-strong); border-radius: var(--radius-tight);
+  background: var(--surface-base); color: var(--text-primary); font: 10px var(--font-mono); white-space: nowrap; pointer-events: none; }
 
 /* Theme tokens */
 :root {
@@ -48,6 +50,8 @@
   --text-field-padding-inline: 5px;
   --text-field-font-size: 10px;
   --knob-default-brightness: .75;
+  --pitch-glide-color: var(--accent-primary);
+  --volume-glide-color: var(--role-arpeggio-strong);
 
   /* Main theme defaults derived by core/ui/theme.ts; preferences apply the same palette. */
   --surface-canvas: #080e16;
