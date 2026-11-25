@@ -1,5 +1,5 @@
 import { ARRANGED_PARTS, type ArrangedPart } from './part-role';
-import type { CompositionTrack } from '../project/track.model';
+import { clearInstrumentTone, type CompositionTrack } from '../project/track.model';
 import type { DrumSettings } from './part-settings.model';
 import type { InstrumentGenerationPolicy, InstrumentPool } from './generation-policy.model';
 import { JavaRandom } from './java-random';
@@ -97,7 +97,7 @@ export function rerollInstruments(seed: bigint, role: ArrangedPart, policy: Inst
     const candidates = INSTRUMENT_POOLS[pool];
     const instrument = shared ?? candidates[random.nextInt(candidates.length)];
     if (role === 'arpeggio' && policy.sameInstrument) shared = instrument;
-    return track.mix.program === instrument && track.instrumentPool === pool ? track
-      : { ...track, instrumentPool: pool, mix: { ...track.mix, program: instrument } };
+    if (track.mix.program === instrument) return track.instrumentPool === pool ? track : { ...track, instrumentPool: pool };
+    return { ...clearInstrumentTone(track), instrumentPool: pool, mix: { ...track.mix, program: instrument } };
   });
 }

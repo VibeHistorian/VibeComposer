@@ -9,6 +9,7 @@ import { glidesByChannel } from '../music/phrase-glides';
 import { createChannelGlideAudio, disposeChannelGlideAudio, scheduleGlideParam } from './channel-glide-audio';
 import { planVoices, type VoiceNote } from '../music/track-voicing';
 import { scheduleVoice } from './schedule-voice';
+import { instrumentToneForBank } from './instrument-tone';
 
 const SAMPLE_RATE = 48000;
 const RENDER_QUANTUM = 128;
@@ -75,9 +76,10 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
       pan.pan.value = track.mix.panPercent / 100;
       gain.connect(pan);
       const channel = channels.get(track.midiChannel);
+      const tone = instrumentToneForBank(track.instrumentTone, kind, project.soundbankName);
       pan.connect(channel?.volume ?? master);
       nodes.push(gain, pan);
-      return notes.map(note => ({ track, note, gain, pitch: channel?.pitch,
+      return notes.map(note => ({ track, note, gain, pitch: channel?.pitch, tone,
         start: timeline.beatToSeconds(note.startBeat) + offsetSeconds }));
     });
     const canSuspend = typeof context.suspend === 'function' && typeof context.resume === 'function';
@@ -86,13 +88,13 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
     const scheduleBefore = async (frame: number) => {
       const end = frame === length ? Infinity : frame / SAMPLE_RATE;
       for (; nextEvent < events.length; nextEvent++) {
-        const { track, note, gain, pitch, start } = events[nextEvent];
+        const { track, note, gain, pitch, start, tone } = events[nextEvent];
         if (start >= end) break;
         const duration = Math.max(note.pitchChanges ? 0 : MIN_NOTE_SECONDS, timeline.beatToSeconds(note.startBeat + note.durationBeats) + offsetSeconds - start);
         const cut = note.cutBeat === undefined ? Infinity : timeline.beatToSeconds(note.cutBeat) + offsetSeconds;
         const lateness = context.currentTime - start;
         const voices = scheduleVoice(synth, gain, track.mix.program, track.role === 'drums',
-          note, start, duration, timeline.beatToSeconds(note.startBeat), cut, pitch);
+          note, start, duration, timeline.beatToSeconds(note.startBeat), cut, pitch, tone);
         if (voices.length && lateness >= 1 / SAMPLE_RATE) {
           lateNotes++;
           maxLateness = Math.max(maxLateness, lateness);

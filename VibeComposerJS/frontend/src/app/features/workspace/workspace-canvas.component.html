@@ -77,7 +77,7 @@
                   <button type="button" [disabled]="editing() || track.rerollLocked" [attr.aria-label]="'Reroll ' + track.name" [title]="'Reroll ' + track.name"
                     (click)="rerollRole(track.role, track.id)">↻</button>
                 </div>
-                <div class="track-instrument-stack">
+                <div class="track-routing">
                   @if (track.role === 'drums') {
                     <vc-menu-select [groups]="drumMenuGroups" [options]="drumSelectOptions()[track.id]" class="track-inline-select track-instrument" [attr.aria-label]="'Percussion instrument ' + track.name"
                       [selectDefault]="36" [value]="drumPitch(track)" [title]="'Percussion instrument: ' + instrumentName(track)" [disabled]="editing()"
@@ -87,21 +87,41 @@
                       [selectDefault]="defaultMix[track.role].program" [value]="track.mix.program" [title]="'Instrument: ' + instrumentName(track)" [disabled]="editing()"
                       (click)="$event.stopPropagation()" (valueChange)="updateInstrument(track, $event)"></vc-menu-select>
                   }
-                  <vc-select [options]="voiceModeOptions" class="track-inline-select track-voice-mode" [attr.aria-label]="'Voice mode ' + track.name"
-                    [value]="track.voiceMode ?? 'poly'" selectDefault="poly" [disabled]="editing()"
-                    title="Poly plays chords. Mono plays one note at a time. Legato keeps one voice through overlapping notes."
-                    (click)="$event.stopPropagation()" (valueChange)="updateVoiceMode(track, $event)" />
-                  </div>
-                  <div class="track-channel-stack">
                   <vc-select [options]="channelSelectOptions()" class="track-inline-select track-channel" [attr.aria-label]="'MIDI channel ' + track.name"
                     [selectDefault]="defaultChannel(track)" [value]="track.midiChannel" [disabled]="editing() || track.role === 'drums'"
                     [title]="track.role === 'drums' ? 'Percussion uses MIDI channel 10' : 'MIDI channel ' + track.midiChannel"
                     (click)="$event.stopPropagation()" (valueChange)="updateChannel(track, $event)"></vc-select>
-                  @if (track.voiceMode && track.voiceMode !== 'poly') {
-                    <vc-compact-knob [pill]="true" [label]="'Glide time ' + track.name" unit=" ms" description="Pitch transition duration. Zero switches pitch immediately."
-                      [value]="track.glideMs ?? 0" [minimum]="0" [maximum]="maximumGlide" [defaultValue]="0" [disabled]="editing()"
-                      (click)="$event.stopPropagation()" (valueCommit)="projects.updateTrack(track.id, { glideMs: $event })" />
-                  }
+                  <div class="track-routing-details">
+                    @if (track.role !== 'drums') {
+                      @if (toneProfiles().get(track.mix.program); as profile) {
+                        @let overrides = track.instrumentTone?.soundbankName === profile.soundbankName ? track.instrumentTone : undefined;
+                        <div class="track-instrument-tone" role="group" [attr.aria-label]="'Instrument tone ' + track.name" (click)="$event.stopPropagation()">
+                          @for (control of profile.controls; track control.id) {
+                            @let value = overrides?.[control.key] ?? control.defaultValue;
+                            <vc-compact-knob [letter]="control.label[0]" [label]="control.label + ' ' + track.name" [unit]="control.unit"
+                              [value]="value" [minimum]="0" [maximum]="control.key === 'sustainPercent' && control.defaultValue <= 100 && value <= 100 ? 100 : control.maximum"
+                              [logarithmicTime]="control.unit === ' ms'" [defaultValue]="control.defaultValue"
+                              [defaultDisplay]="{ active: overrides?.[control.key] === undefined, text: control.defaultText, varied: control.varied }"
+                              [disabled]="editing()" (defaultRequested)="updateInstrumentTone(track, profile.soundbankName, control.key, undefined)"
+                              (valueCommit)="updateInstrumentTone(track, profile.soundbankName, control.key, control.varied || $event !== control.defaultValue ? $event : undefined)" />
+                          }
+                        </div>
+                      }
+                    }
+                    <div class="track-voice-routing">
+                      <vc-select [options]="voiceModeOptions" class="track-inline-select track-voice-mode" [attr.aria-label]="'Voice mode ' + track.name"
+                        [value]="track.voiceMode ?? 'poly'" selectDefault="poly" [disabled]="editing()"
+                        title="Poly plays chords. Mono plays one note at a time. Legato keeps one voice through overlapping notes."
+                        (click)="$event.stopPropagation()" (valueChange)="updateVoiceMode(track, $event)" />
+                      <div class="track-glide-slot">
+                        @if (track.voiceMode && track.voiceMode !== 'poly') {
+                          <vc-compact-knob [pill]="true" [label]="'Glide time ' + track.name" unit=" ms" description="Pitch transition duration. Zero switches pitch immediately."
+                            [value]="track.glideMs ?? 0" [minimum]="0" [maximum]="maximumGlide" [defaultValue]="0" [disabled]="editing()"
+                            (click)="$event.stopPropagation()" (valueCommit)="projects.updateTrack(track.id, { glideMs: $event })" />
+                        }
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div class="track-mix-controls" (click)="$event.stopPropagation()">
                   <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Pan ' + track.name" [defaultValue]="0"

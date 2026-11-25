@@ -1,5 +1,5 @@
 diff --git a/dist/index.d.mts b/dist/index.d.mts
-index e2a4bdb80c9d95dcb6f013f2490f01556d18ba37..00ab7bd912137f8e31b2769889fe0af511879b97 100644
+index e2a4bdb80c9d95dcb6f013f2490f01556d18ba37..602cd288526414f871ff6aa43a7d220136314baa 100644
 --- a/dist/index.d.mts
 +++ b/dist/index.d.mts
 @@ -89,6 +89,12 @@ type PlaybackParams = {
@@ -15,17 +15,21 @@ index e2a4bdb80c9d95dcb6f013f2490f01556d18ba37..00ab7bd912137f8e31b2769889fe0af5
      lpfCutoffHz?: number;
      offset?: number;
      loop?: boolean;
-@@ -166,6 +172,8 @@ type NoteEvent = {
+@@ -166,6 +172,12 @@ type NoteEvent = {
      time?: number;
      duration?: number | null;
      detune?: number;
 +    /** Channel-wide signal added to the sample's detune, in cents. */
 +    pitchBend?: AudioNode;
++    ampModulation?: { signal: AudioNode; base: number };
++    ampAttack?: number;
++    ampDecay?: number;
++    ampSustain?: number;
      lpfCutoffHz?: number;
      loop?: boolean;
      ampRelease?: number;
 diff --git a/dist/index.d.ts b/dist/index.d.ts
-index e2a4bdb80c9d95dcb6f013f2490f01556d18ba37..00ab7bd912137f8e31b2769889fe0af511879b97 100644
+index e2a4bdb80c9d95dcb6f013f2490f01556d18ba37..602cd288526414f871ff6aa43a7d220136314baa 100644
 --- a/dist/index.d.ts
 +++ b/dist/index.d.ts
 @@ -89,6 +89,12 @@ type PlaybackParams = {
@@ -41,17 +45,21 @@ index e2a4bdb80c9d95dcb6f013f2490f01556d18ba37..00ab7bd912137f8e31b2769889fe0af5
      lpfCutoffHz?: number;
      offset?: number;
      loop?: boolean;
-@@ -166,6 +172,8 @@ type NoteEvent = {
+@@ -166,6 +172,12 @@ type NoteEvent = {
      time?: number;
      duration?: number | null;
      detune?: number;
 +    /** Channel-wide signal added to the sample's detune, in cents. */
 +    pitchBend?: AudioNode;
++    ampModulation?: { signal: AudioNode; base: number };
++    ampAttack?: number;
++    ampDecay?: number;
++    ampSustain?: number;
      lpfCutoffHz?: number;
      loop?: boolean;
      ampRelease?: number;
 diff --git a/dist/index.js b/dist/index.js
-index 289ff7081e053cddbede5286717afa5f4e494463..6700c5a349a5d578320e231fbc2e7f540729bf06 100644
+index 289ff7081e053cddbede5286717afa5f4e494463..b9baa8a749ea87964ff625c882b28de74eeb59da 100644
 --- a/dist/index.js
 +++ b/dist/index.js
 @@ -458,6 +458,7 @@ var PARAM_DEFAULTS = {
@@ -74,24 +82,30 @@ index 289ff7081e053cddbede5286717afa5f4e494463..6700c5a349a5d578320e231fbc2e7f54
    let detune = (semitones + merged.tune) * 100 + merged.detune;
    if ((overrides == null ? void 0 : overrides.detune) !== void 0) detune += overrides.detune;
    return {
-@@ -487,6 +488,7 @@ function resolveParams(defaults, group, region, midi, velocity, overrides) {
+@@ -486,7 +487,12 @@ function resolveParams(defaults, group, region, midi, velocity, overrides) {
+     velocity,
      volume: merged.volume,
      ampRelease: (_c = overrides == null ? void 0 : overrides.ampRelease) != null ? _c : merged.ampRelease,
-     ampAttack: merged.ampAttack,
-+    ampDelay: merged.ampDelay, ampHold: merged.ampHold, ampDecay: merged.ampDecay, ampSustain: merged.ampSustain, pan: merged.pan,
+-    ampAttack: merged.ampAttack,
++    ampAttack: overrides?.ampAttack ?? merged.ampAttack,
++    ampDelay: merged.ampDelay,
++    ampHold: merged.ampHold, ampDecay: overrides?.ampDecay ?? merged.ampDecay,
++    ampSustain: overrides?.ampSustain ?? merged.ampSustain, pan: merged.pan,
++    adjustedEnvelope: overrides?.ampAttack !== void 0 || overrides?.ampDecay !== void 0 ||
++      overrides?.ampSustain !== void 0 || overrides?.ampRelease !== void 0,
      lpfCutoffHz: (_d = overrides == null ? void 0 : overrides.lpfCutoffHz) != null ? _d : merged.lpfCutoffHz,
      offset: merged.offset,
      loop: (_e = overrides == null ? void 0 : overrides.loop) != null ? _e : merged.loop,
-@@ -854,7 +856,7 @@ var Scheduler = asConstructable(SchedulerImpl);
+@@ -854,7 +860,7 @@ var Scheduler = asConstructable(SchedulerImpl);
  // src/smplr/voice.ts
  var _context3, _source, _envelope, _startAt, _releaseAt, _ampRelease, _state, _endedCallbacks;
  var Voice = class {
 -  constructor(context, buffer, params, destination, stopId, group, startTime) {
-+  constructor(context, buffer, params, destination, stopId, group, startTime, pitchBend) {
++  constructor(context, buffer, params, destination, stopId, group, startTime, pitchBend, ampModulation) {
      __privateAdd(this, _context3);
      __privateAdd(this, _source);
      __privateAdd(this, _envelope);
-@@ -872,6 +874,7 @@ var Voice = class {
+@@ -872,6 +878,7 @@ var Voice = class {
      const cents = params.detune;
      if (source.detune) {
        source.detune.value = cents;
@@ -99,14 +113,20 @@ index 289ff7081e053cddbede5286717afa5f4e494463..6700c5a349a5d578320e231fbc2e7f54
      } else {
        source.playbackRate.value = Math.pow(2, cents / 1200);
      }
-@@ -901,9 +904,24 @@ var Voice = class {
+@@ -901,9 +908,36 @@ var Voice = class {
        source.connect(gain);
      }
      gain.connect(envelope);
 -    envelope.connect(destination);
 +    const panner = context.createStereoPanner();
 +    panner.pan.value = params.pan;
-+    envelope.connect(panner);
++    const modulation = ampModulation && context.createGain();
++    if (modulation) {
++      modulation.gain.value = ampModulation.base;
++      ampModulation.signal.connect(modulation.gain);
++      envelope.connect(modulation);
++      modulation.connect(panner);
++    } else envelope.connect(panner);
 +    panner.connect(destination);
      const startAt = startTime != null ? startTime : context.currentTime;
      __privateSet(this, _startAt, startAt);
@@ -118,54 +138,89 @@ index 289ff7081e053cddbede5286717afa5f4e494463..6700c5a349a5d578320e231fbc2e7f54
 +    this.envelopeAt = t => t < attackStart ? 0 : t < attackEnd ? (t - attackStart) / Math.max(params.ampAttack, 1e-9)
 +      : t < holdEnd ? 1 : t < decayEnd ? 1 + (sustain - 1) * (t - holdEnd) / Math.max(params.ampDecay, 1e-9) : sustain;
 +    envelope.gain.setValueAtTime(0, startAt);
-+    envelope.gain.setValueAtTime(0, attackStart);
-+    envelope.gain.linearRampToValueAtTime(1, attackEnd);
++    if (params.ampAttack > 0) {
++      envelope.gain.setValueAtTime(0, attackStart);
++      envelope.gain.linearRampToValueAtTime(1, attackEnd);
++    } else envelope.gain.setValueAtTime(1, attackStart);
 +    envelope.gain.setValueAtTime(1, holdEnd);
-+    envelope.gain.linearRampToValueAtTime(sustain, decayEnd);
++    if (params.ampDecay > 0) envelope.gain.linearRampToValueAtTime(sustain, decayEnd);
++    else envelope.gain.setValueAtTime(sustain, decayEnd);
++    if (params.adjustedEnvelope) {
++      this.envelopeRampAt = t => t > attackStart && t <= attackEnd || t > holdEnd && t <= decayEnd;
++    }
      let offsetSec = 0;
      if (params.offset > 0) {
        offsetSec = params.reverse ? buffer.duration - params.offset : params.offset;
-@@ -913,7 +931,11 @@ var Voice = class {
+@@ -913,7 +947,15 @@ var Voice = class {
      __privateSet(this, _envelope, envelope);
      source.onended = () => {
        __privateSet(this, _state, "stopped");
 +      if (source.detune && pitchBend) {
 +        try { pitchBend.disconnect(source.detune); } catch { /* The channel may already be disconnected. */ }
 +      }
++      if (modulation) {
++        try { ampModulation.signal.disconnect(modulation.gain); } catch { /* The note route was already disconnected. */ }
++        modulation.disconnect();
++      }
        envelope.disconnect();
 +      panner.disconnect();
        gain.disconnect();
        lpf == null ? void 0 : lpf.disconnect();
        source.disconnect();
-@@ -938,7 +960,7 @@ var Voice = class {
+@@ -937,9 +979,12 @@ var Voice = class {
+       __privateGet(this, _envelope).gain.cancelScheduledValues(t);
      } else {
        const stopAt = t + __privateGet(this, _ampRelease);
-       __privateGet(this, _envelope).gain.cancelScheduledValues(t);
+-      __privateGet(this, _envelope).gain.cancelScheduledValues(t);
 -      __privateGet(this, _envelope).gain.setValueAtTime(1, t);
-+      __privateGet(this, _envelope).gain.setValueAtTime(this.envelopeAt(t), t);
-       __privateGet(this, _envelope).gain.linearRampToValueAtTime(0, stopAt);
+-      __privateGet(this, _envelope).gain.linearRampToValueAtTime(0, stopAt);
++      const gain = __privateGet(this, _envelope).gain;
++      gain.cancelScheduledValues(t);
++      if (this.envelopeRampAt?.(t)) gain.linearRampToValueAtTime(this.envelopeAt(t), t);
++      else gain.setValueAtTime(this.envelopeAt(t), t);
++      if (stopAt > t) gain.linearRampToValueAtTime(0, stopAt);
++      else gain.setValueAtTime(0, t);
        __privateGet(this, _source).stop(stopAt);
      }
-@@ -1311,6 +1333,7 @@ playNote_fn = function(event) {
+   }
+@@ -1311,9 +1356,14 @@ playNote_fn = function(event) {
      stopId,
      duration,
      detune,
 +    pitchBend,
++    ampModulation,
      lpfCutoffHz,
      loop,
      ampRelease,
-@@ -1361,7 +1384,8 @@ playNote_fn = function(event) {
++    ampAttack,
++    ampDecay,
++    ampSustain,
+     reverse,
+     onStart,
+     onEnded
+@@ -1351,6 +1401,9 @@ playNote_fn = function(event) {
+         lpfCutoffHz,
+         loop,
+         ampRelease,
++        ampAttack,
++        ampDecay,
++        ampSustain,
+         reverse
+       }
+     );
+@@ -1361,7 +1414,9 @@ playNote_fn = function(event) {
        __privateGet(this, _channel).input,
        stopId,
        match.group,
 -      time
 +      time,
-+      pitchBend
++      pitchBend,
++      ampModulation
      );
      __privateGet(this, _voices2).add(voice);
      if (!voiceStarted) {
 diff --git a/dist/index.mjs b/dist/index.mjs
-index b77674141770395687e7222b3a6256221354ca0e..d941ab96ab58b3a5fc1ebb1bd6c73ef633d75f53 100644
+index b77674141770395687e7222b3a6256221354ca0e..0a205177b51ecc59d36d1437ae86f22cb738757a 100644
 --- a/dist/index.mjs
 +++ b/dist/index.mjs
 @@ -390,6 +390,7 @@ var PARAM_DEFAULTS = {
@@ -188,24 +243,30 @@ index b77674141770395687e7222b3a6256221354ca0e..d941ab96ab58b3a5fc1ebb1bd6c73ef6
    let detune = (semitones + merged.tune) * 100 + merged.detune;
    if ((overrides == null ? void 0 : overrides.detune) !== void 0) detune += overrides.detune;
    return {
-@@ -419,6 +420,7 @@ function resolveParams(defaults, group, region, midi, velocity, overrides) {
+@@ -418,7 +419,12 @@ function resolveParams(defaults, group, region, midi, velocity, overrides) {
+     velocity,
      volume: merged.volume,
      ampRelease: (_c = overrides == null ? void 0 : overrides.ampRelease) != null ? _c : merged.ampRelease,
-     ampAttack: merged.ampAttack,
-+    ampDelay: merged.ampDelay, ampHold: merged.ampHold, ampDecay: merged.ampDecay, ampSustain: merged.ampSustain, pan: merged.pan,
+-    ampAttack: merged.ampAttack,
++    ampAttack: overrides?.ampAttack ?? merged.ampAttack,
++    ampDelay: merged.ampDelay,
++    ampHold: merged.ampHold, ampDecay: overrides?.ampDecay ?? merged.ampDecay,
++    ampSustain: overrides?.ampSustain ?? merged.ampSustain, pan: merged.pan,
++    adjustedEnvelope: overrides?.ampAttack !== void 0 || overrides?.ampDecay !== void 0 ||
++      overrides?.ampSustain !== void 0 || overrides?.ampRelease !== void 0,
      lpfCutoffHz: (_d = overrides == null ? void 0 : overrides.lpfCutoffHz) != null ? _d : merged.lpfCutoffHz,
      offset: merged.offset,
      loop: (_e = overrides == null ? void 0 : overrides.loop) != null ? _e : merged.loop,
-@@ -786,7 +788,7 @@ var Scheduler = asConstructable(SchedulerImpl);
+@@ -786,7 +792,7 @@ var Scheduler = asConstructable(SchedulerImpl);
  // src/smplr/voice.ts
  var _context3, _source, _envelope, _startAt, _releaseAt, _ampRelease, _state, _endedCallbacks;
  var Voice = class {
 -  constructor(context, buffer, params, destination, stopId, group, startTime) {
-+  constructor(context, buffer, params, destination, stopId, group, startTime, pitchBend) {
++  constructor(context, buffer, params, destination, stopId, group, startTime, pitchBend, ampModulation) {
      __privateAdd(this, _context3);
      __privateAdd(this, _source);
      __privateAdd(this, _envelope);
-@@ -804,6 +806,7 @@ var Voice = class {
+@@ -804,6 +810,7 @@ var Voice = class {
      const cents = params.detune;
      if (source.detune) {
        source.detune.value = cents;
@@ -213,14 +274,20 @@ index b77674141770395687e7222b3a6256221354ca0e..d941ab96ab58b3a5fc1ebb1bd6c73ef6
      } else {
        source.playbackRate.value = Math.pow(2, cents / 1200);
      }
-@@ -833,9 +836,24 @@ var Voice = class {
+@@ -833,9 +840,36 @@ var Voice = class {
        source.connect(gain);
      }
      gain.connect(envelope);
 -    envelope.connect(destination);
 +    const panner = context.createStereoPanner();
 +    panner.pan.value = params.pan;
-+    envelope.connect(panner);
++    const modulation = ampModulation && context.createGain();
++    if (modulation) {
++      modulation.gain.value = ampModulation.base;
++      ampModulation.signal.connect(modulation.gain);
++      envelope.connect(modulation);
++      modulation.connect(panner);
++    } else envelope.connect(panner);
 +    panner.connect(destination);
      const startAt = startTime != null ? startTime : context.currentTime;
      __privateSet(this, _startAt, startAt);
@@ -232,49 +299,84 @@ index b77674141770395687e7222b3a6256221354ca0e..d941ab96ab58b3a5fc1ebb1bd6c73ef6
 +    this.envelopeAt = t => t < attackStart ? 0 : t < attackEnd ? (t - attackStart) / Math.max(params.ampAttack, 1e-9)
 +      : t < holdEnd ? 1 : t < decayEnd ? 1 + (sustain - 1) * (t - holdEnd) / Math.max(params.ampDecay, 1e-9) : sustain;
 +    envelope.gain.setValueAtTime(0, startAt);
-+    envelope.gain.setValueAtTime(0, attackStart);
-+    envelope.gain.linearRampToValueAtTime(1, attackEnd);
++    if (params.ampAttack > 0) {
++      envelope.gain.setValueAtTime(0, attackStart);
++      envelope.gain.linearRampToValueAtTime(1, attackEnd);
++    } else envelope.gain.setValueAtTime(1, attackStart);
 +    envelope.gain.setValueAtTime(1, holdEnd);
-+    envelope.gain.linearRampToValueAtTime(sustain, decayEnd);
++    if (params.ampDecay > 0) envelope.gain.linearRampToValueAtTime(sustain, decayEnd);
++    else envelope.gain.setValueAtTime(sustain, decayEnd);
++    if (params.adjustedEnvelope) {
++      this.envelopeRampAt = t => t > attackStart && t <= attackEnd || t > holdEnd && t <= decayEnd;
++    }
      let offsetSec = 0;
      if (params.offset > 0) {
        offsetSec = params.reverse ? buffer.duration - params.offset : params.offset;
-@@ -845,7 +863,11 @@ var Voice = class {
+@@ -845,7 +879,15 @@ var Voice = class {
      __privateSet(this, _envelope, envelope);
      source.onended = () => {
        __privateSet(this, _state, "stopped");
 +      if (source.detune && pitchBend) {
 +        try { pitchBend.disconnect(source.detune); } catch { /* The channel may already be disconnected. */ }
 +      }
++      if (modulation) {
++        try { ampModulation.signal.disconnect(modulation.gain); } catch { /* The note route was already disconnected. */ }
++        modulation.disconnect();
++      }
        envelope.disconnect();
 +      panner.disconnect();
        gain.disconnect();
        lpf == null ? void 0 : lpf.disconnect();
        source.disconnect();
-@@ -870,7 +892,7 @@ var Voice = class {
+@@ -869,9 +911,12 @@ var Voice = class {
+       __privateGet(this, _envelope).gain.cancelScheduledValues(t);
      } else {
        const stopAt = t + __privateGet(this, _ampRelease);
-       __privateGet(this, _envelope).gain.cancelScheduledValues(t);
+-      __privateGet(this, _envelope).gain.cancelScheduledValues(t);
 -      __privateGet(this, _envelope).gain.setValueAtTime(1, t);
-+      __privateGet(this, _envelope).gain.setValueAtTime(this.envelopeAt(t), t);
-       __privateGet(this, _envelope).gain.linearRampToValueAtTime(0, stopAt);
+-      __privateGet(this, _envelope).gain.linearRampToValueAtTime(0, stopAt);
++      const gain = __privateGet(this, _envelope).gain;
++      gain.cancelScheduledValues(t);
++      if (this.envelopeRampAt?.(t)) gain.linearRampToValueAtTime(this.envelopeAt(t), t);
++      else gain.setValueAtTime(this.envelopeAt(t), t);
++      if (stopAt > t) gain.linearRampToValueAtTime(0, stopAt);
++      else gain.setValueAtTime(0, t);
        __privateGet(this, _source).stop(stopAt);
      }
-@@ -1243,6 +1265,7 @@ playNote_fn = function(event) {
+   }
+@@ -1243,9 +1288,14 @@ playNote_fn = function(event) {
      stopId,
      duration,
      detune,
 +    pitchBend,
++    ampModulation,
      lpfCutoffHz,
      loop,
      ampRelease,
-@@ -1293,7 +1316,8 @@ playNote_fn = function(event) {
++    ampAttack,
++    ampDecay,
++    ampSustain,
+     reverse,
+     onStart,
+     onEnded
+@@ -1283,6 +1333,9 @@ playNote_fn = function(event) {
+         lpfCutoffHz,
+         loop,
+         ampRelease,
++        ampAttack,
++        ampDecay,
++        ampSustain,
+         reverse
+       }
+     );
+@@ -1293,7 +1346,9 @@ playNote_fn = function(event) {
        __privateGet(this, _channel).input,
        stopId,
        match.group,
 -      time
 +      time,
-+      pitchBend
++      pitchBend,
++      ampModulation
      );
      __privateGet(this, _voices2).add(voice);
      if (!voiceStarted) {

@@ -64,6 +64,7 @@ function fixture({ loop = false } = {}) {
     '../music/midi-glides': require('./music-loader.cjs').loadMusic('midi-glides.ts'),
     '../music/track-voicing': require('./music-loader.cjs').loadMusic('track-voicing.ts'),
     './schedule-voice': require('./music-loader.cjs').loadMusic('../audio/schedule-voice.ts'),
+    './instrument-tone': require('./music-loader.cjs').loadMusic('../audio/instrument-tone.ts'),
     './live-track-voicing': require('./music-loader.cjs').loadMusic('../audio/live-track-voicing.ts'),
     './channel-glide-audio': require('./music-loader.cjs').loadMusic('../audio/channel-glide-audio.ts'),
     '../music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),

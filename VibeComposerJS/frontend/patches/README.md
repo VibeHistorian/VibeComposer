@@ -9,7 +9,9 @@ Synthesis is unchanged.
 The `smplr@1.1.0` patch adds per-region pan and scale tuning, volume-envelope
 delay/attack/hold/decay/sustain, and release from the envelope's computed level.
 The optional note `pitchBend` signal adds channel detune to each sample voice.
-It also filters undefined preset defaults so they cannot overwrite numeric
+Notes also accept envelope overrides and an `ampModulation` signal. An override
+preserves the unfinished attack or decay ramp when note-off interrupts it.
+The patch filters undefined preset defaults so they cannot overwrite numeric
 defaults and produce NaN pitch parameters. Both ESM/CommonJS builds and both
 declaration files are patched. SF2 parsing and bank/program resolution stay in
 `src/app/core/audio/sf2-resolver.ts`; the package patch is only renderer support.

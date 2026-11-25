@@ -1,5 +1,6 @@
 import { Instrument, Scheduler, type Smplr, type SmplrPreset } from 'smplr';
 import type { InstrumentEngine, InstrumentVoice } from './instrument-engine';
+import type { InstrumentTone } from './instrument-tone';
 import type { Sf2Bank, Sf2Preset } from './sf2-resolver';
 
 const Sf2Instrument = Instrument<{ preset: SmplrPreset; buffers: Map<string, AudioBuffer> }>(
@@ -33,9 +34,12 @@ export class Sf2InstrumentEngine implements InstrumentEngine {
     return result;
   }
   schedule(destination: AudioNode, program: number, percussion: boolean, midi: number,
-    velocity: number, start: number, duration: number, pitchBend?: AudioNode): InstrumentVoice[] {
+    velocity: number, start: number, duration: number, pitchBend?: AudioNode,
+    tone?: InstrumentTone, tremoloSignal?: AudioNode): InstrumentVoice[] {
     if (this.disposed || !this.bank) throw new Error('Soundfont engine is not ready.');
     if (velocity <= 0) return [];
+    const { attackMs, decayMs, sustainPercent, releaseMs, tremoloPercent } = (percussion ? undefined : tone) ?? {};
+    const ampRelease = releaseMs === undefined ? undefined : releaseMs / 1000;
     // This bank supplies only the Standard kit. Percussion program changes use that kit.
     const bank = percussion ? 128 : 0, preset = this.bank.resolve(bank, percussion ? 0 : program);
     // Preserve a soundfont’s native shaker; use maracas only when note 82 has no region.
@@ -64,6 +68,11 @@ export class Sf2InstrumentEngine implements InstrumentEngine {
     const pending = sampler.ready.then(() => {
       if (cancelled || this.disposed) { finish(); return; }
       stopNote = sampler.start({ note: midi, velocity, time: start, duration, stopId: id, pitchBend,
+        ampAttack: attackMs === undefined ? undefined : attackMs / 1000,
+        ampDecay: decayMs === undefined ? undefined : decayMs / 1000,
+        ampSustain: sustainPercent === undefined ? undefined : sustainPercent / 100,
+        ampRelease,
+        ampModulation: tremoloSignal && tremoloPercent ? { signal: tremoloSignal, base: 1 - tremoloPercent / 200 } : undefined,
         onEnded: () => { if (--remaining === 0) finish(); } });
       if (stopAt !== undefined) stopNote(stopAt);
     }).catch(error => { this.failure = error; finish(); });
@@ -74,7 +83,8 @@ export class Sf2InstrumentEngine implements InstrumentEngine {
       else if (time === undefined || time <= start) cancelled = true;
       else stopAt = time;
     };
-    return [{ stopTime: start + duration + Math.max(...matching.map(r => r.ampRelease ?? 0)), stop,
+    return [{ stopTime: start + duration + (ampRelease ?? Math.max(...matching.map(r => r.ampRelease ?? 0))), stop,
+      release: ampRelease === undefined ? undefined : stop,
       onEnded: next => { callback = next; if (ended) next(); },
       dispose: () => {
         if (released) return;

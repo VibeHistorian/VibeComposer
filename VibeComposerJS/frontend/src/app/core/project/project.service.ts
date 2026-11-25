@@ -30,6 +30,7 @@ import { UiPreferencesService } from '../ui/ui-preferences.service';
 import { isScaleMode } from '../music/scales';
 import { followManualPhraseMode } from '../music/manual-phrase-mode';
 import { normalizeVolumePercent, validVolumePercent } from '../audio/mix-values';
+import { validInstrumentToneValue, type InstrumentToneKey } from '../audio/instrument-tone';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { historyContent, preserveAudition, projectDiff } from './project-history';
 import { BASE_KEY, getDiatonicChords, progressionChords, validProgressionChords, type ProgressionChord } from '../music/harmony';
@@ -37,7 +38,7 @@ import { generateTrackPresence } from '../music/arrangement-generator';
 import type { ArpeggioSettings, BassSettings, ChordSettings, DrumSettings, PartSettingsPatch, MelodySettings, MelodyGlobalSettings } from '../music/part-settings.model';
 import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
 import type { ArrangementSection, SectionType, SectionMusicalContext } from './arrangement.model';
-import type { CompositionTrack, MixChannelSettings } from './track.model';
+import { clearInstrumentTone, type CompositionTrack, type MixChannelSettings } from './track.model';
 import type { PhraseNote } from '../music/phrase-note';
 import type { PartSettingsScope, LocalPartSettingsScope, PartWorkflowResult } from './part-settings-scope';
 import type { InstrumentGenerationPolicy, ArpeggioGenerationPolicy, TrackGenerationPolicyPatch } from '../music/generation-policy.model';
@@ -1099,7 +1100,8 @@ export class ProjectService {
   setSoundbankName(soundbankName: string): void {
     const current = this.state();
     if (soundbankName !== (current.soundbankName ?? 'synth')) {
-      this.publishHistoryEdit(current, { ...current, soundbankName });
+      const tracks = current.tracks.some(track => track.instrumentTone) ? current.tracks.map(clearInstrumentTone) : current.tracks;
+      this.publishHistoryEdit(current, { ...current, soundbankName, tracks });
     }
   }
 
@@ -1331,6 +1333,7 @@ export class ProjectService {
         ...(patch.mix.solo === true ? { muted: false } : patch.mix.muted === true ? { solo: false } : {}) } : track.mix };
     if (patch.mix?.program !== undefined && patch.mix.program !== track.mix.program) {
       delete (tracks[index] as { instrumentPool?: string }).instrumentPool;
+      tracks[index] = clearInstrumentTone(tracks[index]);
     }
     const controlKey = Object.keys(patch).length === 1
       ? this.controlHistoryKey(['track', trackId, ...(patch.mix ? ['mix'] : [])], patch.mix ?? patch) : undefined;
@@ -1341,6 +1344,23 @@ export class ProjectService {
       return;
     }
     this.commit({ ...current, tracks }, controlKey);
+  }
+
+  updateTrackInstrumentTone(trackId: string, program: number, soundbankName: string, key: InstrumentToneKey,
+    value: number | undefined): void {
+    const current = this.state();
+    const track = current.tracks.find(item => item.id === trackId);
+    if (!track || track.role === 'drums' || track.mix.program !== program || soundbankName !== (current.soundbankName ?? 'synth')
+      || value !== undefined && !validInstrumentToneValue(key, value)) return;
+    const existing = track.instrumentTone?.soundbankName === soundbankName ? track.instrumentTone : undefined;
+    if (existing?.[key] === value) return;
+    const overrides = { ...existing };
+    if (value === undefined) delete overrides[key];
+    else overrides[key] = value;
+    delete overrides.soundbankName;
+    const next = Object.keys(overrides).length ? { ...track, instrumentTone: { soundbankName, ...overrides } } : clearInstrumentTone(track);
+    const tracks = current.tracks.map(item => item === track ? next : item);
+    this.publishHistoryEdit(current, { ...current, tracks }, this.controlHistoryKey(['track', trackId, 'instrumentTone'], { [key]: value }));
   }
 
   updateTrackGeneratorSettings(trackId: string, patch: PartSettingsPatch, compactAs?: string): void {
@@ -1804,7 +1824,10 @@ export class ProjectService {
       if (updated || track.role !== role) return track;
       updated = true;
       const next = { ...track, ...patch } as CompositionTrack;
-      if (patch.mix && patch.mix.program !== track.mix.program) delete (next as { instrumentPool?: string }).instrumentPool;
+      if (patch.mix && patch.mix.program !== track.mix.program) {
+        delete (next as { instrumentPool?: string }).instrumentPool;
+        return clearInstrumentTone(next);
+      }
       return next;
     });
   }

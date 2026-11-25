@@ -6,6 +6,7 @@
 
 /* Appearance preview backdrop */
 .cdk-overlay-backdrop.appearance-preview { background: transparent; }
+.cdk-overlay-pane.knob-tooltip-pane { pointer-events: none; }
 
 /* Theme tokens */
 :root {

@@ -17,6 +17,7 @@ function fixture() {
   viewChild.required = () => () => undefined;
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type,
     signal, computed: (read) => read, effect: callback => { effects.push(callback); }, untracked: read => read(), input, viewChild,
+    resource: () => ({ hasValue: () => false, value: () => undefined }),
     output: () => ({ values: [], emit(value) { this.values.push(value); } }),
     ChangeDetectionStrategy: { OnPush: 0 },
   };

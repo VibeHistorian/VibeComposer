@@ -3,6 +3,55 @@ const test = require('node:test');
 const { Midi } = require('@tonejs/midi');
 const { fixture } = require('../support/project-fixture.cjs');
 
+test('instrument tone edits round-trip, retain independent settings and reset with instrument identity', () => {
+  const { service, load } = fixture();
+  const { resolveProjectTimeline } = load('core/music/project-timeline.ts');
+  const { rerollInstruments, DEFAULT_INSTRUMENT_POLICIES } = load('core/music/instrument-generation.ts');
+  const initial = service.project();
+  const melody = initial.tracks.find(track => track.role === 'melody');
+  const drum = initial.tracks.find(track => track.role === 'drums');
+  const track = () => service.project().tracks.find(track => track.id === melody.id);
+  const edit = (key, value) => service.updateTrackInstrumentTone(melody.id, melody.mix.program, 'synth', key, value);
+  edit('releaseMs', 625);
+  edit('vibratoCents', 13);
+  const saved = { soundbankName: 'synth', releaseMs: 625, vibratoCents: 13 };
+  assert.deepEqual(track().instrumentTone, saved);
+  assert.equal(resolveProjectTimeline(initial), resolveProjectTimeline(service.project()), 'tone does not change generated notes');
+  assert.equal(service.project().tracks.find(track => track.id === drum.id), drum);
+  const restored = fixture().service;
+  assert.equal(restored.importProjectJson(service.exportProjectJson()), true);
+  assert.deepEqual(restored.project().tracks.find(track => track.id === melody.id).instrumentTone, saved);
+  const legacy = JSON.parse(service.exportProjectJson());
+  legacy.tracks.find(track => track.id === melody.id).instrumentTone.delayMs = 200;
+  const bass = legacy.tracks.find(track => track.role === 'bass');
+  bass.instrumentTone = { soundbankName: 'synth', delayMs: 60 };
+  assert.equal(restored.importProjectJson(JSON.stringify(legacy)), true);
+  assert.deepEqual(restored.project().tracks.find(track => track.id === melody.id).instrumentTone, saved);
+  assert.equal(restored.project().tracks.find(track => track.id === bass.id).instrumentTone, undefined);
+  restored.updateTrackInstrumentTone(melody.id, melody.mix.program, 'synth', 'decayMs', 300);
+  assert.equal(JSON.parse(restored.exportProjectJson()).tracks.find(track => track.id === melody.id).instrumentTone.decayMs, 300);
+
+  service.updateTrack(melody.id, { voiceMode: 'legato', mix: { program: melody.mix.program, panPercent: 30 } });
+  assert.deepEqual(track().instrumentTone, saved);
+  const randomizable = { ...track(), mix: { ...track().mix, program: 127 } };
+  const [rerolled] = rerollInstruments(1n, 'melody', DEFAULT_INSTRUMENT_POLICIES.melody, [randomizable]);
+  assert.notEqual(rerolled.mix.program, 127);
+  assert.equal(rerolled.instrumentTone, undefined);
+  service.updateTrack(melody.id, { mix: { program: (melody.mix.program + 1) % 128 } });
+  edit('decayMs', 60); // A gesture started on the original program cannot edit the new one.
+  assert.equal(track().instrumentTone, undefined);
+  service.undo();
+  assert.deepEqual(track().instrumentTone, saved);
+  service.setSoundbankName('chiptune');
+  assert.equal(track().instrumentTone, undefined);
+  service.undo();
+  assert.deepEqual(track().instrumentTone, saved);
+  edit('releaseMs', undefined);
+  assert.deepEqual(track().instrumentTone, { soundbankName: 'synth', vibratoCents: 13 });
+  edit('vibratoCents', undefined);
+  assert.equal(track().instrumentTone, undefined);
+});
+
 test('note removal clears track presence in one or all sections with one undo, preserving notes and other tracks', () => {
   for (const local of [true, false]) {
     const { service } = fixture();

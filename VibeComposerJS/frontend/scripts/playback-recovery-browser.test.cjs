@@ -48,6 +48,7 @@ test('realtime audio survives delays and fractional loops without hidden playhea
           ['../music/midi-glides', ${JSON.stringify(compile('../music/midi-glides.ts'))}],
           ['./channel-glide-audio', ${JSON.stringify(compile('channel-glide-audio.ts'))}],
           ['../music/track-voicing', ${JSON.stringify(compile('../music/track-voicing.ts'))}],
+          ['./instrument-tone', ${JSON.stringify(compile('instrument-tone.ts'))}],
           ['./schedule-voice', ${JSON.stringify(compile('schedule-voice.ts'))}],
           ['./live-track-voicing', ${JSON.stringify(compile('live-track-voicing.ts'))}],
         ];

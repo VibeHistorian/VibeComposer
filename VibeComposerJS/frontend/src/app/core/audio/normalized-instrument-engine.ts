@@ -1,4 +1,5 @@
 import type { InstrumentEngine, InstrumentVoice } from './instrument-engine';
+import type { InstrumentTone } from './instrument-tone';
 
 export interface LoudnessProfile {
   readonly melodic: readonly number[];
@@ -15,9 +16,9 @@ export class NormalizedInstrumentEngine implements InstrumentEngine {
   prepare(): Promise<void> { return this.engine.prepare(); }
   flush(): Promise<void> { return this.engine.flush(); }
   schedule(destination: AudioNode, program: number, percussion: boolean, midi: number,
-    velocity: number, start: number, duration: number, pitchBend?: AudioNode): InstrumentVoice[] {
+    velocity: number, start: number, duration: number, pitchBend?: AudioNode, tone?: InstrumentTone, tremoloSignal?: AudioNode): InstrumentVoice[] {
     const correction = (percussion ? this.profile.drums[midi] : this.profile.melodic[program]) ?? 1;
-    if (velocity <= 0 || correction === 1) return this.engine.schedule(destination, program, percussion, midi, velocity, start, duration, pitchBend);
+    if (velocity <= 0 || correction === 1) return this.engine.schedule(destination, program, percussion, midi, velocity, start, duration, pitchBend, tone, tremoloSignal);
     const key = percussion ? 128 + midi : program;
     let routes = this.routes.get(destination);
     if (!routes) { routes = new Map(); this.routes.set(destination, routes); }
@@ -37,13 +38,13 @@ export class NormalizedInstrumentEngine implements InstrumentEngine {
       if (!activeRoutes.size) this.routes.delete(destination);
     };
     let voices: InstrumentVoice[];
-    try { voices = this.engine.schedule(active.gain, program, percussion, midi, velocity, start, duration, pitchBend); }
+    try { voices = this.engine.schedule(active.gain, program, percussion, midi, velocity, start, duration, pitchBend, tone, tremoloSignal); }
     catch (error) { releaseRoute(); throw error; }
     active.voices += voices.length;
     if (!voices.length) releaseRoute();
     return voices.map(voice => {
       let disposed = false;
-      return { stopTime: voice.stopTime, stop: time => voice.stop(time), onEnded: callback => voice.onEnded(callback),
+      return { stopTime: voice.stopTime, stop: time => voice.stop(time), release: voice.release, onEnded: callback => voice.onEnded(callback),
         dispose: () => {
           if (disposed) return;
           disposed = true;

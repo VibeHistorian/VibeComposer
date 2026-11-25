@@ -65,7 +65,7 @@ for (const { width, missingMethod, sampler, chiptune, lateClock } of [
         const nativeStart = prototype.start;
         prototype.start = function(...args) {
           if (this.context instanceof OfflineAudioContext && this.context.sampleRate === 48000) {
-            sourceStartTimes.push({ now: readClock.call(this.context), start: args[0] });
+            sourceStartTimes.push({ now: readClock.call(this.context), start: args[0], hz: this.frequency?.value });
           }
           return nativeStart.apply(this, args);
         };
@@ -117,6 +117,7 @@ for (const { width, missingMethod, sampler, chiptune, lateClock } of [
           await changeControl(engineSelect, second.value);
           settings.querySelector('[aria-label="Unload Second.sf2"]').click();
           await wait(() => engineSelect.getAttribute('value') === 'synth', 'unloading selected font chooses synth');
+          ensure(!document.querySelector('.track-group.bass .track-instrument-tone'), 'fallback hides the unavailable patch controls');
           const fourth = (await selectOptions(engineSelect)).find(o => o.textContent.includes('Fourth.sf2'));
           await changeControl(engineSelect, fourth.value);
           const normalization = settings.querySelector('[aria-label="Instrument loudness normalization"]');
@@ -138,6 +139,14 @@ for (const { width, missingMethod, sampler, chiptune, lateClock } of [
           const engineSelect = await wait(() => document.querySelector(':is(vc-select, vc-menu-select)[aria-label="Audio instrument engine"]'), 'instrument selector');
           await changeControl(engineSelect, 'chiptune');
         }
+        if (${Boolean(sampler || chiptune)}) {
+          const controls = await wait(() => document.querySelector('.track-group.bass .track-instrument-tone'), 'selected patch tone controls');
+          ensure(controls.querySelectorAll('input').length === 6, 'every tone control is available for the selected engine');
+          const vibrato = controls.querySelector('input[aria-label="Vibrato B1"]');
+          vibrato.value = '20';
+          vibrato.dispatchEvent(new Event('change', { bubbles: true }));
+          await wait(() => vibrato.getAttribute('aria-valuetext') === '20 cents', 'vibrato depth');
+        }
         const trigger = await wait(()=>document.querySelector('[title="Export"]'), 'export trigger');
         trigger.focus(); key(trigger,'ArrowDown');
         await wait(()=>menu() && menu().contains(document.activeElement),'keyboard menu focus');
@@ -154,6 +163,7 @@ for (const { width, missingMethod, sampler, chiptune, lateClock } of [
         const filenamePattern = /^\\d{8}_\\d{2}-\\d{2}_G_${project.tempoBpm}_${project.seed}_Export- test/;
         ensure(!Object.hasOwn(saved, 'key') && saved.transposeSemitones===7,'project export stores global transpose');
         if (${Boolean(sampler)}) ensure(saved.soundbankName==='Fourth.sf2','project export stores the selected soundfont filename');
+        if (${Boolean(sampler || chiptune)}) ensure(saved.tracks.find(track=>track.id==='track-bass-1').instrumentTone?.vibratoCents===20, 'project export keeps the edited tone');
         ensure(saved.name==='Export: test' && filenamePattern.test(downloads[0].name) && downloads[0].name.endsWith('.vibe.json'),'project export preserved with automatic filename');
         trigger.click(); await wait(menu,'MIDI menu'); item('Export MIDI').click();
         await wait(()=>downloads.length===2,'MIDI download');
@@ -164,7 +174,10 @@ for (const { width, missingMethod, sampler, chiptune, lateClock } of [
         ensure([...menu().querySelectorAll('button')].some(b=>b.disabled && b.textContent.includes('Audio')),'duplicate audio export disabled');
         key(document.activeElement,'Escape');
         await wait(()=>downloads.length===3,'audio download');
-        const exportMessage = document.querySelector('.project-message span')?.textContent ?? '';
+        const exportMessage = await wait(() => {
+          const message = document.querySelector('.project-message span')?.textContent;
+          return message && !message.startsWith('Rendering audio:') ? message : undefined;
+        }, 'final audio export message');
         ensure(${Boolean(lateClock)} ? exportMessage.includes('Timing may differ from playback. 1 note was scheduled late') : exportMessage === 'Audio exported.',
           'export reports late scheduling: '+exportMessage);
         ensure(realtimeContexts===0,'offline export never opens audio device');
@@ -188,6 +201,7 @@ for (const { width, missingMethod, sampler, chiptune, lateClock } of [
           ensure(rms(0,5.62,5.7)>.001,'late note remains audible');
           ensure(sourceStartTimes.some(({now,start}) => start>5.5 && start>=now && (missingMethod ? now===0 : now>0)),
             'later notes are scheduled at the expected offline clock position');
+          if (${Boolean(sampler || chiptune)}) ensure(sourceStartTimes.some(({start,hz}) => start>5.5 && hz===5), 'audio export schedules the edited vibrato');
         } finally { await context.close(); }
         ensure(offlineResumes===(missingMethod ? 0 : 19),'only supported render checkpoints suspend and resume');
         ensure(renderProgress[0]===0 && renderProgress.at(-1)===100,'render progress runs from 0 to 100: '+renderProgress);

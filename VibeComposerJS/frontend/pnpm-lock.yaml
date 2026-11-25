@@ -163,7 +163,7 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  smplr@1.1.0: 05477721fd439a07a172ccc559ae0737ff72e10ceba3e02ed3f9d79f7b1d0f03
+  smplr@1.1.0: 3c7f30ff19f560fcf9587d49f2d868ed064489bc7962036ea1bd07951c50d196
   webaudio-tinysynth@1.1.3: ef1ecdbe903265ead2f0d3eef8958d417cff79c143b8d41f2cfa6fa94737298a
 
 importers:
@@ -217,7 +217,7 @@ importers:
         version: 7.8.2
       smplr:
         specifier: 1.1.0
-        version: 1.1.0(patch_hash=05477721fd439a07a172ccc559ae0737ff72e10ceba3e02ed3f9d79f7b1d0f03)
+        version: 1.1.0(patch_hash=3c7f30ff19f560fcf9587d49f2d868ed064489bc7962036ea1bd07951c50d196)
       tslib:
         specifier: 2.8.1
         version: 2.8.1
@@ -3614,7 +3614,7 @@ snapshots:
       ansi-styles: 6.2.3
       is-fullwidth-code-point: 5.1.0
 
-  smplr@1.1.0(patch_hash=05477721fd439a07a172ccc559ae0737ff72e10ceba3e02ed3f9d79f7b1d0f03): {}
+  smplr@1.1.0(patch_hash=3c7f30ff19f560fcf9587d49f2d868ed064489bc7962036ea1bd07951c50d196): {}
 
   source-map-js@1.2.2: {}
 

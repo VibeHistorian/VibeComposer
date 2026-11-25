@@ -18,7 +18,8 @@ import { GLIDE_LANES, glidesByChannel, withGlidePreview, type GlideReplacement, 
 import { midiGlideEvents } from '../music/midi-glides';
 import { createChannelGlideAudio, disposeChannelGlideAudio, scheduleGlideParam, type ChannelGlideAudio } from './channel-glide-audio';
 import { planVoices, type VoiceNote } from '../music/track-voicing';
-import { scheduleVoice } from './schedule-voice';
+import { scheduleInstrumentNote, scheduleVoice } from './schedule-voice';
+import { instrumentToneForBank } from './instrument-tone';
 import { LiveTrackVoicing } from './live-track-voicing';
 
 type PlaybackState = 'stopped' | 'playing' | 'paused';
@@ -182,14 +183,15 @@ export class AudioPlaybackService {
         }
         await this.prepareInstrument(context);
         if (cancelled) return;
+        const tone = instrumentToneForBank(track.instrumentTone, this.engineKind, project.soundbankName);
         if (track.voiceMode && track.voiceMode !== 'poly') {
           let voice = this.liveVoicing.get(track.id);
-          if (!voice || voice.engine !== this.synth || voice.mode !== track.voiceMode) {
+          if (!voice || voice.engine !== this.synth || voice.mode !== track.voiceMode || voice.program !== track.mix.program) {
             voice?.dispose();
-            voice = new LiveTrackVoicing(this.synth!, track.voiceMode);
+            voice = new LiveTrackVoicing(this.synth!, track.voiceMode, track.mix.program);
             this.liveVoicing.set(track.id, voice);
           }
-          release = voice.press(track, note, project.masterVolumePercent ?? 100);
+          release = voice.press(track, note, project.masterVolumePercent ?? 100, tone);
           return;
         }
         this.liveVoicing.get(track.id)?.dispose();
@@ -198,13 +200,18 @@ export class AudioPlaybackService {
         gain.gain.value = 0.8 * track.mix.volumePercent / 100 * (project.masterVolumePercent ?? 100) / 100;
         pan.pan.value = track.mix.panPercent / 100;
         gain.connect(pan); pan.connect(protectedAudioOutput(context));
-        const voices = this.synth!.schedule(gain, track.mix.program, track.role === 'drums', note.midi, note.velocity, context.currentTime + 0.003, 3600);
+        const voices = scheduleInstrumentNote(this.synth!, gain, track.mix.program, track.role === 'drums', note.midi, note.velocity,
+          context.currentTime + 0.003, 3600, undefined, tone);
         let remaining = voices.length;
         const disconnect = () => { gain.disconnect(); pan.disconnect(); };
         for (const voice of voices) voice.onEnded(() => { voice.dispose(); if (--remaining === 0) disconnect(); });
         if (!remaining) disconnect();
         release = () => {
           const now = context.currentTime;
+          if (voices.some(voice => voice.release)) {
+            for (const voice of voices) voice.release?.(now);
+            return;
+          }
           gain.gain.setTargetAtTime(0, now, 0.005);
           for (const voice of voices) { try { voice.stop(now + 0.025); } catch { /* Already ended/disposed; the audition gain still fades to zero. */ } }
         };
@@ -237,14 +244,15 @@ export class AudioPlaybackService {
       gain.connect(pan);
       pan.connect(protectedAudioOutput(context));
       const pitches = new Set<number>();
+      const tone = instrumentToneForBank(track.instrumentTone, this.engineKind, project?.soundbankName);
       const audible = track.voiceMode && track.voiceMode !== 'poly'
         ? [notes.reduce((highest, note) => note.midi >= highest.midi ? note : highest)] : notes;
       const voices = audible.filter(note => {
         if (pitches.has(note.midi)) return false;
         pitches.add(note.midi);
         return true;
-      }).flatMap(note => this.synth!.schedule(gain, track.mix.program, track.role === 'drums',
-        note.midi, note.velocity, context.currentTime + 0.003, 0.3));
+      }).flatMap(note => scheduleInstrumentNote(this.synth!, gain, track.mix.program, track.role === 'drums',
+        note.midi, note.velocity, context.currentTime + 0.003, 0.3, undefined, tone));
       let remaining = voices.length;
       const disconnect = () => { gain.disconnect(); pan.disconnect(); };
       if (!remaining) disconnect();
@@ -859,7 +867,8 @@ export class AudioPlaybackService {
     const cutBeat = Math.min(note.cutBeat ?? Infinity, this.loopEnabled() ? this.loopBounds().endBeat : Infinity);
     const cutTime = Number.isFinite(cutBeat) ? startTime + beatToSeconds(this.tempoMap, cutBeat) - songTime : Infinity;
     const voices = scheduleVoice(this.synth, bus.gain, this.programs.get(note.trackId) ?? 0,
-      note.role === 'drums', note, startTime, duration, songTime, cutTime, this.glideAudio.get(bus.track.midiChannel)?.pitch);
+      note.role === 'drums', note, startTime, duration, songTime, cutTime, this.glideAudio.get(bus.track.midiChannel)?.pitch,
+      instrumentToneForBank(bus.track.instrumentTone, this.engineKind, this.mixProject?.soundbankName));
     if (voices.length) this.scheduledNotes.push({ trackId: note.trackId, noteId: note.id, startTime, endTime: startTime + duration });
     for (const voice of voices) {
       this.activeSources.add(voice);

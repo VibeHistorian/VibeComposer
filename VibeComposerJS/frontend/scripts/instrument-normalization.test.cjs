@@ -50,11 +50,13 @@ test('shared output correction preserves note timing/velocity, separates drum no
   const normalized = new NormalizedInstrumentEngine(engine, { melodic, drums });
   const destination = {};
   const pitchBend = {};
-  const a = normalized.schedule(destination, 32, false, 48, 80, 1, 2, pitchBend)[0];
+  const tone = { releaseMs: 125, tremoloPercent: 30 };
+  const tremoloSignal = {};
+  const a = normalized.schedule(destination, 32, false, 48, 80, 1, 2, pitchBend, tone, tremoloSignal)[0];
   const b = normalized.schedule(destination, 32, false, 60, 110, 2, 1)[0];
   assert.equal(calls[0][0], calls[1][0]);
   assert.equal(calls[0][0].gain.value, .5);
-  assert.deepEqual(calls[0].slice(1), [32, false, 48, 80, 1, 2, pitchBend]);
+  assert.deepEqual(calls[0].slice(1), [32, false, 48, 80, 1, 2, pitchBend, tone, tremoloSignal]);
   const kick = normalized.schedule(destination, 0, true, 36, 100, 0, .2)[0];
   const snare = normalized.schedule(destination, 0, true, 38, 100, 0, .2)[0];
   assert.equal(calls[2][0].gain.value, .25);

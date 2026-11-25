@@ -8,6 +8,7 @@ import { INSTRUMENT_POOLS } from '../music/instrument-generation';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
 import { decodePhraseGlideEdits } from './project-glide-decoder';
 import { validTrackVoicing } from '../music/track-voicing';
+import { decodeTrackInstrumentTone } from '../audio/instrument-tone';
 
 export function decodeTracks(value: unknown): CompositionTrack[] | undefined {
   if (!Array.isArray(value) || value.length > 64) return undefined;
@@ -61,6 +62,11 @@ export function decodeTracks(value: unknown): CompositionTrack[] | undefined {
       }
     }
     if (!decoded) return undefined;
+    if (track.instrumentTone !== undefined) {
+      const instrumentTone = decodeTrackInstrumentTone(track.instrumentTone);
+      if (instrumentTone === undefined || track.role === 'drums') return undefined;
+      if (instrumentTone) decoded = { ...decoded, instrumentTone };
+    }
     if (track.drumPan !== undefined) {
       if (track.role !== 'drums' || (track.drumPan !== 'auto' && track.drumPan !== 'fixed')) return undefined;
       decoded = { ...decoded, drumPan: track.drumPan };

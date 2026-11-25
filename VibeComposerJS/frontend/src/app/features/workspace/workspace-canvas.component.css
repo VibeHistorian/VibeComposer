@@ -75,20 +75,27 @@
 .track-row-card:not(.selected):hover > .track-row-gradient { --track-gradient-strength: 10%; }
 .track-row-card.selected { border-color: var(--border-default); background: color-mix(in srgb, var(--track-group-color) 8%, var(--surface-role-group-selected)); }
 .track-row-card:not(.selected):hover { border-color: var(--border-default); background: color-mix(in srgb, var(--text-primary) 2%, transparent) }
-.track-line { min-width: 0; display: grid; grid-template-columns: var(--track-name-column-width) auto minmax(0, 1fr) auto auto; align-items: center; }
+.track-line { min-width: 0; display: grid; grid-template-columns: var(--track-name-column-width) auto minmax(0, 1fr) auto; align-items: center; }
 .track-select { min-width: 0; padding: 4px 0; display: flex; align-items: center; gap: 7px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; font: 10px var(--font-ui); }
 .track-select span { overflow: hidden; text-overflow: clip; white-space: nowrap; }
 .role-dot { width: 7px; height: 7px; flex: 0 0 auto; display: inline-block; border-radius: 50%; background: var(--role-bass); }
 .role-dot.melody { background: var(--role-melody); }
 .role-dot.bass { background: var(--role-bass); }.role-dot.chords { background: var(--role-chords); }.role-dot.arpeggio { background: var(--role-arpeggio); }.role-dot.drums { background: var(--role-drums); }
 /* Compact instrument and routing comboboxes */
-.track-instrument-stack, .track-channel-stack { display: grid; grid-template-rows: repeat(2, 15px); gap: 0; min-width: 0; }
+.track-routing { --track-channel-width: 43px; display: grid; grid-template-columns: minmax(0, 1fr) var(--track-channel-width); min-width: 0; container: track-routing / inline-size; }
+.track-routing-details { grid-column: 1 / -1; display: flex; flex-wrap: wrap; min-width: 0; }
+.track-instrument-tone { display: flex; align-items: center; gap: 1px; }
+.track-voice-routing { display: flex; margin-left: auto; }
+.track-glide-slot { width: var(--track-channel-width); }
+@container track-routing (max-width: 148px) {
+  .track-routing-details:has(.track-instrument-tone) .track-glide-slot:empty { display: none; }
+}
 .track-inline-select { appearance: none; width: 100%; height: 15px; padding: 0 3px; overflow: hidden; border: 1px solid var(--border-subtle); border-radius: var(--radius-tight); color: var(--text-secondary); text-overflow: ellipsis; white-space: nowrap; }
 .track-inline-select:hover { border-color: var(--border-strong); background: var(--surface-hover); }
 .track-inline-select[aria-disabled="true"] { color: var(--text-muted); cursor: default; }
 .track-instrument { font: 10px var(--font-ui); text-transform: uppercase; }
-.track-channel { width: 43px; font: 9px var(--font-mono); }
-.track-voice-mode { justify-self: end; width: max-content; max-width: 100%; display: grid;
+.track-channel { font: 9px var(--font-mono); }
+.track-voice-mode { width: max-content; max-width: 100%; display: grid;
   grid-template: 0 1fr / minmax(0, 1fr); align-items: center; font: 9px var(--font-ui); }
 /* Use the longest option to keep the trigger width stable when the selection changes. */
 .track-voice-mode::before { content: 'Legato'; visibility: hidden; }

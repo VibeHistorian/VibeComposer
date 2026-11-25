@@ -25,6 +25,19 @@ for (const width of [1440, 780, 700]) test(`MIDI dropdown permissions, keyboard,
       const key=(target,value)=>target.dispatchEvent(new KeyboardEvent('keydown',{key:value,keyCode:{ArrowDown:40,Escape:27}[value],bubbles:true,cancelable:true}));
       try{
         const trigger=await wait(()=>document.querySelector('.midi-port-button'),'MIDI trigger');
+        const tone=()=>document.querySelector('.track-group.melody .track-instrument-tone');
+        const letters=await wait(tone,'melodic instrument tone');
+        ensure([...letters.querySelectorAll('.knob-face')].map(face=>face.textContent.trim()).join('')==='ADSRVT','six compact letters');
+        ensure(!document.querySelector('.track-group.drums .track-instrument-tone'),'drum tracks omit tone');
+        const instrument=letters.closest('.track-row-card').querySelector('.track-instrument').getBoundingClientRect();
+        const toneBounds=letters.getBoundingClientRect();
+        ensure(Math.abs(instrument.left-toneBounds.left)<1 && toneBounds.top>=instrument.bottom,'controls align below instrument');
+        const attack=letters.querySelector('input[aria-label^="Attack "]');
+        const initialAttack=attack.getAttribute('aria-valuetext');
+        attack.value='500';
+        attack.dispatchEvent(new Event('change',{bubbles:true}));
+        const savedAttack=await wait(()=>attack.getAttribute('aria-valuetext') !== initialAttack && attack.getAttribute('aria-valuetext'),'attack value');
+        ensure(!attack.closest('.compact-knob').classList.contains('at-default'),'edit uses custom accent');
         ensure(requests===0,'no permission prompt on page load');
         ensure(trigger.textContent.includes('MIDI Port...') && !trigger.classList.contains('midi-connected'),'inactive label and style');
         const settings=document.querySelector('[aria-label="Settings"]');
@@ -42,6 +55,7 @@ for (const width of [1440, 780, 700]) test(`MIDI dropdown permissions, keyboard,
         ensure(bounds.left>=0 && bounds.right<=innerWidth && bounds.top>=0 && bounds.bottom<=innerHeight,'menu inside viewport');
         item('External synthesizer').click();
         await wait(()=>trigger.classList.contains('midi-connected'),'connected glow');
+        ensure(!tone(),'external MIDI hides instrument tone');
         ensure(trigger.textContent.includes(output.name),'selected name');
         const selectedBounds=trigger.getBoundingClientRect();
         ensure(selectedBounds.left>=0 && selectedBounds.right<=innerWidth,'long device name stays inside viewport');
@@ -67,6 +81,8 @@ for (const width of [1440, 780, 700]) test(`MIDI dropdown permissions, keyboard,
         ensure(item('External synthesizer').getAttribute('aria-checked')==='true','selected output accessible');
         item('Internal synth').click();
         await wait(()=>!trigger.classList.contains('midi-connected'),'internal synth clears glow');
+        const restoredTone=await wait(tone,'internal instrument tone restores');
+        ensure(restoredTone.querySelector('input[aria-label^="Attack "]').getAttribute('aria-valuetext')===savedAttack,'routing retains the edited tone');
         ensure(trigger.textContent.includes('MIDI Port...'),'empty label restored');
         await wait(()=>drumOption()?.textContent.trim()==='Kick · 36','Auto restores GM labels for internal synth');
         trigger.click();await wait(menu,'reselect menu');item('External synthesizer').click();

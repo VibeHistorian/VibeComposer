@@ -1,5 +1,6 @@
 import type { PhraseNote } from '../music/phrase-note';
 import type { TrackVoicing } from '../music/track-voicing';
+import type { TrackInstrumentTone } from '../audio/instrument-tone';
 import type { PhraseRangeEdit } from '../music/phrase-range-edit';
 import type { PhraseGlideEdit } from '../music/phrase-glides';
 import type { InstrumentPool } from '../music/generation-policy.model';
@@ -24,6 +25,8 @@ interface TrackBase extends TrackVoicing {
   /** MIDI channels are stored one-based to match the channel numbers shown in the UI. */
   readonly midiChannel: number;
   readonly mix: MixChannelSettings;
+  /** Internal playback overrides for the current instrument program and bank. */
+  readonly instrumentTone?: TrackInstrumentTone;
   readonly editedPhrase?: readonly PhraseNote[];
   /** Track-owned replacements layered over each section's resolved phrase. */
   readonly phraseEdits?: readonly PhraseRangeEdit[];
@@ -39,6 +42,12 @@ interface TrackBase extends TrackVoicing {
 
 export function drumPanIsAutomatic(track: CompositionTrack): boolean {
   return track.role === 'drums' && (track.drumPan === 'auto' || (track.drumPan === undefined && track.mix.panPercent === 0));
+}
+
+export function clearInstrumentTone(track: CompositionTrack): CompositionTrack {
+  if (!track.instrumentTone) return track;
+  const { instrumentTone, ...remaining } = track;
+  return remaining;
 }
 
 export type CompositionTrack =

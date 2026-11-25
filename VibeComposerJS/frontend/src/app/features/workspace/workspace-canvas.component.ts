@@ -24,9 +24,12 @@ import type { ScoreGlideReference } from '../score/score-glide-lane.component';
 import { sectionDurationBeats } from '../../core/music/section-context';
 import { sectionHarmonyDisplay } from '../../core/music/harmony-display';
 import { MAX_VOLUME_PERCENT, mixEnabled, validVolumePercent } from '../../core/audio/mix-values';
+import { INSTRUMENT_TONE_CONTROLS, type InstrumentToneKey } from '../../core/audio/instrument-tone';
+import { InstrumentSettingsService } from '../../core/audio/instrument-settings.service';
+import { synthInstrumentEnvelopes } from '../../core/audio/tiny-synth-engine';
 import { samePhraseInputs } from '../../core/music/phrase-inputs';
 import { partEditorContext } from '../part-settings/part-editor-context';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, resource, signal, untracked, viewChild } from '@angular/core';
 import { type ArrangedPart, ARRANGED_PARTS, PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/music/part-role';
 import { type ArrangementSection, type SectionType, SECTION_TYPES } from '../../core/project/arrangement.model';
 import { drumPanIsAutomatic, type CompositionTrack } from '../../core/project/track.model';
@@ -258,6 +261,27 @@ export class WorkspaceCanvasComponent {
     }));
   });
   readonly midi = inject(MidiOutputService);
+  private readonly instrumentSettings = inject(InstrumentSettingsService);
+  private readonly chiptunePatches = resource({
+    params: () => this.instrumentSettings.kind() === 'chiptune' ? 'chiptune' : undefined,
+    loader: async () => (await import('../../core/audio/chiptune-patches')).CHIPTUNE_PATCHES,
+  });
+  readonly toneProfiles = computed(() => {
+    const profiles = new Map<number, ReturnType<typeof instrumentToneProfile>>();
+    if (this.midi.selectedOutput()) return profiles;
+    const kind = this.instrumentSettings.kind(), bank = this.instrumentSettings.selectedBank();
+    const name = this.project().soundbankName ?? 'synth';
+    // An unavailable saved bank uses TinySynth temporarily. Its overrides belong to the saved bank.
+    if (kind === 'synth' && name !== 'synth' || kind === 'chiptune' && !this.chiptunePatches.hasValue()) return profiles;
+    for (const { role, mix: { program } } of this.project().tracks) {
+      if (role === 'drums' || profiles.has(program)) continue;
+      const envelopes = bank ? (bank.presets.find(preset => preset.bank === 0 && preset.program === program)?.regions ?? []).map(region => ({
+        attack: region.ampAttack ?? 0, decay: region.ampDecay, sustain: region.ampSustain, release: region.ampRelease ?? 0,
+      })) : synthInstrumentEnvelopes(program, kind === 'chiptune' ? this.chiptunePatches.value() : undefined);
+      if (envelopes.length) profiles.set(program, instrumentToneProfile(`${kind}:${program}`, name, envelopes));
+    }
+    return profiles;
+  });
   readonly drumInstruments = DRUM_INSTRUMENTS;
   readonly sectionTypes = SECTION_TYPES;
   readonly chords = computed(() => getDiatonicChords(BASE_KEY, this.project().scale));
@@ -1177,6 +1201,11 @@ export class WorkspaceCanvasComponent {
       this.playback.updateMix(this.project());
     }
   }
+  updateInstrumentTone(track: CompositionTrack, soundbankName: string, key: InstrumentToneKey, value: number | undefined): void {
+    if (!this.editing() && !this.midi.selectedOutput()) {
+      this.projects.updateTrackInstrumentTone(track.id, track.mix.program, soundbankName, key, value);
+    }
+  }
   updateVolume(event: Event): void {
     const volumePercent = Number(this.inputValue(event));
     if (validVolumePercent(volumePercent)) {
@@ -1197,4 +1226,25 @@ export class WorkspaceCanvasComponent {
   private inputValue(event: Event): string {
     return (event.target as HTMLInputElement | HTMLSelectElement).value;
   }
+}
+
+function instrumentToneProfile(id: string, soundbankName: string,
+  envelopes: readonly { attack: number; decay: number; sustain: number; release: number }[]) {
+  const values = {
+    attackMs: envelopes.map(envelope => envelope.attack * 1000),
+    decayMs: envelopes.map(envelope => envelope.decay * 1000),
+    sustainPercent: envelopes.map(envelope => envelope.sustain * 100),
+    releaseMs: envelopes.map(envelope => envelope.release * 1000),
+    vibratoCents: [0], tremoloPercent: [0],
+  };
+  return { soundbankName, controls: INSTRUMENT_TONE_CONTROLS.map(control => {
+    const range = values[control.key];
+    const defaultValue = range.reduce((max, value) => Math.max(max, value), 0);
+    const minimum = range.reduce((min, value) => Math.min(min, value), defaultValue);
+    const min = Number(minimum.toFixed(2));
+    const max = Number(defaultValue.toFixed(2));
+    return { ...control, id: `${id}:${control.key}`, defaultValue, varied: minimum !== defaultValue,
+      defaultText: `${min === max ? max : `${min}–${max}`}${control.unit}`,
+    };
+  }) };
 }

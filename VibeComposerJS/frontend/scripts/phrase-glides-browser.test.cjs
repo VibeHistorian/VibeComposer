@@ -58,6 +58,31 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
       assert.equal(result.exceptionDetails, undefined, JSON.stringify(result.exceptionDetails));
       return result.result.value;
     };
+    const knob = await evaluate(`
+      const input = await wait(() => document.querySelector('input[aria-label="Decay B1"]'));
+      input.scrollIntoView({ block: 'nearest' });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const rect = input.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, value: input.getAttribute('aria-valuetext') };
+    `);
+    await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: knob.x, y: knob.y });
+    const tooltip = await evaluate(`return (await wait(() => document.querySelector('.knob-tooltip'))).textContent;`);
+    assert.ok(tooltip.includes(knob.value) && tooltip.includes('Default'), 'hover shows the instrument default immediately');
+    await command('Input.dispatchMouseEvent', { type: 'mousePressed', x: knob.x, y: knob.y, button: 'left', buttons: 1, clickCount: 1 });
+    await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: knob.x, y: knob.y - 18, button: 'left', buttons: 1 });
+    const preview = await evaluate(`
+      return (await wait(() => [...document.querySelectorAll('.knob-tooltip')].find(tip => !tip.textContent.includes('Default')))).textContent;
+    `);
+    assert.equal(await evaluate(`return project()?.tracks.find(track => track.id === 'track-bass-1').instrumentTone ?? null;`), null);
+    await command('Input.dispatchMouseEvent', { type: 'mouseReleased', x: knob.x, y: knob.y - 18, button: 'left', clickCount: 1 });
+    const decay = await evaluate(`
+      const track = () => project()?.tracks.find(track => track.id === 'track-bass-1');
+      const amount = await wait(() => track()?.instrumentTone?.decayMs);
+      document.querySelector('input[aria-label="Decay B1"]').dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true }));
+      await wait(() => !track()?.instrumentTone);
+      return amount;
+    `);
+    assert.ok(decay > 0 && preview.includes(String(decay)), 'drag commits the previewed value and reset removes the override');
     const pill = await evaluate(`
       const mode = await wait(() => document.querySelector('vc-select[aria-label="Voice mode B1"]'));
       await changeControl(mode, 'legato');
