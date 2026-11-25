@@ -43,12 +43,29 @@ export function logNoteContour(height: number, plucky: boolean): readonly number
   return polygon;
 }
 
-export function logNotePolygon(x: number, y: number, width: number, height: number, plucky: boolean): number[] {
+export function logNotePolygon(x: number, y: number, width: number, height: number, plucky: boolean, tipOffset = 0): number[] {
   const contour = logNoteContour(height, plucky);
   const polygon = new Array<number>(contour.length);
   for (let i = 0; i < contour.length; i += 2) {
     polygon[i] = x + contour[i] * width;
-    polygon[i + 1] = y + contour[i + 1] * height;
+    polygon[i + 1] = y + contour[i + 1] * height + contour[i] * tipOffset;
   }
   return polygon;
+}
+
+/** Clip a bent note to one horizontal edge of the pitch grid. */
+export function clipNotePolygon(points: readonly number[], edge: number, keepBelow: boolean): number[] {
+  const result: number[] = [];
+  let x0 = points[points.length - 2], y0 = points[points.length - 1];
+  let inside0 = keepBelow ? y0 >= edge : y0 <= edge;
+  for (let i = 0; i < points.length; i += 2) {
+    const x1 = points[i], y1 = points[i + 1];
+    const inside1 = keepBelow ? y1 >= edge : y1 <= edge;
+    if (inside0 !== inside1 && y0 !== edge && y1 !== edge) {
+      result.push(x0 + (x1 - x0) * (edge - y0) / (y1 - y0), edge);
+    }
+    if (inside1) result.push(x1, y1);
+    x0 = x1; y0 = y1; inside0 = inside1;
+  }
+  return result;
 }

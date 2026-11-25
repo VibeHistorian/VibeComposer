@@ -19,7 +19,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { SectionContextEditorComponent } from '../arrangement/section-context-editor.component';
 import { resolveProjectTimeline, resolveSectionTrackGlides } from '../../core/music/project-timeline';
 import { MAX_GLIDE_MS, VOICE_MODES, type VoiceMode } from '../../core/music/track-voicing';
-import { clipGlideSegments, glidesByChannel, shiftGlideSegments, withGlidePreview, type GlideSegment } from '../../core/music/phrase-glides';
+import { clipGlideSegments, glidesByChannel, shiftGlideSegments, withGlidePreview, type GlideReplacement, type GlideSegment, type PhraseGlides } from '../../core/music/phrase-glides';
 import type { ScoreGlideReference } from '../score/score-glide-lane.component';
 import { sectionDurationBeats } from '../../core/music/section-context';
 import { sectionHarmonyDisplay } from '../../core/music/harmony-display';
@@ -518,15 +518,24 @@ export class WorkspaceCanvasComponent {
     const bounds = this.editor()?.editBounds() ?? { startBeat: 0, endBeat: this.editPhraseLength() };
     return { startBeat: this.editStartBeat() + bounds.startBeat, endBeat: this.editStartBeat() + bounds.endBeat };
   });
+  private readonly glidePreview = computed<GlideReplacement | null>(() => {
+    const editor = this.editing() ? this.editor() : undefined;
+    if (!editor?.draftReady()) return null;
+    const changes = editor.changedGlides();
+    if (!changes.length) return null;
+    const origin = this.editStartBeat();
+    return {
+      ...this.scoreEditBounds(),
+      glides: changes.map(change => ({ ...change, segments: shiftGlideSegments(change.segments, origin) })),
+    };
+  });
   private readonly phrasePreview = computed(() => {
     const editor = this.editing() ? this.editor() : undefined;
     return editor?.draftReady() ? {
       ...this.scoreEditBounds(),
       trackIds: editor.editedTrackIds(),
       notes: editor.notes().map(note => ({ ...note, startBeat: note.startBeat + this.editStartBeat() })),
-      glides: editor.changedGlides().map(change => ({ ...change,
-        segments: shiftGlideSegments(change.segments, this.editStartBeat()),
-      })),
+      glides: this.glidePreview()?.glides ?? [],
     } : null;
   });
   private readonly phrasePlaybackEffect = effect(() => {
@@ -552,6 +561,17 @@ export class WorkspaceCanvasComponent {
   readonly selectedSectionBeats = computed(() => { const section = this.selectedSection(); return section ? sectionDurationBeats(this.project(), section) : 0; });
   readonly timeline = computed(() => resolveProjectTimeline(this.phraseProject()));
   readonly channelGlides = computed(() => glidesByChannel(this.phraseProject().tracks, this.timeline().glidesByTrack));
+  readonly scoreTrackGlides = computed<ReadonlyMap<string, PhraseGlides>>(() => {
+    const tracks = this.phraseProject().tracks;
+    const preview = this.glidePreview();
+    const channels = preview ? glidesByChannel(tracks, withGlidePreview(this.timeline().glidesByTrack, preview)) : this.channelGlides();
+    const curvesByTrack = new Map<string, PhraseGlides>();
+    if (channels.size) for (const track of tracks) {
+      const curves = channels.get(track.midiChannel);
+      if (curves) curvesByTrack.set(track.id, curves);
+    }
+    return curvesByTrack;
+  });
 
   channelTooltip(track: TrackRow, pitchGlide: boolean, volumeGlide: boolean): string {
     const channel = track.role === 'drums' ? 'Percussion uses MIDI channel 10' : `MIDI channel ${track.midiChannel}`;
@@ -565,7 +585,7 @@ export class WorkspaceCanvasComponent {
     const project = this.projects.projectWithoutVolumeChanges();
     const timeline = resolveProjectTimeline(project);
     const tracks = project.tracks.filter(track => track.midiChannel === owner.midiChannel);
-    const byTrack = withGlidePreview(timeline.glidesByTrack, this.phrasePreview());
+    const byTrack = withGlidePreview(timeline.glidesByTrack, this.glidePreview());
     const origin = this.editStartBeat();
     const relative = (segments: readonly GlideSegment[]) => shiftGlideSegments(segments, -origin);
     const sources = tracks.flatMap(track => {

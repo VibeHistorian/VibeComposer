@@ -189,6 +189,7 @@ function fixture(reactivity) {
     : name.includes('musical-time') ? loadHelper(path.resolve(__dirname, '../src/app/core/ui/musical-time.ts'))
     : name.includes('track-color') ? loadHelper(path.resolve(__dirname, '../src/app/core/ui/track-color.ts'))
     : name.includes('phrase-edit') ? helperModule.exports
+    : name.includes('phrase-glides') ? require('./music-loader.cjs').loadMusic('phrase-glides.ts')
     : name.includes('gm-instruments') ? require('./music-loader.cjs').loadMusic('gm-instruments.ts')
     : name.includes('part-role') ? require('./music-loader.cjs').loadMusic('part-role.ts')
     : name.includes('drum-instruments') ? require('./music-loader.cjs').loadMusic('drum-instruments.ts') : angular, module, module.exports);
@@ -1333,6 +1334,67 @@ test('triangle geometry tapers to the right center and leaves phrase notes round
   c.editable = () => true;
   c.noteShape(graphics, 10, 20, 40, 12, 3);
   assert.deepEqual(calls, [['roundRect', 10, 20, 40, 12, 3]]);
+});
+
+test('score glides dim notes at onset and bend pointed notes and their hit targets at both ends', () => {
+  const { Graphics } = require('pixi.js');
+  const { hitAreaAt } = scoreHelper('score-hit-testing');
+  const { component: c } = fixture();
+  c.staticGraphics = new Graphics();
+  c.dynamicGraphics = new Graphics();
+  c.horizontalOffset = 0;
+  c.horizontalScale = 1;
+  c.playhead = 25;
+  const note = { id: 'bent', part: 'bass', color: 'bass', midi: 60, instrumentProgram: 48,
+    startBeat: 2, durationBeats: 2, velocity: 100, opacity: 0.4 + 100 / 127 * 0.6 };
+  c.model = { notes: [note], tracks: [{ id: 'bass', color: 'bass' }], sections: [],
+    totalBeats: 8, selectedTrackId: 'bass', hiddenTrackIds: new Set() };
+  const segment = (startBeat, endBeat, startValue, endValue) => ({ startBeat, endBeat, startValue, endValue });
+  const byTrack = new Map([['bass', {
+    pitch: [segment(0, 2, -1, -1), segment(2, 4, 0.75, 1.5), segment(4, 8, -2, 0)],
+    volume: [segment(0, 2, 1, 1), segment(2, 4, 0.25, 0.75)],
+  }]]);
+  c.trackGlides = () => byTrack;
+  for (const mode of ['triangle', 'instrument-log', 'classic', 'instrument']) {
+    c.preferences.scoreNoteShape = () => mode;
+    c.drawStatic();
+    const [fill, stroke] = c.staticGraphics.context.instructions.slice(-2);
+    assert.equal(fill.data.style.alpha, 0.15 + 25 / 127 * 0.65);
+    assert.ok(Math.abs(stroke.data.style.alpha - (0.4 + 25 / 127 * 0.6)) < 1e-12);
+    const [area] = c.hitAreas;
+    const { x, y, width, height } = area.visualBounds;
+    const pointed = mode === 'triangle' || mode === 'instrument-log';
+    const writtenPitchY = (c.pitchMax - note.midi + 0.5) * c.laneHeight - c.verticalOffset;
+    assert.equal(y + height / 2, writtenPitchY - (pointed ? 0.75 * c.laneHeight : 0));
+    assert.equal(area.tipOffset, pointed ? -0.75 * c.laneHeight : 0);
+    assert.equal(c.dynamicGraphics.context.instructions.at(-1).data.style.alpha, 0.4 * area.glideBrightness);
+    if (!pointed) continue;
+    const tipX = x + width, tipY = y + height / 2 + area.tipOffset;
+    const [polygon] = stroke.data.path.shapePath.shapePrimitives;
+    const pointIndex = polygon.shape.points.findIndex((point, index) => index % 2 === 0 && point === tipX);
+    assert.equal(polygon.shape.points[pointIndex + 1], tipY);
+    const geometry = { width: c.width, height: c.height, scoreHeight: c.scoreHeight, harmonicHeight: c.harmonicHeight,
+      drumHeight: c.drumHeight, trackCount: 1, editable: false, areas: c.hitAreas, columnCount: c.hitColumnCount,
+      buckets: c.hitAreaBuckets };
+    assert.equal(hitAreaAt({ x: tipX, y: tipY }, geometry), area);
+    assert.equal(hitAreaAt({ x, y: y + height / 2 }, geometry), area);
+    assert.equal(hitAreaAt({ x, y: writtenPitchY }, geometry), undefined);
+    assert.equal(hitAreaAt({ x: tipX, y: y + height / 2 }, geometry), undefined);
+  }
+  c.preferences.scoreNoteShape = () => 'triangle';
+  byTrack.set('bass', { pitch: [segment(3, 4, -1, -2)], volume: [] });
+  c.drawStatic();
+  assert.equal(c.hitAreas[0].tipOffset, 2 * c.laneHeight);
+  assert.equal(c.hitAreas[0].glideBrightness, 1);
+  const originalY = c.hitAreas[0].visualBounds.y;
+  byTrack.set('bass', { pitch: [segment(2, 4, 1, 1)], volume: [] });
+  c.drawStatic();
+  assert.equal(c.hitAreas[0].tipOffset, 0, 'constant bend shifts the whole note');
+  assert.equal(c.hitAreas[0].visualBounds.y, originalY - c.laneHeight);
+  assert.equal(note.velocity, 100);
+  assert.equal(note.midi, 60);
+  c.staticGraphics.destroy();
+  c.dynamicGraphics.destroy();
 });
 
 const mouseBinding = (button, shift = false) => ({ kind: 'mouse', input: String(button), ctrl: false, shift, alt: false });

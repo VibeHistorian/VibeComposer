@@ -4,6 +4,7 @@ export interface NoteHitArea<Note = { readonly id: string }> extends ScoreRect {
   readonly note: Note;
   readonly trackIndex: number;
   readonly visualBounds?: ScoreRect;
+  readonly tipOffset?: number;
 }
 
 export const HIT_BUCKET_WIDTH = 96;
@@ -45,6 +46,12 @@ export function hitAreaAt<Note extends { readonly id: string }>(point: ScorePoin
   for (let index = candidates.length - 1; index >= 0; index--) {
     const area = candidates[index];
     if (x >= area.x && x <= area.x + area.width && y >= area.y && y <= area.y + area.height) {
+      const bounds = area.visualBounds;
+      if (area.tipOffset && bounds) {
+        const fraction = Math.max(0, Math.min(1, (x - bounds.x) / bounds.width));
+        const center = bounds.y + bounds.height / 2 + fraction * area.tipOffset;
+        if (Math.abs(y - center) > Math.max(3, bounds.height / 2)) continue;
+      }
       if (selectedIds.includes(area.note.id)) return area;
       fallback ??= area;
     }

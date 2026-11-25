@@ -30,21 +30,35 @@ export function glideValue(segment: GlideSegment, beat: number): number {
   return segment.startValue + (segment.endValue - segment.startValue) * (beat - segment.startBeat) / (segment.endBeat - segment.startBeat);
 }
 
+/** Resolve the active value, or the left-hand limit when sampling a note release. */
+export function glideValueAt(segments: readonly GlideSegment[], beat: number, lane: GlideLane,
+  side: 'at' | 'before' = 'at'): number {
+  const index = firstGlideAt(segments, beat, side === 'before');
+  const segment = segments[index];
+  return segment && (side === 'before' ? segment.startBeat < beat : segment.startBeat <= beat)
+    ? glideValue(segment, beat) : glideNeutral(lane);
+}
+
 export function shiftGlideSegments(segments: readonly GlideSegment[], offset: number): readonly GlideSegment[] {
   return offset === 0 ? segments : segments.map(segment => ({ ...segment,
     startBeat: segment.startBeat + offset, endBeat: segment.endBeat + offset,
   }));
 }
 
-/** All lane segments are sorted and disjoint. Find the first segment that can overlap the window. */
-export function clipGlideSegments(segments: readonly GlideSegment[], start: number, end: number): GlideSegment[] {
+/** All lane segments are sorted and disjoint. */
+function firstGlideAt(segments: readonly GlideSegment[], beat: number, includeEnd = false): number {
   let low = 0, high = segments.length;
   while (low < high) {
     const middle = (low + high) >>> 1;
-    if (segments[middle].endBeat <= start) low = middle + 1; else high = middle;
+    const end = segments[middle].endBeat;
+    if (includeEnd ? end < beat : end <= beat) low = middle + 1; else high = middle;
   }
+  return low;
+}
+
+export function clipGlideSegments(segments: readonly GlideSegment[], start: number, end: number): GlideSegment[] {
   const clipped: GlideSegment[] = [];
-  for (let index = low; index < segments.length && segments[index].startBeat < end; index++) {
+  for (let index = firstGlideAt(segments, start); index < segments.length && segments[index].startBeat < end; index++) {
     const segment = segments[index];
     const startBeat = Math.max(start, segment.startBeat), endBeat = Math.min(end, segment.endBeat);
     if (endBeat <= startBeat) continue;

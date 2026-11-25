@@ -22,7 +22,8 @@ function fixture() {
     ChangeDetectionStrategy: { OnPush: 0 },
   };
   const projects = { project, projectWithoutVolumeChanges: project, projectActivation: signal(0) };
-  const preferences = Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { syncScoreMix: signal(false), scoreChordGrid: signal(false), appearance: signal({ progressiveTrackColoring: true }) });
+  const preferences = Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { syncScoreMix: signal(false), scoreChordGrid: signal(false),
+    scoreNoteShape: signal('classic'), appearance: signal({ progressiveTrackColoring: true }) });
   let ui;
   angular.inject = (type) => type === 'ui' ? ui : type === 'preferences' ? preferences : type === 'audio' ? { setPhrasePreview() {} } : projects;
   const timelineModule = require('./support/timeline-fixture.cjs')(() => []);

@@ -8,7 +8,11 @@ test('workspace publishes sounding draft notes at song positions and clears them
   const { service, workspace, ui, load, flushEffects } = fixture();
   const previews = [];
   workspace.playback = { setPhrasePreview: (project, preview) => previews.push(preview) };
-  ui.selectedTrackId.set('track-bass-1');
+  const bassId = 'track-bass-1', chordsId = 'track-chords-1';
+  const channel = service.project().tracks.find(track => track.id === bassId).midiChannel;
+  service.state.update(project => ({ ...project, tracks: project.tracks.map(track => track.id === chordsId
+    ? { ...track, midiChannel: channel } : track) }));
+  ui.selectedTrackId.set(bassId);
   const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
   const editor = new Editor(); editor.ngOnInit();
   workspace.editor = () => editor;
@@ -17,14 +21,21 @@ test('workspace publishes sounding draft notes at song positions and clears them
   const before = service.exportProjectJson();
   flushEffects();
   assert.deepEqual(previews.at(-1).notes, editor.notes().map(note => ({ ...note, startBeat: note.startBeat + 16 })));
-  assert.deepEqual(previews.at(-1).trackIds, ['track-bass-1']);
+  assert.deepEqual(previews.at(-1).trackIds, [bassId]);
   const first = editor.notes()[0]; editor.selectNote(first.id);
   editor.updateSelected('velocity', { target: { value: '117' } }); flushEffects();
   assert.equal(previews.at(-1).notes.find(n => n.id === first.id).velocity, 117);
   editor.undo(); flushEffects();
   assert.equal(previews.at(-1).notes.find(n => n.id === first.id).velocity, first.velocity);
+  const segment = { startBeat: 0, endBeat: 1, startValue: .25, endValue: .75 };
+  editor.setLane('volume'); editor.drawGlide([segment]); flushEffects();
+  const scoreGlides = workspace.scoreTrackGlides();
+  assert.deepEqual(scoreGlides.get(bassId).volume, [{ ...segment, startBeat: 16, endBeat: 17 }]);
+  assert.equal(scoreGlides.get(chordsId), scoreGlides.get(bassId), 'shared channels use the same draft curve');
+  assert.equal(workspace.channelGlides().size, 0, 'draft changes do not reach the channel indicators');
   workspace.editing.set(false); flushEffects();
   assert.equal(previews.at(-1), null);
+  assert.equal(workspace.scoreTrackGlides().size, 0);
   assert.equal(service.exportProjectJson(), before);
 });
 

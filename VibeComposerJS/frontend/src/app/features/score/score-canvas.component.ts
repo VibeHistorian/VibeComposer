@@ -1,6 +1,6 @@
 import { adjustColor } from '../../core/ui/appearance';
 import { keyboardLabelLayout } from './score-keyboard-labels';
-import { logNotePolygon } from './score-note-shape';
+import { clipNotePolygon, logNotePolygon } from './score-note-shape';
 import { instrumentEnvelope } from '../../core/music/gm-instruments';
 import type { DrumSlots } from '../../core/music/drum-instruments';
 import { drumInstrumentName } from '../../core/music/drum-instruments';
@@ -20,7 +20,7 @@ import type { PhraseSource } from '../../core/music/phrase';
 import { snapMidiToScale, type PhraseDragMode } from '../../core/music/phrase-edit';
 import type { ArrangedPart } from '../../core/music/part-role';
 import type { PhraseNote } from '../../core/music/phrase-note';
-import type { GlideLane, GlideSegment } from '../../core/music/phrase-glides';
+import { glideValueAt, PITCH_GLIDE_SEMITONES, type GlideLane, type GlideSegment, type PhraseGlides } from '../../core/music/phrase-glides';
 import { ScoreGlideLaneComponent, type ScoreGlideReference } from './score-glide-lane.component';
 import {
   canvasPoint, clampViewport, contentHeight, harmonicNotePitchBounds, laneHeight, maxVerticalScale, overviewPitchRange, pitchAt,
@@ -76,7 +76,14 @@ export interface ScoreViewport {
   readonly scoreHeight: number;
 }
 
-type NoteHitArea = HitArea<ScoreCanvasNote>;
+type NoteHitArea = HitArea<ScoreCanvasNote> & { readonly glideBrightness?: number; readonly pitchShifted?: boolean };
+
+interface NoteGlideSamples {
+  readonly curves: PhraseGlides;
+  readonly onsetPitch: number;
+  readonly releasePitch: number;
+  readonly volume: number;
+}
 
 interface ScoreCanvasModel {
   readonly tracks: readonly ScoreCanvasTrack[];
@@ -133,6 +140,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly velocityVisible = input(false);
   readonly glideLane = input<GlideLane | null>(null);
   readonly glideSegments = input<readonly GlideSegment[]>([]);
+  readonly trackGlides = input<ReadonlyMap<string, PhraseGlides>>(new Map());
   readonly glideReference = input<ScoreGlideReference | null>(null);
   readonly glideOrigin = input(0);
   readonly glideDisabled = input(false);
@@ -289,6 +297,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.wasEditable = editable;
     this.velocityVisible();
     this.glideLane();
+    this.trackGlides();
     this.snapBeats();
     this.snapToScale();
     this.scalePitchClasses();
@@ -323,6 +332,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private resizeObserver?: ResizeObserver;
   private model?: ScoreCanvasModel;
   private hitAreas: NoteHitArea[] = [];
+  private readonly glideSamples = new WeakMap<ScoreCanvasNote, NoteGlideSamples>();
   private hitAreaBuckets = new Map<number, NoteHitArea[]>();
   private hitColumnCount = 0;
   private playhead = 0;
@@ -1300,6 +1310,13 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     line(this.width - 0.5, 0, this.width - 0.5, this.height, '--border-default');
 
     const trackIndexes = new Map(tracks.flatMap((track, index) => (track.trackIds ?? [track.id]).map(id => [id, index] as const)));
+    const editable = this.editable();
+    const noteShapeMode = editable ? 'classic' : this.preferences.scoreNoteShape();
+    const trackGlides = this.trackGlides();
+    const hasGlides = trackGlides.size > 0;
+    const pitchRowHeight = this.laneHeight;
+    // Percussion rows identify instruments, so show detune within the instrument row.
+    const drumBendScale = drumRowHeight * 0.375 / PITCH_GLIDE_SEMITONES;
     const progressive = this.preferences.appearance().progressiveTrackColoring !== false;
     const noteColorCache = new Map<string, { value: number; alpha: number }>();
     const tokens = new Map<string, string>();
@@ -1320,20 +1337,38 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const x = this.scoreX(note.startBeat);
       const noteWidth = Math.max(3, note.durationBeats * beatWidth);
       if (x + noteWidth < 0 || x > this.width) continue;
-      const centerY = note.color === 'drums'
+      const curves = hasGlides ? trackGlides.get(note.part) : undefined;
+      const glides = curves && this.sampleNoteGlides(note, curves);
+      const onsetPitch = glides?.onsetPitch ?? 0;
+      const releasePitch = glides?.releasePitch ?? 0;
+      const bendScale = (onsetPitch || releasePitch) && noteShapeMode !== 'classic'
+        && (noteShapeMode !== 'instrument' || instrumentEnvelope(note.instrumentProgram ?? 0, note.color === 'drums') === 'plucky')
+        ? (note.color === 'drums' ? drumBendScale : pitchRowHeight) : 0;
+      const pitchShifted = bendScale !== 0;
+      const tipOffset = pitchShifted ? (onsetPitch - releasePitch) * bendScale : 0;
+      const centerY = (note.color === 'drums'
         ? this.harmonicHeight + (this.drumRows.findIndex(row => row.trackId === note.part) + 0.5) * drumRowHeight
-        : (this.pitchMax - note.midi + 0.5) * this.laneHeight - this.verticalOffset;
+        : (this.pitchMax - note.midi + 0.5) * pitchRowHeight - this.verticalOffset) - onsetPitch * bendScale;
       const top = note.color === 'drums' ? this.harmonicHeight : 0;
       const bottom = note.color === 'drums' ? scoreHeight : this.harmonicHeight;
-      if (centerY < top || centerY >= bottom) continue;
-      if (this.editable() && x >= 0) {
+      const rowHeight = note.color === 'drums' ? drumRowHeight : pitchRowHeight;
+      const halfHeight = rowHeight * 0.375;
+      if (pitchShifted
+        ? centerY + halfHeight + Math.max(0, tipOffset) <= top || centerY - halfHeight + Math.min(0, tipOffset) >= bottom
+        : centerY < top || centerY >= bottom) continue;
+      if (editable && x >= 0) {
         this.seekOnsets.push({ id: note.id, x, beat: note.startBeat, midi: note.midi, drum: note.color === 'drums' });
       }
-      const rowHeight = note.color === 'drums' ? drumRowHeight : this.laneHeight;
-      const y = Math.max(top, centerY - rowHeight * 0.375);
-      const noteHeight = Math.min(bottom, centerY + rowHeight * 0.375) - y;
-      const selectionOpacity = selectedTrackId === note.part ? 1 : 0.8;
-      const opacity = selectedTrackId === note.part ? note.opacity : this.editable() ? 0.3 : 0.3 + note.velocity / 127 * 0.5;
+      const y = pitchShifted ? centerY - halfHeight : Math.max(top, centerY - halfHeight);
+      const noteHeight = pitchShifted ? 2 * halfHeight : Math.min(bottom, centerY + halfHeight) - y;
+      const selected = selectedTrackId === note.part;
+      const gain = glides?.volume ?? 1;
+      const velocityFraction = Math.max(0, Math.min(127, note.velocity)) / 127;
+      const fillOpacity = 0.15 + velocityFraction * gain * 0.65;
+      const glideBrightness = gain === 1 ? 1 : fillOpacity / (0.15 + velocityFraction * 0.65);
+      const opacityFloor = editable ? 0.5 : 0.4;
+      const opacity = selected ? note.opacity - (note.opacity - opacityFloor) * (1 - gain)
+        : editable ? 0.3 * glideBrightness : 0.3 + velocityFraction * gain * 0.5;
       const noteColors = COLORS[note.color];
       const order = progressive ? (note.trackOrder ?? 1) - 1 : 0;
       const count = note.trackCount ?? 1;
@@ -1346,37 +1381,37 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       }
       if (ghost) {
         const parsed = parsedNote;
-        if (noteHeight > 0) this.noteShape(graphics, x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2), note)
-          .stroke({ color: parsed.value, alpha: note.opacity * parsed.alpha * 0.5, width: 1 });
+        if (noteHeight > 0) this.noteShape(graphics, x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2), note, 0, noteShapeMode)
+          ?.stroke({ color: parsed.value, alpha: note.opacity * parsed.alpha * 0.5 * glideBrightness, width: 1 });
         continue;
       }
-      if (noteHeight > 0 && selectedTrackId === note.part && (!this.editable() || note.color === 'drums')) {
+      if (noteHeight > 0 && selected && (!editable || note.color === 'drums')) {
+        const glow = color(noteColors.glow);
         for (let radius = 6; radius >= 1; radius--) {
-          if (!this.editable() && this.preferences.scoreNoteShape() !== 'classic') {
-            const glow = color(noteColors.glow);
-            this.noteShape(graphics, x - radius, y - radius, noteWidth + radius * 2, noteHeight + radius * 2, 0, note)
-              .fill({ color: glow.value, alpha: glow.alpha * (7 - radius) / 15 });
+          const alpha = glideBrightness * (7 - radius) / 15;
+          if (!editable && noteShapeMode !== 'classic') {
+            this.noteShape(graphics, x - radius, y - radius, noteWidth + radius * 2, noteHeight + radius * 2, 0, note, tipOffset, noteShapeMode, pitchShifted)
+              ?.fill({ color: glow.value, alpha: glow.alpha * alpha });
           } else {
-            fill(x - radius, y - radius, noteWidth + radius * 2, noteHeight + radius * 2,
-              noteColors.glow, (7 - radius) / 15);
+            fill(x - radius, y - radius, noteWidth + radius * 2, noteHeight + radius * 2, noteColors.glow, alpha);
           }
         }
       }
       const parsed = parsedNote;
       if (noteHeight > 0) {
-        const shape = this.noteShape(graphics, x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2), note);
-        const logNote = !this.editable() && this.preferences.scoreNoteShape() === 'instrument-log';
+        const shape = this.noteShape(graphics, x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2), note, tipOffset, noteShapeMode, pitchShifted);
+        if (!shape) continue;
+        const logNote = noteShapeMode === 'instrument-log';
         // Miter joins spike at the steep start of short log notes. Fit the bevel stroke into the row's remaining quarter.
         const outline: StrokeStyle = {
           color: parsed.value,
           alpha: opacity * parsed.alpha,
           width: logNote ? Math.min(1, rowHeight / 4) : 1,
-          join: logNote ? 'bevel' : 'miter',
+          join: logNote || tipOffset ? 'bevel' : 'miter',
         };
-        if (!this.editable() && this.preferences.scoreOutlineOtherTracks() && selectedTrackId !== note.part) {
+        if (!editable && this.preferences.scoreOutlineOtherTracks() && !selected) {
           shape.stroke(outline);
         } else {
-          const fillOpacity = 0.15 + Math.max(0, Math.min(127, note.velocity)) / 127 * 0.65;
           shape.fill({ color: parsed.value, alpha: fillOpacity * parsed.alpha })
             .stroke(outline);
         }
@@ -1385,19 +1420,22 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         const velocityColor = parsedNote;
         const velocityHeight = Math.max(2, note.velocity / 127 * VELOCITY_HEIGHT);
         graphics.rect(x, this.height - velocityHeight, 2, velocityHeight)
-          .fill({ color: velocityColor.value, alpha: (selectedTrackId === note.part ? 0.9 : 0.32) * velocityColor.alpha * selectionOpacity });
+          .fill({ color: velocityColor.value, alpha: (selected ? 0.9 : 0.32 * 0.8) * velocityColor.alpha });
       }
       if (noteHeight <= 0) continue;
-      const hitHalfHeight = Math.max(3, rowHeight * 0.375);
-      const hitY = Math.max(top, centerY - hitHalfHeight);
+      const hitHalfHeight = Math.max(3, halfHeight);
+      const hitY = Math.max(top, centerY - hitHalfHeight + Math.min(0, tipOffset));
       const hitArea: NoteHitArea = {
         note,
         trackIndex,
         visualBounds: { x, y, width: noteWidth, height: noteHeight },
+        tipOffset,
+        pitchShifted,
+        glideBrightness,
         x: Math.max(0, x - 1),
         y: hitY,
         width: Math.min(this.width, x + Math.max(5, noteWidth + 2)) - Math.max(0, x - 1),
-        height: Math.min(bottom, centerY + hitHalfHeight) - hitY,
+        height: Math.min(bottom, centerY + hitHalfHeight + Math.max(0, tipOffset)) - hitY,
       };
       this.hitAreas.push(hitArea);
       addHitArea(hitArea, this.hitColumnCount, this.hitAreaBuckets);
@@ -1409,13 +1447,38 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     untracked(() => this.drawDynamic());
   }
 
-  private noteShape(graphics: PixiGraphics, x: number, y: number, width: number, height: number, radius: number, note?: ScoreCanvasNote): PixiGraphics {
-    const mode = this.editable() ? 'classic' : this.preferences.scoreNoteShape();
+  private sampleNoteGlides(note: ScoreCanvasNote, curves: PhraseGlides): NoteGlideSamples {
+    const cached = this.glideSamples.get(note);
+    if (cached?.curves === curves) return cached;
+    const samples = {
+      curves,
+      onsetPitch: glideValueAt(curves.pitch, note.startBeat, 'pitch'),
+      releasePitch: glideValueAt(curves.pitch, note.startBeat + note.durationBeats, 'pitch', 'before'),
+      volume: glideValueAt(curves.volume, note.startBeat, 'volume'),
+    };
+    this.glideSamples.set(note, samples);
+    return samples;
+  }
+
+  private noteShape(graphics: PixiGraphics, x: number, y: number, width: number, height: number, radius: number, note?: ScoreCanvasNote,
+    tipOffset = 0, mode = this.editable() ? 'classic' : this.preferences.scoreNoteShape(),
+    pitchShifted = false): PixiGraphics | undefined {
     if (mode === 'classic') return graphics.roundRect(x, y, width, height, radius);
-    const plucky = instrumentEnvelope(note?.instrumentProgram ?? 0, note?.color === 'drums') === 'plucky';
+    const plucky = mode !== 'triangle' && instrumentEnvelope(note?.instrumentProgram ?? 0, note?.color === 'drums') === 'plucky';
     if (mode === 'instrument' && !plucky) return graphics.roundRect(x, y, width, height, radius);
-    if (mode !== 'instrument-log') return graphics.moveTo(x, y).lineTo(x + width, y + height / 2).lineTo(x, y + height).closePath();
-    return graphics.poly(logNotePolygon(x, y, width, height, plucky));
+    const top = note?.color === 'drums' ? this.harmonicHeight : 0;
+    const bottom = note?.color === 'drums' ? this.scoreHeight : this.harmonicHeight;
+    const clipTop = pitchShifted && y + Math.min(0, tipOffset) < top;
+    const clipBottom = pitchShifted && y + height + Math.max(0, tipOffset) > bottom;
+    const tipY = y + height / 2 + tipOffset;
+    if (mode !== 'instrument-log' && !clipTop && !clipBottom) {
+      return graphics.moveTo(x, y).lineTo(x + width, tipY).lineTo(x, y + height).closePath();
+    }
+    let polygon = mode === 'instrument-log' ? logNotePolygon(x, y, width, height, plucky, tipOffset)
+      : [x, y, x + width, tipY, x, y + height];
+    if (clipTop) polygon = clipNotePolygon(polygon, top, true);
+    if (clipBottom) polygon = clipNotePolygon(polygon, bottom, false);
+    return polygon.length >= 6 ? graphics.poly(polygon) : undefined;
   }
 
   private drawDynamic(): void {
@@ -1446,21 +1509,22 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       }
     }
     const glowColors = new Map<string, number>();
+    const noteShapeMode = this.editable() ? 'classic' : this.preferences.scoreNoteShape();
     const beat = this.playhead / 100 * (this.model?.totalBeats ?? 1) + (this.model?.timelineStartBeat ?? 0);
     for (const area of this.hitAreas) {
       if (beat < area.note.startBeat || beat >= area.note.startBeat + area.note.durationBeats) continue;
-      const noteShapeMode = this.editable() ? 'classic' : this.preferences.scoreNoteShape();
       const bounds = noteShapeMode !== 'classic' ? (area.visualBounds ?? area) : area;
-      const glowStrength = 1 - (beat - area.note.startBeat) / area.note.durationBeats;
+      const tipOffset = area.tipOffset ?? 0;
+      const glowStrength = (1 - (beat - area.note.startBeat) / area.note.durationBeats) * (area.glideBrightness ?? 1);
       let glow = glowColors.get(area.note.color);
       if (glow === undefined) {
         glow = new Color(style.getPropertyValue(COLORS[area.note.color].note).trim() || '#32d7f4').toNumber();
         glowColors.set(area.note.color, glow);
       }
-      this.noteShape(graphics, bounds.x - 3, bounds.y - 2, bounds.width + 6, bounds.height + 4, 3, area.note)
-        .stroke({ color: glow, alpha: 0.325 * glowStrength, width: 3, join: noteShapeMode === 'instrument-log' ? 'bevel' : 'miter' });
-      this.noteShape(graphics, bounds.x, bounds.y + bounds.height / 4, bounds.width, bounds.height / 2, 2, area.note)
-        .fill({ color: glow, alpha: 0.4 * glowStrength });
+      this.noteShape(graphics, bounds.x - 3, bounds.y - 2, bounds.width + 6, bounds.height + 4, 3, area.note, tipOffset, noteShapeMode, area.pitchShifted)
+        ?.stroke({ color: glow, alpha: 0.325 * glowStrength, width: 3, join: noteShapeMode === 'instrument-log' || tipOffset ? 'bevel' : 'miter' });
+      this.noteShape(graphics, bounds.x, bounds.y + bounds.height / 4, bounds.width, bounds.height / 2, 2, area.note, tipOffset, noteShapeMode, area.pitchShifted)
+        ?.fill({ color: glow, alpha: 0.4 * glowStrength });
     }
     const placement = this.placementPreview;
     if (placement && this.editable()) {
