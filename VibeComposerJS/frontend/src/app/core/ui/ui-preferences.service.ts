@@ -242,8 +242,11 @@ export class UiPreferencesService {
     })) style.setProperty(name, value);
     const width = preferences.appearance.windowWidthLimit;
     style.setProperty('--workspace-max-width', width === 'none' ? '100vw' : `${width}px`);
-    const { themeColors, roleColors } = adjustedPalette(preferences.appearance);
-    for (const [name, color] of Object.entries(themeColorTokens(themeColors, preferences.appearance.scoreRowBrightness, preferences.appearance.scoreGridBrightness))) style.setProperty(name, color);
+    const { scoreRowBrightness, scoreGridBrightness } = preferences.appearance;
+    const { themeColors, uiColors, roleColors } = adjustedPalette(preferences.appearance);
+    for (const [name, color] of Object.entries(themeColorTokens(themeColors, scoreRowBrightness, scoreGridBrightness, uiColors))) {
+      style.setProperty(name, color);
+    }
     for (const [area, font] of Object.entries(preferences.appearance.fonts)) style.setProperty(`--font-${area}`, font);
     for (const role of ARRANGED_PARTS) {
       for (const [name, value] of Object.entries(roleColorTokens(role, roleColors[role], themeColors))) style.setProperty(name, value);

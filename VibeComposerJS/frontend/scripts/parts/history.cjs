@@ -875,7 +875,7 @@ test('volume rounds displayed zero to unity and scrolls by exact 1% or 10% steps
   knob.value.set(5); knob.onWheel(wheel(1)); assert.equal(commits.at(-1), 0);
 });
 
-test('mixer accents mute at defaults, jump for tiny edits, reach both endpoints and invert only boosts', () => {
+test('mixer accents mute at defaults, jump for tiny edits, reach both endpoints and use the boost color above unity', () => {
   const { load } = fixture();
   const { MAX_VOLUME_PERCENT } = load('core/audio/mix-values.ts');
   const { CompactKnobComponent } = load('shared/compact-knob.component.ts');
@@ -889,10 +889,10 @@ test('mixer accents mute at defaults, jump for tiny edits, reach both endpoints 
   knob.value.set(100); assert.match(knob.mixAccent(), / 0%,/);
   knob.value.set(100 * 10 ** (-0.1 / 20));
   assert.ok(parseFloat(knob.mixAccent().match(/ ([\d.]+)%,/)[1]) > 25);
-  assert.ok(!knob.mixAccent().includes('255 -'));
+  assert.match(knob.mixAccent(), /var\(--accent-primary\)/);
   knob.value.set(0); assert.match(knob.mixAccent(), / 100%,/);
   knob.value.set(MAX_VOLUME_PERCENT);
-  assert.match(knob.mixAccent(), /255 - r/); assert.match(knob.mixAccent(), / 100%,/);
+  assert.match(knob.mixAccent(), /var\(--mix-boost-accent\)/); assert.match(knob.mixAccent(), / 100%,/);
   knob.preview.set(100); assert.match(knob.mixAccent(), / 0%,/);
   knob.mini.set(false); assert.equal(knob.mixAccent(), null);
 });

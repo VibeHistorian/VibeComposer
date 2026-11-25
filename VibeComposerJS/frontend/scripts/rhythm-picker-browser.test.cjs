@@ -194,14 +194,16 @@ test('production Angular controls initialize selects from settings and support r
           const context = canvas.getContext('2d'); context.fillStyle = color; context.fillRect(0, 0, 1, 1);
           return [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
         };
-        const color = input => rgb(getComputedStyle(face(input)).borderColor);
+        const color = input => rgb(getComputedStyle(face(input)).getPropertyValue('--knob-accent'));
+        const outline = input => getComputedStyle(face(input)).borderColor;
+        const outlines = [pan, volume].map(outline);
+        result.mixOutlinesStayDim = true;
         const setMix = async (input, value) => {
           await changeControl(input, String(value));
           await waitFor(() => input.closest('.compact-knob').querySelector('output').textContent.trim()
             === (input === pan ? value === 0 ? 'C' : '100% ' + (value < 0 ? 'L' : 'R')
               : [99.5, 100, 100.5].includes(value) ? '-0.0' : value === 98.9 ? '-0.1' : value === 0 ? '-Inf' : '+6.0'));
-          // Border colors animate for 120ms after Angular applies the new value.
-          await new Promise(resolve => setTimeout(resolve, 180));
+          result.mixOutlinesStayDim &&= outline(input) === outlines[input === pan ? 0 : 1];
         };
         const muted = rgb(getComputedStyle(track).getPropertyValue('--text-muted'));
         const accent = rgb(getComputedStyle(track).getPropertyValue('--accent-primary'));
@@ -223,6 +225,7 @@ test('production Angular controls initialize selects from settings and support r
         result.attenuationAccent = color(volume);
         await setMix(volume, Number(volume.max));
         result.boostAccent = color(volume); result.configuredAccent = accent;
+        result.configuredBoostAccent = rgb(getComputedStyle(track).getPropertyValue('--mix-boost-accent'));
         await setMix(volume, 100);
         result.panEndpointsAccent = true;
         for (const value of [-100, 100]) {
@@ -792,9 +795,10 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.roundedUnityMuted, true);
     assert.equal(actual.volumeScrollSteps, true);
     assert.equal(actual.tinyGainVisible, true);
+    assert.equal(actual.mixOutlinesStayDim, true);
     assert.equal(actual.panEndpointsAccent, true);
     assert.deepEqual(actual.attenuationAccent, actual.configuredAccent);
-    assert.deepEqual(actual.boostAccent, actual.configuredAccent.map(channel => 255 - channel));
+    assert.deepEqual(actual.boostAccent, actual.configuredBoostAccent);
     assert.equal(actual.quickMix.volumePercent, 50);
     assert.equal(actual.quickMix.panPercent, 1);
     assert.equal(actual.quickMix.muted, false);

@@ -50,8 +50,8 @@
   --text-field-padding-inline: 5px;
   --text-field-font-size: 10px;
   --knob-default-brightness: .75;
-  --pitch-glide-color: var(--accent-primary);
-  --volume-glide-color: var(--role-arpeggio-strong);
+  --pitch-glide-color: #b6b1d1;
+  --volume-glide-color: #b9c1a4;
 
   /* Main theme defaults derived by core/ui/theme.ts; preferences apply the same palette. */
   --surface-canvas: #080e16;
@@ -83,6 +83,7 @@
   --background-role-group: linear-gradient(to bottom, var(--surface-role-group), color-mix(in srgb, var(--surface-role-group), var(--surface-base) 35%));
 
   /* Mixer status, distinct from role colors */
+  --mix-boost-accent: #d22827;
   --mix-mute-active: #ffff32;
   --mix-solo-active: #91ff28;
   --mix-track-mute-active: color-mix(in srgb, var(--mix-mute-active) 75%, var(--surface-base));

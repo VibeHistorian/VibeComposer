@@ -472,6 +472,26 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
           ensure(JSON.stringify((await selectOptions(scope)).map(option=>option.textContent.trim()))===
             JSON.stringify(['All','Role','App']),label+' scope choices');
         }
+        const compose = document.querySelector('.compose-button');
+        const master = document.querySelector('vc-compact-knob input[aria-label="Master volume"]');
+        const face = master.parentElement.querySelector('.mix-face');
+        const outline = getComputedStyle(face).borderColor;
+        const neutralArc = getComputedStyle(face).backgroundImage;
+        master.value = '199.5';
+        master.dispatchEvent(new Event('input', { bubbles: true }));
+        await wait(()=>master.getAttribute('aria-valuetext')==='+6.0 dB','boost master volume');
+        const boostArc = getComputedStyle(face).backgroundImage;
+        ensure(boostArc!==neutralArc && getComputedStyle(face).borderColor===outline,'mix accent changes the arc only');
+        ensure(getComputedStyle(compose).backgroundColor==='rgb(242, 181, 68)','default Compose color');
+        await changeAdjustment('Brightness',-50);
+        await wait(()=>getComputedStyle(compose).backgroundColor==='rgb(121, 90, 34)','Compose follows brightness');
+        ensure(style().getPropertyValue('--mix-boost-accent').trim()==='#691414' &&
+          getComputedStyle(face).backgroundImage!==boostArc,'boost arc dims with brightness');
+        await changeControl(scopeControl('Brightness'), 'role');
+        await wait(()=>getComputedStyle(compose).backgroundColor==='rgb(242, 181, 68)','Role brightness excludes Compose');
+        ensure(getComputedStyle(face).backgroundImage===boostArc,'Role brightness excludes the master boost arc');
+        await changeControl(scopeControl('Brightness'), 'all');
+        await changeControl(master, '100');
         await changeAdjustment('Brightness',50);
         await wait(()=>style().getPropertyValue('--accent-primary').trim()==='#4bffff','brightness scales and clamps');
         ensure(style().getPropertyValue('--role-melody').trim()==='#ff6060','brightness adjusts role colors');
@@ -494,11 +514,13 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         await wait(()=>JSON.parse(storedSetting(key)).appearance.colorAdjustments.saturation===-50,'adjustment persisted');
         ensure(JSON.parse(storedSetting(key)).appearance.roleColors.melody==='#d44040','chosen color retained');
         const adjustedAccent=style().getPropertyValue('--accent-primary').trim();
+        const adjustedCompose=getComputedStyle(compose).backgroundColor;
         button('Apply to Base Colors').click();
         const applied=await wait(()=>{ const appearance=JSON.parse(storedSetting(key)).appearance; return appearance.roleColors.melody==='#8ad4d4' && appearance; },'adjusted colors saved');
         ensure(applied.themeColors.accent===adjustedAccent && applied.roleColors.melody==='#8ad4d4','apply saves the scoped preview');
         ensure(style().getPropertyValue('--accent-primary').trim()===adjustedAccent &&
           style().getPropertyValue('--role-melody').trim()==='#8ad4d4','apply preserves visible colors');
+        ensure(getComputedStyle(compose).backgroundColor===adjustedCompose,'apply preserves the Compose color');
         ensure(Object.values(applied.colorAdjustments).every(value=>value===0),'apply neutralizes the knobs');
         ensure(applied.colorAdjustmentScopes.brightness==='app' && applied.colorAdjustmentScopes.hueShift==='role' &&
           applied.colorAdjustmentScopes.saturation==='all','apply retains independent scopes');

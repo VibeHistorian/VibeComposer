@@ -1,5 +1,5 @@
 import { ARRANGED_PARTS, type ArrangedPart } from '../music/part-role';
-import { appHeadingColor, DEFAULT_THEME_COLORS, THEME_COLORS, type ThemeColors } from './theme';
+import { appHeadingColor, DEFAULT_THEME_COLORS, DEFAULT_UI_COLORS, THEME_COLORS, type ThemeColors, type UiColors } from './theme';
 
 export const WINDOW_WIDTH_OPTIONS = [
   { value: 'none', label: 'No limit' },
@@ -62,6 +62,7 @@ export interface AppearancePreferences {
   readonly colorAdjustments: ColorAdjustments;
   readonly colorAdjustmentScopes: ColorAdjustmentScopes;
   readonly themeColors: ThemeColors;
+  readonly uiColors: UiColors;
   readonly fonts: Readonly<Record<FontArea, string>>;
   readonly roleColors: Readonly<Record<ArrangedPart, string>>;
 }
@@ -79,6 +80,7 @@ export function defaultAppearance(): AppearancePreferences {
     colorAdjustments: { ...DEFAULT_COLOR_ADJUSTMENTS },
     colorAdjustmentScopes: { ...DEFAULT_COLOR_ADJUSTMENT_SCOPES },
     themeColors: { ...DEFAULT_THEME_COLORS },
+    uiColors: { ...DEFAULT_UI_COLORS },
     fonts: { ui: FONT_CHOICES[0].value, heading: FONT_CHOICES[0].value, mono: FONT_CHOICES[1].value },
     roleColors: { melody: '#d44040', chords: '#28b82b', arpeggio: '#ed55bf', bass: '#8ca9ba', drums: '#e4b74e' },
   };
@@ -125,6 +127,11 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
     roleGroups: themeColors.roleGroups === undefined ? DEFAULT_THEME_COLORS.roleGroups : themeColors.roleGroups,
   };
   if (!THEME_COLORS.every(color => isRoleColor(resolvedColors[color.key]))) return null;
+  const uiColors = data.uiColors === undefined ? DEFAULT_UI_COLORS : data.uiColors;
+  if (!uiColors || typeof uiColors !== 'object' || Array.isArray(uiColors)) return null;
+  const resolvedUiColors = { ...DEFAULT_UI_COLORS, ...uiColors };
+  const uiColorNames = Object.keys(DEFAULT_UI_COLORS) as (keyof UiColors)[];
+  if (!uiColorNames.every(name => isRoleColor(resolvedUiColors[name]))) return null;
   return {
     arrangementCellBrightness: data.arrangementCellBrightness ?? 0,
     arrangementNoteBrightness: data.arrangementNoteBrightness ?? 0,
@@ -137,6 +144,7 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
     colorAdjustments: Object.fromEntries(COLOR_ADJUSTMENTS.map(({ key }) => [key, colorAdjustments[key]])) as ColorAdjustments,
     colorAdjustmentScopes: Object.fromEntries(COLOR_ADJUSTMENTS.map(({ key }) => [key, scopes[key]])) as ColorAdjustmentScopes,
     themeColors: Object.fromEntries(THEME_COLORS.map(color => [color.key, resolvedColors[color.key].toLowerCase()])) as ThemeColors,
+    uiColors: Object.fromEntries(uiColorNames.map(name => [name, resolvedUiColors[name].toLowerCase()])) as UiColors,
     fonts: Object.fromEntries(FONT_AREAS.map(area => [area.key, data.fonts[area.key]])) as AppearancePreferences['fonts'],
     roleColors: Object.fromEntries(ARRANGED_PARTS.map(role => [role, data.roleColors[role].toLowerCase()])) as AppearancePreferences['roleColors'],
   };
@@ -159,7 +167,7 @@ export function adjustColor(base: string, adjustments: ColorAdjustments): string
     Math.round((channel + max - chroma) * (1 + brightness / 100) * 255))).toString(16).padStart(2, '0')).join('');
 }
 
-export function adjustedPalette(appearance: AppearancePreferences): Pick<AppearancePreferences, 'themeColors' | 'roleColors'> {
+export function adjustedPalette(appearance: AppearancePreferences): Pick<AppearancePreferences, 'themeColors' | 'uiColors' | 'roleColors'> {
   const adjustmentsFor = (group: 'app' | 'role'): ColorAdjustments =>
     Object.fromEntries(COLOR_ADJUSTMENTS.map(({ key }) => {
       const scope = appearance.colorAdjustmentScopes[key];
@@ -170,6 +178,8 @@ export function adjustedPalette(appearance: AppearancePreferences): Pick<Appeara
   return {
     themeColors: Object.fromEntries(THEME_COLORS.map(({ key }) =>
       [key, adjustColor(appearance.themeColors[key], appAdjustments)])) as ThemeColors,
+    uiColors: Object.fromEntries(Object.entries(appearance.uiColors).map(([name, base]) =>
+      [name, adjustColor(base, appAdjustments)])) as UiColors,
     roleColors: Object.fromEntries(ARRANGED_PARTS.map(role =>
       [role, adjustColor(appearance.roleColors[role], roleAdjustments)])) as AppearancePreferences['roleColors'],
   };

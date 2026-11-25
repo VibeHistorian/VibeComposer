@@ -27,12 +27,33 @@ export const DEFAULT_THEME_COLORS: ThemeColors = {
   text: '#f2f7ff', border: '#3b607d', accent: '#32d7f4',
 };
 
+export const DEFAULT_UI_COLORS = {
+  '--compose-accent': '#f2b544',
+  '--generation-symbol-color': '#102a2a',
+  '--mix-boost-accent': '#d22827',
+  '--mix-mute-active': '#ffff32',
+  '--mix-solo-active': '#91ff28',
+  '--parameter-timing': '#70839c',
+  '--parameter-rhythm': '#418c91',
+  '--parameter-pitch': '#7e70a6',
+  '--parameter-shape': '#a47659',
+  '--parameter-dynamics': '#858f50',
+  '--parameter-structure': '#5b819d',
+  '--parameter-other': '#6a7b8c',
+  '--color-danger': '#ff9fb5',
+  '--color-danger-bright': '#ffb8c8',
+  '--color-warning': '#ffc66b',
+} as const;
+export type UiColors = Readonly<Record<keyof typeof DEFAULT_UI_COLORS, string>>;
+
 /** Derive concrete colors so CSS, Canvas and Pixi share the same palette. */
-export function themeColorTokens(colors: ThemeColors, scoreRowBrightness = 0, scoreGridBrightness = 0): Readonly<Record<string, string>> {
+export function themeColorTokens(colors: ThemeColors, scoreRowBrightness = 0, scoreGridBrightness = 0,
+  uiColors: UiColors = DEFAULT_UI_COLORS): Readonly<Record<string, string>> {
   const mix = (from: string, to: string, amount: number): string => '#' + [1, 3, 5].map(offset =>
     Math.round(parseInt(from.slice(offset, offset + 2), 16) * (1 - amount)
       + parseInt(to.slice(offset, offset + 2), 16) * amount).toString(16).padStart(2, '0')).join('');
   const { background, surface, inspector, roleGroups, text, border, accent } = colors;
+  const danger = uiColors['--color-danger'], warning = uiColors['--color-warning'];
   const raised = (amount: number) => mix(surface, border, amount);
   const tinted = (amount: number) => mix(surface, accent, amount);
   const muted = (amount: number) => mix(text, surface, amount);
@@ -57,6 +78,7 @@ export function themeColorTokens(colors: ThemeColors, scoreRowBrightness = 0, sc
     }
   }
   const tokens: Record<string, string> = {
+    ...uiColors,
     '--surface-canvas': background, '--surface-app-heading': colors.appHeading,
     '--surface-transport-dock': colors.transportDock,
     '--surface-inspector': inspector, '--surface-role-group': roleGroups,
@@ -67,14 +89,14 @@ export function themeColorTokens(colors: ThemeColors, scoreRowBrightness = 0, sc
     '--surface-hover': tinted(.2), '--surface-accent': tinted(.15), '--surface-accent-hover': tinted(.25),
     '--surface-score': mix(background, surface, .6), '--surface-glass': surface + 'f5',
     '--surface-blue': tinted(.12), '--surface-violet': mix(surface, '#a49ac9', .18),
-    '--surface-warm': mix(surface, '#ffc66b', .16), '--surface-danger': mix(surface, '#ff9fb5', .16),
+    '--surface-warm': mix(surface, warning, .16), '--surface-danger': mix(surface, danger, .16),
     '--text-primary': text, '--text-strong': muted(.1), '--text-secondary': muted(.28),
     '--text-muted': muted(.44), '--text-subtle': muted(.52), '--text-faint': muted(.6), '--text-disabled': muted(.7),
     '--border-subtle': mix(surface, border, .3), '--border-default': mix(surface, border, .65),
     '--border-strong': border, '--border-contrast': mix(border, text, .18),
     '--border-focus': accent, '--border-accent': mix(surface, accent, .5),
-    '--border-danger': mix(border, '#ff9fb5', .4), '--border-blue': mix(border, accent, .2),
-    '--border-violet': mix(border, '#a49ac9', .4), '--border-warm': mix(border, '#ffc66b', .4),
+    '--border-danger': mix(border, danger, .4), '--border-blue': mix(border, accent, .2),
+    '--border-violet': mix(border, '#a49ac9', .4), '--border-warm': mix(border, warning, .4),
     '--border-grid': mix(surface, border, .6),
     '--grid-subdivision': raised(.15), '--grid-step': raised(.08), '--grid-eighth': raised(.3),
     '--grid-beat': raised(.8), '--grid-measure': mix(border, text, .2),
@@ -85,9 +107,14 @@ export function themeColorTokens(colors: ThemeColors, scoreRowBrightness = 0, sc
     '--accent-primary': accent, '--accent-hover': mix(accent, text, .4),
     '--accent-shadow': accent + '26', '--accent-glow': accent + '80', '--accent-outline': accent + '2e',
     '--ambient-glow': accent + '0a',
+    '--pitch-glide-color': mix(uiColors['--parameter-pitch'], text, .48),
+    '--volume-glide-color': mix(uiColors['--parameter-dynamics'], text, .48),
     '--loop-accent': loopAccent, '--loop-line': mix(loopAccent, surface, .2),
     '--loop-surface': loopAccent + '1f', '--loop-outline': loopAccent + '33',
   };
+  for (const [name, color] of Object.entries(uiColors)) {
+    if (name.startsWith('--parameter-')) tokens[name] = mix(color, text, .3);
+  }
   for (const [name, color] of Object.entries(tokens)) {
     const brightness = name.startsWith('--score-') ? scoreRowBrightness : name.startsWith('--grid-') ? scoreGridBrightness : 0;
     if (brightness === 0) continue;

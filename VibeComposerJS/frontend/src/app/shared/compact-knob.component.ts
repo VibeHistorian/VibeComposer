@@ -80,7 +80,7 @@ export class CompactKnobComponent {
     // A visible initial jump makes even tiny mix edits readable; each endpoint reaches full accent.
     const strength = deviation === 0 ? 0 : 25 + 75 * Math.sqrt(deviation);
     const accent = this.valueFormat() === 'decibels' && value > neutral
-      ? 'rgb(from var(--accent-primary) calc(255 - r) calc(255 - g) calc(255 - b))'
+      ? 'var(--mix-boost-accent)'
       : 'var(--accent-primary)';
     return `color-mix(in srgb, ${accent} ${strength}%, var(--text-muted))`;
   });

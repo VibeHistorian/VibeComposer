@@ -21,8 +21,8 @@
 .mini:has(input:focus-visible) .knob-face { box-shadow: 0 0 0 2px var(--accent-outline); }
 .mini .knob-face > span { width: 18px; height: 18px; padding: 0; overflow: visible; text-overflow: clip; font-size: 9px; }
 .mini input { top: 0; width: 24px; height: 24px; }
-.mini .mix-face { border-color: var(--knob-accent); }
-.mini .mix-face > span { color: var(--knob-accent); }
+.mini:not(:has(input:focus-visible)) .mix-face { border-color: color-mix(in srgb, var(--text-muted) 40%, var(--surface-low)); }
+.mini .mix-face > span { color: var(--text-subtle); }
 .mini .knob-value { font: 10px var(--font-ui); white-space: nowrap; }
 .mini.at-default .knob-face, .mini.at-default .knob-value { filter: brightness(var(--knob-default-brightness)); }
 
@@ -84,5 +84,6 @@
   --letter-accent: color-mix(in srgb, var(--track-group-color, var(--accent-primary)) 50%, transparent);
 }
 .letter .knob-face > span { width: auto; height: auto; padding: 0; border: 0; background: none; font: 9px var(--font-mono); }
+.letter.at-default .knob-face > span { color: var(--text-subtle); filter: brightness(var(--knob-default-brightness)); }
 .letter input { inset: 0; width: 100%; height: 100%; transform: none; }
 .letter:has(input:focus-visible) .knob-face { border-color: transparent; box-shadow: 0 0 0 1px var(--border-focus); }
