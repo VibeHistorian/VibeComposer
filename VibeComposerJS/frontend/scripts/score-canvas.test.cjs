@@ -259,6 +259,42 @@ test('ghost outlines paint behind draft notes at half opacity without hit areas 
   assert.deepEqual(capsules.map(item => item.method), ['fill', 'stroke', 'fill', 'stroke']);
 });
 
+test('phrase lanes show only the inactive glides and dim velocity bars while a glide is active', () => {
+  const { Graphics } = require('pixi.js');
+  const { glideLaneY } = scoreHelper('score-geometry');
+  const { component: c } = fixture();
+  const curve = value => [{ startBeat: 0, endBeat: 3, startValue: value, endValue: value }];
+  c.horizontalOffset = 0;
+  c.horizontalScale = 1;
+  c.editable = () => true;
+  c.velocityVisible = () => true;
+  c.glideOrigin = () => 2;
+  c.editBounds = () => ({ startBeat: 2, endBeat: 4 });
+  c.glideCurves = () => ({ pitch: curve(1), volume: curve(.25) });
+  c.model = { tracks: [{ id: 'bass', color: 'bass' }], sections: [], totalBeats: 8,
+    selectedTrackId: 'bass', hiddenTrackIds: new Set(), notes: [
+      { id: 'draft', part: 'bass', color: 'bass', midi: 60, velocity: 90, startBeat: 2, durationBeats: 1, opacity: .8 },
+    ] };
+  c.staticGraphics = new Graphics();
+  for (const active of [null, 'pitch', 'volume']) {
+    c.glideLane = () => active;
+    c.drawStatic();
+    const instructions = c.staticGraphics.context.instructions;
+    const traces = instructions.filter(({ action, data }) => action === 'stroke' && data.style.alpha === .2);
+    assert.deepEqual(traces.map(({ data }) => {
+      assert.equal(data.style.width, 1);
+      return data.path.shapePath.shapePrimitives[0].shape.points;
+    }), ['pitch', 'volume'].filter(lane => lane !== active).map(lane => {
+      const y = c.scoreHeight + glideLaneY(lane, lane === 'pitch' ? 1 : .25);
+      return [200, y, 400, y];
+    }));
+    const bar = instructions.at(-1);
+    assert.equal(bar.data.style.alpha, active ? .2 : .9);
+    assert.equal(bar.data.path.shapePath.shapePrimitives[0].shape.width, active ? 1 : 2);
+  }
+  c.staticGraphics.destroy();
+});
+
 test('optional chord grid draws chord colors at half the previous opacity only when enabled', () => {
   const { component: c } = fixture();
   c.horizontalOffset = 0; c.horizontalScale = 1;

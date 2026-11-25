@@ -1,4 +1,5 @@
 import type { ArrangedPart } from '../../core/music/part-role';
+import { PITCH_GLIDE_SEMITONES, type GlideLane } from '../../core/music/phrase-glides';
 
 /** Canvas coordinates are CSS pixels; offsets are fractions of the full song. */
 export interface ScoreTimeGeometry {
@@ -25,7 +26,13 @@ export interface ScoreRect extends ScorePoint { readonly width: number; readonly
 export interface CanvasBounds { readonly left: number; readonly top: number; readonly width: number; readonly height: number }
 
 export const VELOCITY_HEIGHT = 34;
+export const GLIDE_PADDING = 4;
+export const GLIDE_HEIGHT = VELOCITY_HEIGHT - GLIDE_PADDING * 2;
 const MAX_PITCH_ROW_HEIGHT = 30;
+
+export function glideLaneY(lane: GlideLane, value: number): number {
+  return GLIDE_PADDING + GLIDE_HEIGHT * (lane === 'pitch' ? (1 - value / PITCH_GLIDE_SEMITONES) / 2 : 1 - value);
+}
 
 export function canvasPoint(clientX: number, clientY: number, bounds: CanvasBounds, size: { width: number; height: number }): ScorePoint {
   return { x: (clientX - bounds.left) * size.width / Math.max(1, bounds.width),

@@ -479,9 +479,13 @@ export class EditWorkspaceComponent {
   readonly canDrawGlides = computed(() => this.draftReady() && !this.recorder()?.running());
   readonly draftGlides = signal<TrackGlides>({});
   private baselineGlides: TrackGlides = {};
+  readonly glideCurves = computed(() => {
+    const track = this.glideTrack();
+    return track ? this.draftGlides()[track.id] ?? EMPTY_PHRASE_GLIDES : EMPTY_PHRASE_GLIDES;
+  });
   readonly laneSegments = computed(() => {
-    const lane = this.glideLane(), track = this.glideTrack();
-    return lane && track ? this.draftGlides()[track.id]?.[lane] ?? [] : [];
+    const lane = this.glideLane();
+    return lane ? this.glideCurves()[lane] : [];
   });
   readonly changedGlides = computed(() => {
     const track = this.glideTrack();

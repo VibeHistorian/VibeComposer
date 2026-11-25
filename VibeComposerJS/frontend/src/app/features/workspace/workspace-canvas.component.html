@@ -354,7 +354,7 @@
                   (trackAddRequested)="addScoreTrack($event)"
                   [canRemoveTrack]="project().tracks.length > 1" (noteRemoveRequested)="removeScoreTrack($event)"
                   [hiddenTrackIds]="editing() ? editingHiddenTracks : hiddenTracks()" [editable]="editing()" [editBounds]="editing() ? scoreEditBounds() : null" [velocityVisible]="editing()"
-                  [glideLane]="editor()?.glideLane() ?? null" [glideSegments]="editor()?.laneSegments() ?? []" [glideOrigin]="editStartBeat()"
+                  [glideLane]="editor()?.glideLane() ?? null" [glideCurves]="editor()?.glideCurves()" [glideOrigin]="editStartBeat()"
                   [glideReference]="glideReference()" [glideDisabled]="!editor()?.canDrawGlides()" (glideStroke)="editor()?.drawGlide($event)"
                   (noteSelected)="canvasNoteSelected($event)" (noteTrackSelected)="selectNoteTrack($event)" (noteChanged)="canvasNoteChanged($event)"
                   [selectedNoteIds]="editor()?.canvasSelectedNoteIds() ?? []" [snapBeats]="editor()?.snapBeats() ?? 0.25" [placementDuration]="editor()?.placementDuration ?? 0.5"

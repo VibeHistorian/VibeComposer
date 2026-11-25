@@ -1,10 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { clipGlideSegments, glideNeutral, glideValue, PITCH_GLIDE_SEMITONES, type GlideLane, type GlideSegment } from '../../core/music/phrase-glides';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
-import { scoreBeat, scoreX, VELOCITY_HEIGHT, type ScoreTimeGeometry } from './score-geometry';
-
-const PADDING = 4;
-const HEIGHT = VELOCITY_HEIGHT - PADDING * 2;
+import { glideLaneY, GLIDE_HEIGHT, GLIDE_PADDING, scoreBeat, scoreX, VELOCITY_HEIGHT, type ScoreTimeGeometry } from './score-geometry';
 interface GlidePoint { readonly beat: number; readonly value: number; }
 interface GlideSource { readonly label: string; readonly segments: readonly GlideSegment[]; }
 export interface ScoreGlideReference {
@@ -136,7 +133,7 @@ export class ScoreGlideLaneComponent {
     const step = free || !this.snapBeats() ? Math.max(0.001, geometry.totalBeats / geometry.horizontalScale / 320) : this.snapBeats();
     const targetBeat = Math.max(bounds.startBeat, Math.min(bounds.endBeat, Math.round(beat / step) * step));
     const y = (event.clientY - rect.top) * VELOCITY_HEIGHT / Math.max(1, rect.height);
-    const fraction = Math.max(0, Math.min(1, (VELOCITY_HEIGHT - PADDING - y) / HEIGHT));
+    const fraction = Math.max(0, Math.min(1, (VELOCITY_HEIGHT - GLIDE_PADDING - y) / GLIDE_HEIGHT));
     // Round near the center to make the pitch neutral line easy to hit.
     const value = this.lane() === 'pitch'
       ? Math.round((2 * fraction - 1) * PITCH_GLIDE_SEMITONES * 10) / 10 : Math.round(fraction * 100) / 100;
@@ -188,7 +185,7 @@ export class ScoreGlideLaneComponent {
     context.clearRect(0, 0, geometry.width, VELOCITY_HEIGHT);
     const style = getComputedStyle(canvas);
     const color = style.getPropertyValue(lane === 'pitch' ? '--pitch-glide-color' : '--volume-glide-color').trim();
-    const y = (value: number) => PADDING + HEIGHT * (lane === 'pitch' ? (1 - value / PITCH_GLIDE_SEMITONES) / 2 : 1 - value);
+    const y = (value: number) => glideLaneY(lane, value);
     const neutral = y(glideNeutral(lane));
     const leftBeat = scoreBeat(0, geometry), rightBeat = scoreBeat(geometry.width, geometry);
     const start = Math.max(bounds.startBeat, leftBeat), end = Math.min(bounds.endBeat, rightBeat);

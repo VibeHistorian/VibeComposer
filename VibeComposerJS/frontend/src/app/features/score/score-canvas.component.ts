@@ -20,10 +20,10 @@ import type { PhraseSource } from '../../core/music/phrase';
 import { snapMidiToScale, type PhraseDragMode } from '../../core/music/phrase-edit';
 import type { ArrangedPart } from '../../core/music/part-role';
 import type { PhraseNote } from '../../core/music/phrase-note';
-import { glideValueAt, PITCH_GLIDE_SEMITONES, type GlideLane, type GlideSegment, type PhraseGlides } from '../../core/music/phrase-glides';
+import { clipGlideSegments, GLIDE_LANES, glideValueAt, PITCH_GLIDE_SEMITONES, type GlideLane, type GlideSegment, type PhraseGlides } from '../../core/music/phrase-glides';
 import { ScoreGlideLaneComponent, type ScoreGlideReference } from './score-glide-lane.component';
 import {
-  canvasPoint, clampViewport, contentHeight, harmonicNotePitchBounds, laneHeight, maxVerticalScale, overviewPitchRange, pitchAt,
+  canvasPoint, clampViewport, contentHeight, glideLaneY, harmonicNotePitchBounds, laneHeight, maxVerticalScale, overviewPitchRange, pitchAt,
   scoreBeat, scoreHeight, scoreX, sectionViewport, VELOCITY_HEIGHT,
   type NotePitchBounds, type ScorePitchGeometry, type ScoreTimeGeometry,
 } from './score-geometry';
@@ -96,6 +96,7 @@ interface ScoreCanvasModel {
 }
 
 const MIN_TIME_GRID_SPACING = 8;
+const LANE_GHOST_ALPHA = 0.2;
 const COLORS: Readonly<Record<ArrangedPart, { note: string; velocity: string; glow: string }>> = {
   melody: { note: '--role-melody-strong', velocity: '--role-melody-strong', glow: '--role-melody-glow' },
   bass: { note: '--role-bass-strong', velocity: '--role-bass-strong', glow: '--role-bass-glow' },
@@ -139,7 +140,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly editable = input(false);
   readonly velocityVisible = input(false);
   readonly glideLane = input<GlideLane | null>(null);
-  readonly glideSegments = input<readonly GlideSegment[]>([]);
+  readonly glideCurves = input<PhraseGlides>();
+  readonly glideSegments = computed(() => {
+    const lane = this.glideLane();
+    return lane ? this.glideCurves()?.[lane] ?? [] : [];
+  });
   readonly trackGlides = input<ReadonlyMap<string, PhraseGlides>>(new Map());
   readonly glideReference = input<ScoreGlideReference | null>(null);
   readonly glideOrigin = input(0);
@@ -297,6 +302,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.wasEditable = editable;
     this.velocityVisible();
     this.glideLane();
+    this.glideCurves();
+    this.glideOrigin();
+    this.editBounds();
     this.trackGlides();
     this.snapBeats();
     this.snapToScale();
@@ -1311,6 +1319,27 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
 
     const trackIndexes = new Map(tracks.flatMap((track, index) => (track.trackIds ?? [track.id]).map(id => [id, index] as const)));
     const editable = this.editable();
+    const velocityVisible = this.velocityVisible();
+    const activeGlide = this.glideLane();
+    const glideCurves = this.glideCurves();
+    if (editable && velocityVisible && glideCurves && (glideCurves.pitch.length || glideCurves.volume.length)) {
+      const geometry = this.timeGeometry;
+      const origin = this.glideOrigin();
+      const bounds = this.glideBounds();
+      const start = Math.max(bounds.startBeat, scoreBeat(0, geometry) - origin);
+      const end = Math.min(bounds.endBeat, scoreBeat(this.width, geometry) - origin);
+      for (const lane of GLIDE_LANES) {
+        if (lane === activeGlide) continue;
+        const visible = clipGlideSegments(glideCurves[lane], start, end);
+        if (!visible.length) continue;
+        for (const segment of visible) {
+          graphics.moveTo(scoreX(segment.startBeat + origin, geometry), scoreHeight + glideLaneY(lane, segment.startValue))
+            .lineTo(scoreX(segment.endBeat + origin, geometry), scoreHeight + glideLaneY(lane, segment.endValue));
+        }
+        const ghost = color(lane === 'pitch' ? '--pitch-glide-color' : '--volume-glide-color');
+        graphics.stroke({ color: ghost.value, alpha: ghost.alpha * LANE_GHOST_ALPHA, width: 1 });
+      }
+    }
     const noteShapeMode = editable ? 'classic' : this.preferences.scoreNoteShape();
     const trackGlides = this.trackGlides();
     const hasGlides = trackGlides.size > 0;
@@ -1416,11 +1445,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
             .stroke(outline);
         }
       }
-      if (this.velocityVisible() && !this.glideLane()) {
-        const velocityColor = parsedNote;
+      if (velocityVisible && (!activeGlide || editable)) {
         const velocityHeight = Math.max(2, note.velocity / 127 * VELOCITY_HEIGHT);
-        graphics.rect(x, this.height - velocityHeight, 2, velocityHeight)
-          .fill({ color: velocityColor.value, alpha: (selected ? 0.9 : 0.32 * 0.8) * velocityColor.alpha });
+        const velocityAlpha = activeGlide ? LANE_GHOST_ALPHA * (selected ? 1 : 0.6) : selected ? 0.9 : 0.32 * 0.8;
+        graphics.rect(x, this.height - velocityHeight, activeGlide ? 1 : 2, velocityHeight)
+          .fill({ color: parsedNote.value, alpha: velocityAlpha * parsedNote.alpha });
       }
       if (noteHeight <= 0) continue;
       const hitHalfHeight = Math.max(3, halfHeight);
