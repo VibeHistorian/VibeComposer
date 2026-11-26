@@ -3,7 +3,7 @@ const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, 
 const assert=require('node:assert/strict');
 const fs=require('node:fs'); const path=require('node:path'); const test=require('node:test');
 const browser=findBrowser();
-test('phrase MIDI drop, clipboard, transpose and draft undo work in the production browser', {skip:!browser,timeout:60000},async()=>{
+test('phrase MIDI drop, clipboard, transpose and separate draft and project history work in the production browser', {skip:!browser,timeout:60000},async()=>{
  const root=requireProductionBuild();
  const server=createBrowserServer({ root });
  await listen(server);
@@ -252,6 +252,67 @@ test('phrase MIDI drop, clipboard, transpose and draft undo work in the producti
   assert.deepEqual(pasted.tracks[0].notes.map(note => [
     note.midi, note.ticks / pasted.header.ppq, note.durationTicks / pasted.header.ppq, Math.round(note.velocity * 127),
   ]).sort((a, b) => a[1] - b[1] || a[0] - b[0]), [[64, 2, 0.5, 79], [64, 4, 0.5, 79], [67, 4, 0.75, 108], [67, 6, 0.75, 108]]);
+
+  await evaluate(`(async () => { ${waitCode} ${setup}
+    const control = label => document.querySelector('[aria-label="' + label + '"]');
+    const undo = control('Undo'), redo = control('Redo');
+    const knob = (row, label) => row.querySelector('input[aria-label^="' + label + ' "]');
+    const row = document.querySelector('.track-group.bass .track-row-card');
+    const pan = knob(row, 'Pan'), volume = knob(row, 'Volume');
+    const transpose = control('Transpose in semitones');
+    const instrument = row.querySelector('.track-instrument');
+    const earlierProgram = instrument.getAttribute('value');
+    const program = earlierProgram === '32' ? '33' : '32';
+    button('Cancel').click();
+    await wait(() => !document.querySelector('#phrase-grid'));
+    await change(pan, '20');
+    await wait(() => !undo.disabled);
+    await change(transpose, '3');
+    undo.click();
+    await wait(() => transpose.value === '0' && !redo.disabled);
+    await open('bass');
+    if (!undo.disabled || !redo.disabled || row.querySelector('.track-channel').getAttribute('aria-disabled') !== 'true') {
+      throw Error('Opening a phrase must lock earlier history and the MIDI channel');
+    }
+    button('Cancel').click();
+    await wait(() => !undo.disabled && !redo.disabled);
+    await open('bass');
+    const draftShortcut = key => document.body.dispatchEvent(new KeyboardEvent('keydown', { key, ctrlKey: true, bubbles: true, cancelable: true }));
+    const draftTranspose = control('Transpose phrase');
+    const openingVolume = volume.value;
+    const quieterVolume = String(Number(openingVolume) - 10);
+    await change(pan, '40');
+    await change(volume, quieterVolume);
+    await wait(() => pan.value === '40' && volume.value === quieterVolume);
+    await change(instrument, program);
+    await wait(() => instrument.getAttribute('value') === program);
+    const attack = await wait(() => knob(row, 'Attack'));
+    const defaultAttack = attack.getAttribute('aria-valuetext');
+    await change(attack, '500');
+    await wait(() => attack.getAttribute('aria-valuetext') !== defaultAttack);
+    await change(transpose, '4');
+    await change(draftTranspose, '2');
+    draftShortcut('z');
+    await wait(() => draftTranspose.value === '0' && transpose.value === '4');
+    draftShortcut('y');
+    await wait(() => draftTranspose.value === '2');
+    undo.click();
+    await wait(() => transpose.value === '0' && draftTranspose.value === '2' && !redo.disabled);
+    undo.click();
+    await wait(() => attack.getAttribute('aria-valuetext') === defaultAttack);
+    redo.click();
+    await wait(() => attack.getAttribute('aria-valuetext') !== defaultAttack);
+    undo.click();
+    await wait(() => attack.getAttribute('aria-valuetext') === defaultAttack);
+    undo.click();
+    await wait(() => instrument.getAttribute('value') === earlierProgram);
+    undo.click();
+    await wait(() => volume.value === openingVolume);
+    undo.click();
+    await wait(() => pan.value === '20' && undo.disabled);
+    button('Cancel').click();
+    await wait(() => !undo.disabled && !redo.disabled);
+  })()`);
  } finally {
     await closeBrowser({ child, server, socket });
   }

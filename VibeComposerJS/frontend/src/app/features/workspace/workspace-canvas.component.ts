@@ -960,6 +960,7 @@ export class WorkspaceCanvasComponent {
     this.editPhraseLength.set(Math.min(this.project().progression.length * 4, item ? sectionDurationBeats(this.project(), item.section) : this.totalBeats()));
     this.workspaceUi.selectedTrackId.set(trackId);
     this.editingNoteId.set(null);
+    this.projects.beginPhraseHistory();
     this.editing.set(true);
   }
 
@@ -987,6 +988,11 @@ export class WorkspaceCanvasComponent {
     }
     this.editing.set(false);
     this.editingNoteId.set(null);
+    this.projects.endPhraseHistory();
+  }
+
+  ngOnDestroy(): void {
+    if (this.editing()) this.projects.endPhraseHistory();
   }
 
 
@@ -1136,7 +1142,7 @@ export class WorkspaceCanvasComponent {
   }
 
   updateDrumPitch(track: CompositionTrack, selection: string): void {
-    if (!this.editing() && track.role === 'drums') this.projects.updateTrackGeneratorSettings(track.id, { pitch: Number(selection) });
+    if (track.role === 'drums') this.projects.updateTrackGeneratorSettings(track.id, { pitch: Number(selection) });
   }
 
   reorderTrack(trackId: string, offset: -1 | 1): void {
@@ -1221,7 +1227,7 @@ export class WorkspaceCanvasComponent {
     if (!this.editing()) this.projects.updateTrack(track.id, { voiceMode: mode as VoiceMode });
   }
   updateInstrument(track: CompositionTrack, selection: string): void {
-    if (this.editing() || track.role === 'drums') return;
+    if (track.role === 'drums') return;
     const program = Number(selection);
     if (this.instruments.some((instrument) => instrument.program === program)) {
       this.projects.updateTrack(track.id, { mix: { program } });
@@ -1229,7 +1235,7 @@ export class WorkspaceCanvasComponent {
     }
   }
   updateInstrumentTone(track: CompositionTrack, soundbankName: string, key: InstrumentToneKey, value: number | undefined): void {
-    if (!this.editing() && !this.midi.selectedOutput()) {
+    if (!this.midi.selectedOutput()) {
       this.projects.updateTrackInstrumentTone(track.id, track.mix.program, soundbankName, key, value);
     }
   }

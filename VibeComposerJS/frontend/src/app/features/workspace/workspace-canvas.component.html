@@ -80,11 +80,11 @@
                 <div class="track-routing">
                   @if (track.role === 'drums') {
                     <vc-menu-select [groups]="drumMenuGroups" [options]="drumSelectOptions()[track.id]" class="track-inline-select track-instrument" [attr.aria-label]="'Percussion instrument ' + track.name"
-                      [selectDefault]="36" [value]="drumPitch(track)" [title]="'Percussion instrument: ' + instrumentName(track)" [disabled]="editing()"
+                      [selectDefault]="36" [value]="drumPitch(track)" [title]="'Percussion instrument: ' + instrumentName(track)"
                       (click)="$event.stopPropagation()" (valueChange)="updateDrumPitch(track, $event)"></vc-menu-select>
                   } @else {
                     <vc-menu-select [groups]="instrumentMenuGroups" [options]="instrumentSelectOptions()[track.id]" class="track-inline-select track-instrument" [attr.aria-label]="'Instrument ' + track.name"
-                      [selectDefault]="defaultMix[track.role].program" [value]="track.mix.program" [title]="'Instrument: ' + instrumentName(track)" [disabled]="editing()"
+                      [selectDefault]="defaultMix[track.role].program" [value]="track.mix.program" [title]="'Instrument: ' + instrumentName(track)"
                       (click)="$event.stopPropagation()" (valueChange)="updateInstrument(track, $event)"></vc-menu-select>
                   }
                   @let glides = channelGlides().get(track.midiChannel);
@@ -106,7 +106,7 @@
                               [value]="value" [minimum]="0" [maximum]="control.key === 'sustainPercent' && control.defaultValue <= 100 && value <= 100 ? 100 : control.maximum"
                               [logarithmicTime]="control.unit === ' ms'" [defaultValue]="control.defaultValue"
                               [defaultDisplay]="{ active: overrides?.[control.key] === undefined, text: control.defaultText, varied: control.varied }"
-                              [disabled]="editing()" (defaultRequested)="updateInstrumentTone(track, profile.soundbankName, control.key, undefined)"
+                              (defaultRequested)="updateInstrumentTone(track, profile.soundbankName, control.key, undefined)"
                               (valueCommit)="updateInstrumentTone(track, profile.soundbankName, control.key, control.varied || $event !== control.defaultValue ? $event : undefined)" />
                           }
                         </div>

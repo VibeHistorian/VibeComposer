@@ -1,7 +1,7 @@
 <section class="transport-dock" aria-label="Playback controls">
   <div class="transport-left">
     <div class="transport-generation">
-      <button type="button" class="transport-button generation-button compose-button" [disabled]="workspaceUi.editingNoteId() !== null"
+      <button type="button" class="transport-button generation-button compose-button" [disabled]="projects.phraseHistoryActive()"
         (click)="generate()" aria-label="Compose" title="Compose using the current seed and enabled role rules">✦</button>
       <div class="transport-tempo">
         <vc-compact-knob [dense]="true" label="Tempo in beats per minute" [defaultValue]="120" shortLabel="♩=" unit=""
@@ -26,7 +26,7 @@
               title="On Compose: reroll global harmony when global Compose runs"
               [class.active]="project().randomizeHarmonyOnCompose !== false"
               [attr.aria-pressed]="project().randomizeHarmonyOnCompose !== false"
-              [disabled]="workspaceUi.editingNoteId() !== null"
+              [disabled]="projects.phraseHistoryActive()"
               (click)="toggleComposeRandomization('randomizeHarmonyOnCompose')">✦</button>
           </vc-chordlet-editor>
         </div>

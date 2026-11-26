@@ -336,6 +336,61 @@ test('compact history groups same-control bursts while keeping live state, persi
   service.undo(); assert.equal(service.exportProjectJson(), after, 'undo ends a burst');
 });
 
+test('phrase history locks both sides of the opening position and breaks compact control bursts', (t) => {
+  t.mock.method(performance, 'now', () => 0);
+  const { service } = fixture({ compactHistory: true });
+  const trackId = service.project().tracks[0].id;
+  const pan = panPercent => service.updateTrack(trackId, { mix: { panPercent } });
+  pan(20);
+  const opening = service.project();
+  service.beginPhraseHistory();
+  assert.equal(service.canUndo(), false);
+  service.goToHistory(0);
+  assert.equal(service.project(), opening);
+  pan(30);
+  pan(40);
+  const edited = service.project();
+  service.undo(); service.undo();
+  assert.equal(service.project(), opening);
+  assert.equal(service.canUndo(), false);
+  assert.equal(service.canRedo(), true);
+  service.redo();
+  assert.equal(service.project(), edited);
+  service.undo();
+  service.endPhraseHistory();
+
+  service.beginPhraseHistory();
+  assert.equal(service.canRedo(), false, 'redo from an earlier session is protected');
+  service.redo();
+  assert.equal(service.project(), opening);
+  service.endPhraseHistory();
+  assert.equal(service.canUndo(), true);
+  assert.equal(service.canRedo(), true);
+  service.beginPhraseHistory();
+  pan(50);
+  service.undo();
+  service.redo();
+  assert.equal(service.project().tracks[0].mix.panPercent, 50, 'a new edit replaces the old redo branch');
+});
+
+test('phrase history follows the opening position as old snapshots are evicted and releases on tab activation', () => {
+  const { service } = fixture();
+  const originalTab = service.activeProjectTabId();
+  for (let i = 0; i < 100; i++) service.updateSettings({ name: 'Project ' + i });
+  const opening = service.project();
+  service.beginPhraseHistory();
+  for (let i = 0; i < 3; i++) service.updateSettings({ name: 'Edit ' + i });
+  assert.equal(service.historyPosition(), 100);
+  for (let i = 0; i < 4; i++) service.undo();
+  assert.equal(service.project(), opening);
+  assert.equal(service.canUndo(), false);
+  service.newEmptyProjectTab();
+  service.switchProjectTab(originalTab);
+  assert.equal(service.phraseHistoryActive(), false);
+  assert.equal(service.canUndo(), true);
+  assert.equal(service.canRedo(), true);
+});
+
 test('compact history separates fields, scopes, delayed edits, actions and multi-control patches', (t) => {
   let now = 0;
   t.mock.method(performance, 'now', () => now);

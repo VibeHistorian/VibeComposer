@@ -34,8 +34,8 @@
       <button type="button" (click)="openSettings()" aria-label="Settings" title="Settings" aria-haspopup="dialog">Settings</button>
       </div>
       <div transportHistory class="project-tool-group project-history-group" role="group" aria-label="Project history">
-        <button type="button" class="icon-button" (click)="projects.undo()" [disabled]="!projects.canUndo() || workspaceUi.editingNoteId() !== null" aria-label="Undo" title="Undo">↶</button>
-        <button type="button" class="icon-button" (click)="projects.redo()" [disabled]="!projects.canRedo() || workspaceUi.editingNoteId() !== null" aria-label="Redo" title="Redo">↷</button>
+        <button type="button" class="icon-button" (click)="projects.undo()" [disabled]="!projects.canUndo()" aria-label="Undo" title="Undo">↶</button>
+        <button type="button" class="icon-button" (click)="projects.redo()" [disabled]="!projects.canRedo()" aria-label="Redo" title="Redo">↷</button>
         <button type="button" (click)="openHistory()" aria-label="History" title="History" aria-haspopup="dialog">History</button>
       </div>
     <div transportFiles class="project-tool-group project-file-tools" role="group" aria-label="Project files">

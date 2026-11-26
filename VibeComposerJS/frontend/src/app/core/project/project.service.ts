@@ -91,8 +91,7 @@ export class ProjectService {
   private readonly state = signal<CompositionProject>(this.loadProject());
   private readonly past: CompositionProject[] = [];
   private readonly future: CompositionProject[] = [];
-  private readonly undoAvailable = signal(false);
-  private readonly redoAvailable = signal(false);
+  private readonly phraseHistoryBoundary = signal<{ pastLength: number; futureLength: number } | null>(null);
   private readonly uiPreferences = inject(UiPreferencesService);
   private lastControlEdit: { key: string; time: number } | null = null;
   private readonly historyRevision = signal(0);
@@ -106,8 +105,12 @@ export class ProjectService {
   readonly persistenceError = this.persistenceFailure.asReadonly();
   private readonly automaticSeed = signal(BigInt(this.state().seed) === 0n);
   readonly seedInput = computed(() => this.automaticSeed() ? '0' : this.project().seed);
-  readonly canUndo = this.undoAvailable.asReadonly();
-  readonly canRedo = this.redoAvailable.asReadonly();
+  readonly phraseHistoryActive = computed(() => this.phraseHistoryBoundary() !== null);
+  readonly canUndo = computed(() => this.historyPosition() > (this.phraseHistoryBoundary()?.pastLength ?? 0));
+  readonly canRedo = computed(() => {
+    this.historyRevision();
+    return this.future.length > (this.phraseHistoryBoundary()?.futureLength ?? 0);
+  });
   readonly compactHistory = this.uiPreferences.compactHistory;
   readonly historyPosition = computed(() => { this.historyRevision(); return this.past.length; });
   readonly historyEntries = computed(() => {
@@ -177,6 +180,7 @@ export class ProjectService {
   }
 
   private activateTab(tab: ProjectTab): void {
+    this.endPhraseHistory();
     this.projectActivation.update(revision => revision + 1);
     this.activeProjectTabId.set(tab.id);
     this.past.splice(0, this.past.length, ...tab.past);
@@ -185,7 +189,7 @@ export class ProjectService {
     this.automaticSeed.set(tab.automaticSeed);
     this.generationFailure.set(null);
     this.state.set(tab.project);
-    this.refreshHistoryAvailability();
+    this.refreshHistory();
     this.persist();
   }
 
@@ -248,7 +252,7 @@ export class ProjectService {
   }
 
   goToHistory(index: number): void {
-    if (!Number.isInteger(index) || index < 0 || index > this.past.length + this.future.length) return;
+    if (this.phraseHistoryActive() || !Number.isInteger(index) || index < 0 || index > this.past.length + this.future.length) return;
     const current = this.state();
     const states = [...this.past, current, ...[...this.future].reverse()];
     const next = preserveAudition(states[index], current);
@@ -257,7 +261,7 @@ export class ProjectService {
     this.lastControlEdit = null;
     this.state.set(next);
     this.persist();
-    this.refreshHistoryAvailability();
+    this.refreshHistory();
   }
 
   toggleCompactHistory(): void {
@@ -1731,30 +1735,37 @@ export class ProjectService {
     this.commit({ ...this.state(), progression: [...DEFAULT_PROJECT.progression], progressionChords: undefined });
   }
 
+  beginPhraseHistory(): void {
+    this.lastControlEdit = null;
+    this.phraseHistoryBoundary.set({ pastLength: this.past.length, futureLength: this.future.length });
+  }
+
+  endPhraseHistory(): void {
+    if (!this.phraseHistoryActive()) return;
+    this.phraseHistoryBoundary.set(null);
+    this.lastControlEdit = null;
+  }
+
   undo(): void {
     this.lastControlEdit = null;
-    const previous = this.past.pop();
-    if (!previous) {
-      return;
-    }
+    if (!this.canUndo()) return;
+    const previous = this.past.pop()!;
     this.future.push(this.state());
     const restored = preserveAudition(previous, this.state());
     this.state.set(restored);
     this.persist();
-    this.refreshHistoryAvailability();
+    this.refreshHistory();
   }
 
   redo(): void {
     this.lastControlEdit = null;
-    const next = this.future.pop();
-    if (!next) {
-      return;
-    }
+    if (!this.canRedo()) return;
+    const next = this.future.pop()!;
     this.past.push(this.state());
     const restored = preserveAudition(next, this.state());
     this.state.set(restored);
     this.persist();
-    this.refreshHistoryAvailability();
+    this.refreshHistory();
   }
 
   private commit(next: CompositionProject, controlKey?: string): void {
@@ -1798,19 +1809,23 @@ export class ProjectService {
       && time - this.lastControlEdit.time < COMPACT_HISTORY_WINDOW_MS;
     if (!compact) {
       this.past.push(current);
-      if (this.past.length > MAX_HISTORY) this.past.shift();
+      const evicted = this.past.length > MAX_HISTORY;
+      if (evicted) this.past.shift();
+      const boundary = this.phraseHistoryBoundary();
+      if (boundary && (evicted || boundary.futureLength > 0)) {
+        // A new branch discards the old redo entries. Trimming the oldest snapshot shifts the opening position.
+        this.phraseHistoryBoundary.set({ pastLength: Math.max(0, boundary.pastLength - Number(evicted)), futureLength: 0 });
+      }
     }
     this.lastControlEdit = this.compactHistory() && controlKey !== undefined ? { key: controlKey, time } : null;
     this.future.length = 0;
     this.state.set(next);
     this.persist();
-    this.refreshHistoryAvailability();
+    this.refreshHistory();
   }
 
-  private refreshHistoryAvailability(): void {
+  private refreshHistory(): void {
     this.historyRevision.update(revision => revision + 1);
-    this.undoAvailable.set(this.past.length > 0);
-    this.redoAvailable.set(this.future.length > 0);
   }
 
   private updatePrimaryTrack(

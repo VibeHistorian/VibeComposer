@@ -21,7 +21,8 @@ function fixture() {
     output: () => ({ values: [], emit(value) { this.values.push(value); } }),
     ChangeDetectionStrategy: { OnPush: 0 },
   };
-  const projects = { project, projectWithoutVolumeChanges: project, projectActivation: signal(0) };
+  const projects = { project, projectWithoutVolumeChanges: project, projectActivation: signal(0),
+    beginPhraseHistory() {}, endPhraseHistory() {} };
   const preferences = Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { syncScoreMix: signal(false), scoreChordGrid: signal(false),
     scoreNoteShape: signal('classic'), appearance: signal({ progressiveTrackColoring: true }) });
   let ui;

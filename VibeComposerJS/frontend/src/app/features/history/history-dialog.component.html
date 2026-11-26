@@ -6,7 +6,7 @@
     </div>
     <button type="button" class="close" (click)="dialog.close()" aria-label="Close history">×</button>
   </header>
-  @if (workspaceUi.editingNoteId() !== null) {
+  @if (projects.phraseHistoryActive()) {
     <p role="status">Finish editing the phrase to navigate project history.</p>
   }
   <ol aria-label="Project history">
@@ -16,7 +16,7 @@
           [class.current]="entry.index === projects.historyPosition()"
           [class.future]="entry.index > projects.historyPosition()"
           [attr.aria-current]="entry.index === projects.historyPosition() ? 'step' : null"
-          [disabled]="workspaceUi.editingNoteId() !== null"
+          [disabled]="projects.phraseHistoryActive()"
           [title]="entry.changes.join('\n')"
           (click)="projects.goToHistory(entry.index)">
           <span class="entry-heading">

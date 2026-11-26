@@ -80,7 +80,7 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
         return [style.content, style.bottom, style.right];
       };
       return [dot('M1', '::before')[0], dot('B1', '::after')[0], dot('B1', '::before')];
-    `), ['none', 'none', ['""', '-1px', '-1px']]);
+    `), ['none', 'none', ['""', '0px', '-1px']]);
     const knob = await evaluate(`
       const input = await wait(() => document.querySelector('input[aria-label="Decay B1"]'));
       input.scrollIntoView({ block: 'nearest' });
@@ -213,11 +213,18 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
         const range = document.createRange();
         range.selectNodeContents(trigger.querySelector('.select-value'));
         const label = range.getBoundingClientRect();
-        return Math.abs((label.left + label.right) - (button.left + button.right)) <= 1
+        const style = getComputedStyle(trigger);
+        const contentLeft = button.left + parseFloat(style.borderLeftWidth) + parseFloat(style.paddingLeft);
+        const innerRight = button.right - parseFloat(style.borderRightWidth);
+        const clearsDots = ['::before', '::after'].every(pseudo => {
+          const dot = getComputedStyle(trigger, pseudo);
+          return dot.content === 'none' || label.right < innerRight - parseFloat(dot.right) - parseFloat(dot.width);
+        });
+        return Math.abs(label.left - contentLeft) <= 1
           && Math.abs((label.top + label.bottom) - (button.top + button.bottom)) <= 1
-          && label.left >= button.left + 6 && label.right <= button.right - 6;
+          && clearsDots;
       });
-    `), 'channel labels are centered on both axes and clear the corner dots');
+    `), 'channel labels are left-aligned, vertically centered and clear the corner dots');
     assert.deepEqual(await evaluate(`
       const trigger = channel('B1');
       const pitch = getComputedStyle(trigger, '::after'), volume = getComputedStyle(trigger, '::before');
@@ -232,7 +239,7 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
       return [pitch.top, pitch.right, volume.bottom, volume.right,
         pitch.backgroundColor === laneColor('--pitch-glide-color'),
         volume.backgroundColor === laneColor('--volume-glide-color')];
-    `), ['-1px', '-1px', '-1px', '-1px', true, true]);
+    `), ['0px', '-1px', '0px', '-1px', true, true]);
   } finally {
     await closeBrowser({ child, server, socket });
   }

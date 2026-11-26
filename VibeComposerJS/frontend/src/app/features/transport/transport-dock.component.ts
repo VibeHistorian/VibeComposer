@@ -47,7 +47,7 @@ export class TransportDockComponent {
     if (file) await this.instruments.load(file);
   }
   readonly playback = inject(AudioPlaybackService);
-  private readonly projects = inject(ProjectService);
+  protected readonly projects = inject(ProjectService);
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
   readonly seedInput = this.projects.seedInput;
