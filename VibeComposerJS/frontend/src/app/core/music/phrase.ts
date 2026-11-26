@@ -28,10 +28,79 @@ import { trackHasSectionHarmony, trackHasSectionRhythm } from './harmony-display
 import { applyPhraseRangeEdits, hasManualPhrase } from './phrase-range-edit';
 import { sectionPhraseBounds } from './phrase-bounds';
 
-/** Generate a phrase using the independent track's settings. */
+/** Detached notes for the global preview, editor and validation callers. */
 export function generateTrackPhrase(project: CompositionProject, track: CompositionTrack, includeTiming = true, context?: MelodyContext,
   harmony: GenerationHarmony = baseGenerationHarmony(project)): PhraseNote[] {
+  const notes = generatedTrackPhrase(project, track, context, harmony).map(note => ({ ...note }));
+  return includeTiming ? applyPartTiming(notes, track.generatorSettings) : notes;
+}
+
+const MAX_GENERATED_PHRASES = 256;
+const MAX_GENERATED_NOTES = 65_536;
+const generatedPhrases = new Map<string, readonly PhraseNote[]>();
+let generatedNoteCount = 0;
+
+function generationHarmonyInputs(role: ArrangedPart, harmony: GenerationHarmony) {
+  switch (role) {
+    case 'melody': return [harmony.roots, harmony.voicings, harmony.soundingVoicings, harmony.durations];
+    case 'bass': return [harmony.roots, harmony.soundingRoots];
+    case 'chords':
+    case 'arpeggio': return [harmony.voicings, harmony.soundingVoicings];
+    case 'drums': return [];
+  }
+}
+
+function generationKeyValue(this: object, key: string, value: unknown): unknown {
+  // Preserve values that JSON would conflate, including explicit undefined fields rejected by the generators.
+  if (value === undefined) return Object.hasOwn(this, key) ? { undefined: true } : { hole: true };
+  if (typeof value === 'number') {
+    if (Object.is(value, -0)) return { number: '-0' };
+    if (!Number.isFinite(value)) return { number: String(value) };
+  }
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const entries = Object.entries(value).sort(([a], [b]) => a < b ? -1 : 1);
+    return Object.fromEntries(entries);
+  }
+  return value;
+}
+
+function usesMelodyRhythm(track: CompositionTrack): boolean {
+  return (track.role === 'arpeggio' || track.role === 'drums') && track.generatorSettings.rhythm === 'melody';
+}
+
+/** Share a generated cycle across equivalent sections and immutable project snapshots. */
+function generatedTrackPhrase(project: CompositionProject, track: CompositionTrack, context: MelodyContext | undefined,
+  harmony: GenerationHarmony): readonly PhraseNote[] {
+  const { role, generatorSettings } = track;
   const seed = BigInt(withTrackSeed(project, track).seed);
+  const melody = usesMelodyRhythm(track) ? context ?? sectionMelodyContext(project) : undefined;
+  const orderOffset = role === 'arpeggio' ? track.orderOffset
+    ?? Math.max(1, project.tracks.filter(candidate => candidate.role === role).findIndex(candidate => candidate.id === track.id) + 1) : undefined;
+  const harmonyInputs = role === 'drums' ? project.progression.length
+    : [project.scale, project.progression, project.progressionChords, generationHarmonyInputs(role, harmony)];
+  const key = JSON.stringify([role, seed.toString(), generatorSettings, harmonyInputs,
+    role === 'melody' ? project.melodyGlobal : undefined, melody?.pitches, orderOffset], generationKeyValue);
+  const cached = generatedPhrases.get(key);
+  if (cached) {
+    generatedPhrases.delete(key);
+    generatedPhrases.set(key, cached);
+    return cached;
+  }
+
+  const notes = generateUntimedTrackPhrase(project, track, seed, melody, harmony, orderOffset);
+  if (notes.length > MAX_GENERATED_NOTES) return notes;
+  generatedPhrases.set(key, notes);
+  generatedNoteCount += notes.length;
+  while (generatedPhrases.size > MAX_GENERATED_PHRASES || generatedNoteCount > MAX_GENERATED_NOTES) {
+    const oldest = generatedPhrases.keys().next().value!;
+    generatedNoteCount -= generatedPhrases.get(oldest)!.length;
+    generatedPhrases.delete(oldest);
+  }
+  return notes;
+}
+
+function generateUntimedTrackPhrase(project: CompositionProject, track: CompositionTrack, seed: bigint, melody: MelodyContext | undefined,
+  harmony: GenerationHarmony, orderOffset: number | undefined): PhraseNote[] {
   let notes: PhraseNote[];
   switch (track.role) {
     case 'melody':
@@ -53,26 +122,23 @@ export function generateTrackPhrase(project: CompositionProject, track: Composit
       break;
     case 'arpeggio':
       notes = generateArpeggio(seed, BASE_KEY, project.scale, project.progression, track.generatorSettings, project.progressionChords,
-        context ?? (track.generatorSettings.rhythm === 'melody' ? sectionMelodyContext(project) : undefined), harmony,
-        track.orderOffset ?? Math.max(1, project.tracks.filter(candidate => candidate.role === track.role).findIndex(candidate => candidate.id === track.id) + 1))
+        melody, harmony, orderOffset)
         .map((note, index) => ({ id: `arpeggio-${index}`, midi: note.midi, startBeat: note.startBeat,
           durationBeats: note.durationBeats, velocity: note.velocity }));
       break;
     case 'drums':
-      notes = generateDrumPart(seed, project.progression.length, track.generatorSettings,
-        context ?? (track.generatorSettings.rhythm === 'melody' ? sectionMelodyContext(project) : undefined))
+      notes = generateDrumPart(seed, project.progression.length, track.generatorSettings, melody)
         .map((hit, index) => ({ id: `drums-${index}`, midi: hit.midi, startBeat: hit.startBeat,
           durationBeats: hit.durationBeats, velocity: hit.velocity }));
       break;
   }
   // Melody applies transpose before interval repair and length before mode conversion, as Java does.
-  if (track.role === 'melody') return includeTiming ? applyPartTiming(notes, track.generatorSettings) : notes;
+  if (track.role === 'melody') return notes;
   const length = track.generatorSettings.noteLengthMultiplier ?? 100;
   const transpose = track.role === 'drums' ? 0 : track.generatorSettings.transpose ?? 0;
   // These role generators above already project into the five-field note contract.
-  const prepared = notes.map((note) => ({ id: note.id, midi: Math.max(0, Math.min(127, note.midi + transpose)),
+  return notes.map((note) => ({ id: note.id, midi: Math.max(0, Math.min(127, note.midi + transpose)),
     startBeat: note.startBeat, durationBeats: note.durationBeats * length / 100, velocity: note.velocity }));
-  return includeTiming ? applyPartTiming(prepared, track.generatorSettings) : prepared;
 }
 
 export function phraseForTrack(project: CompositionProject, track: CompositionTrack): readonly PhraseNote[] {
@@ -218,9 +284,8 @@ function buildTrackLayout(project: CompositionProject, track: CompositionTrack, 
     const harmony = sectionGenerationHarmony(project, section, track.role);
     const progression = !manual ? harmony.degrees : project.progression;
     const generated = !manual
-      ? generateTrackPhrase({ ...sectionProject(project, section), progression, progressionChords: harmony.customChords }, effectiveTrack, false,
-        (effectiveTrack.role === 'arpeggio' && effectiveTrack.generatorSettings.rhythm === 'melody')
-           || (effectiveTrack.role === 'drums' && effectiveTrack.generatorSettings.rhythm === 'melody') ? sectionMelodyContext(project, section) : undefined, harmony)
+      ? generatedTrackPhrase({ ...sectionProject(project, section), progression, progressionChords: harmony.customChords }, effectiveTrack,
+        usesMelodyRhythm(effectiveTrack) ? sectionMelodyContext(project, section) : undefined, harmony)
       : manualNotesInSection(track.editedPhrase!, section, track.role);
     const expandedPhrase = effectiveTrack.role === 'bass' && !manual
       ? withBassOctaveInterval(generated, effectiveTrack.generatorSettings.octaveInterval) : generated;

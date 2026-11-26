@@ -120,7 +120,10 @@ test('parameter edits, track/group rerolls and Compose validate without detached
 
 test('track layouts share generation across consumers without sharing mutable note objects', () => {
   const { service, phrase, load } = fixture({ contextualMelody: false });
-  service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, 'track-melody-1', true));
+  // Set up a cold layout. Presence commands validate and warm the generated phrases.
+  service.state.update(project => ({ ...project, arrangement: project.arrangement.map(section => ({ ...section,
+    trackPresence: { ...section.trackPresence, 'track-melody-1': true },
+  })) }));
   const generator = load('core/music/melody-generator.ts');
   const generate = generator.generateMelody;
   let calls = 0;

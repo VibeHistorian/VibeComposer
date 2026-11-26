@@ -85,7 +85,7 @@ export function generateContextualMelody(...args: Parameters<typeof planContextu
  */
 function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMode,
   degrees: readonly number[], settings: MelodySettings, offset: number, global: MelodyGlobalSettings,
-  custom?: readonly (ProgressionChord | null)[], harmony?: GenerationHarmony & { durations?: readonly number[] }): {
+  custom?: readonly (ProgressionChord | null)[], harmony?: GenerationHarmony): {
     notes: PhraseNote[]; pattern: Pick<PhraseNote, 'midi' | 'startBeat'>[]; skeleton: { midi: number; rhythm: number }[][];
   } {
   const options = resolveMelodyInputs(settings, global), tonic = getPitchClass(key)!;

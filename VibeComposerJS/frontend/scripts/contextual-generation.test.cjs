@@ -122,6 +122,104 @@ test('section presence toggles reuse contextual search for melody and dependent 
   }
 });
 
+test('equivalent sections and project snapshots reuse generated phrases for every role', () => {
+  const { DEFAULT_PROJECT } = loadMusic('../project/project-defaults.ts');
+  const { phraseForTrack, resolvedTrackPhrase } = loadMusic('phrase.ts');
+  const generators = [
+    ['melody-generator.ts', 'generateMelody'], ['bass-generator.ts', 'generateBassline'],
+    ['chord-generator.ts', 'generateChordPart'], ['arpeggio-generator.ts', 'generateArpeggio'],
+    ['drum-generator.ts', 'generateDrumPart'],
+  ];
+  const calls = {};
+  const restore = generators.map(([file, name]) => {
+    const generator = loadMusic(file), original = generator[name];
+    calls[name] = 0;
+    generator[name] = (...args) => {
+      calls[name]++;
+      return original(...args);
+    };
+    return () => { generator[name] = original; };
+  });
+  try {
+    const section = { ...DEFAULT_PROJECT.arrangement[0], measures: 4,
+      trackPresence: Object.fromEntries(DEFAULT_PROJECT.tracks.map(track => [track.id, true])) };
+    const repeat = { ...section, id: 'repeat', measures: 3, context: { tempoBpm: 95 } };
+    const project = { ...DEFAULT_PROJECT, seed: '-6115251555024971520', arrangement: [section, repeat] };
+    const render = project => Object.fromEntries(project.tracks.map(track => {
+      phraseForTrack(project, track);
+      return [track.id, resolvedTrackPhrase(project, track)];
+    }));
+    const first = render(project);
+    assert.deepEqual(Object.values(calls), [1, 1, 1, 1, 1]);
+    for (const notes of Object.values(first)) {
+      assert.ok(notes.some(note => note.sectionId === section.id && note.startBeat < 16));
+      assert.ok(notes.some(note => note.sectionId === repeat.id && note.startBeat >= 16));
+    }
+
+    const equivalent = structuredClone(project);
+    for (const track of equivalent.tracks) {
+      track.generatorSettings = Object.fromEntries(Object.entries(track.generatorSettings).reverse());
+    }
+    assert.deepEqual(render(equivalent), first);
+    assert.deepEqual(Object.values(calls), [1, 1, 1, 1, 1]);
+
+    const chordId = project.tracks.find(track => track.role === 'chords').id;
+    const edited = { ...equivalent, arrangement: [equivalent.arrangement[0], { ...equivalent.arrangement[1],
+      trackPartOverrides: { [chordId]: { noteLengthPercent: 50 } } }] };
+    const changed = render(edited);
+    assert.deepEqual(Object.values(calls), [1, 1, 2, 1, 1]);
+    for (const id of Object.keys(first)) {
+      if (id !== chordId) assert.deepEqual(changed[id], first[id]);
+    }
+    assert.deepEqual(changed[chordId].filter(note => note.sectionId === section.id),
+      first[chordId].filter(note => note.sectionId === section.id));
+    const lengths = notes => notes.filter(note => note.sectionId === repeat.id).map(note => note.durationBeats);
+    assert.notDeepEqual(lengths(changed[chordId]), lengths(first[chordId]));
+  } finally {
+    for (const reset of restore) reset();
+  }
+});
+
+test('generated phrases distinguish contextual chord durations and supplied melody rhythm', () => {
+  const { DEFAULT_PROJECT } = loadMusic('../project/project-defaults.ts');
+  const { generateTrackPhrase } = loadMusic('phrase.ts');
+  const { baseGenerationHarmony } = loadMusic('project-harmony.ts');
+  const { melodyContext } = loadMusic('melody-context.ts');
+  const project = { ...DEFAULT_PROJECT, seed: '38845784061122630' };
+  const harmony = baseGenerationHarmony(project);
+  const melody = project.tracks.find(track => track.role === 'melody');
+  const timedHarmony = { ...harmony, durations: [1, 2, 3, 6] };
+  const first = generateTrackPhrase(project, melody, false, undefined, harmony);
+  const changed = generateTrackPhrase(project, melody, false, undefined, timedHarmony);
+  assert.notDeepEqual(changed, first);
+  assert.deepEqual(changed, generateMelody(BigInt(project.seed), 'C', project.scale, project.progression,
+    melody.generatorSettings, 0, undefined, project.melodyGlobal, project.progressionChords, timedHarmony));
+
+  const contextAt = startBeat => melodyContext([{ midi: 60, startBeat }], project.progression.length);
+  for (const track of project.tracks.filter(track => track.role === 'arpeggio' || track.role === 'drums')) {
+    const follows = { ...track, generatorSettings: { ...track.generatorSettings, rhythm: 'melody' } };
+    const earlier = generateTrackPhrase(project, follows, false, contextAt(0));
+    const later = generateTrackPhrase(project, follows, false, contextAt(1));
+    assert.deepEqual(earlier.map(note => note.startBeat), [0]);
+    assert.deepEqual(later.map(note => note.startBeat), [1]);
+  }
+});
+
+test('cached generated notes remain detached and use exact seeds and generator validation', () => {
+  const { DEFAULT_PROJECT } = loadMusic('../project/project-defaults.ts');
+  const { generateTrackPhrase } = loadMusic('phrase.ts');
+  const drums = DEFAULT_PROJECT.tracks.find(track => track.role === 'drums');
+  const project = { ...DEFAULT_PROJECT, seed: '9007199254740992' };
+  const original = generateTrackPhrase(project, drums);
+  const expected = structuredClone(original);
+  original[0].velocity = 0;
+  original.pop();
+  assert.deepEqual(generateTrackPhrase(project, drums, false), expected);
+  assert.notDeepEqual(generateTrackPhrase({ ...project, seed: '9007199254740993' }, drums), expected);
+  const invalid = { ...drums, generatorSettings: { ...drums.generatorSettings, pauseChance: undefined } };
+  assert.throws(() => generateTrackPhrase(project, invalid), /Drum generation settings/);
+});
+
 test('contextual search preserves exact notes, patterns and skeletons across the optimization corpus', () => {
   const { contextualDigest } = require('./benchmark-contextual-melody.cjs');
   assert.deepEqual(contextualDigest(), {
