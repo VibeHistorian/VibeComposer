@@ -77,9 +77,9 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
     assert.deepEqual(await evaluate(`
       const dot = (name, pseudo) => {
         const style = getComputedStyle(channel(name), pseudo);
-        return [style.content, style.top, style.left, style.right, style.backgroundColor];
+        return [style.content, style.bottom, style.right];
       };
-      return [dot('M1', '::before')[0], dot('B1', '::after')[0], dot('B1', '::before').slice(0, 3)];
+      return [dot('M1', '::before')[0], dot('B1', '::after')[0], dot('B1', '::before')];
     `), ['none', 'none', ['""', '-1px', '-1px']]);
     const knob = await evaluate(`
       const input = await wait(() => document.querySelector('input[aria-label="Decay B1"]'));
@@ -229,7 +229,7 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
         swatch.remove();
         return color;
       };
-      return [pitch.top, pitch.right, volume.top, volume.left,
+      return [pitch.top, pitch.right, volume.bottom, volume.right,
         pitch.backgroundColor === laneColor('--pitch-glide-color'),
         volume.backgroundColor === laneColor('--volume-glide-color')];
     `), ['-1px', '-1px', '-1px', '-1px', true, true]);
