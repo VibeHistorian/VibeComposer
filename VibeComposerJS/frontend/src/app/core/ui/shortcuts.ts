@@ -19,6 +19,7 @@ export const SHORTCUTS = [
   { id: 'rangeSections', group: 'Section selection', label: 'Select section range', description: 'Hold while selecting a section to select from the selection anchor.', defaults: [modifier(false, true)] },
   { id: 'freeGrid', group: 'Editing modifiers', label: 'Bypass time grid', description: 'Hold while moving, resizing or splitting notes to bypass time snapping.', defaults: [modifier(false, true)] },
   { id: 'retainPitch', group: 'Editing modifiers', label: 'Retain pitch while moving', description: 'Hold while moving notes to retain their pitch.', defaults: [modifier(false, true)] },
+  { id: 'scaleNoteVelocity', group: 'Editing modifiers', label: 'Scale selected velocities', description: 'Hold when starting a drag on the first or last selected note’s velocity bar. The change tapers to zero at the opposite note.', defaults: [modifier(false, true)] },
   { id: 'addNote', group: 'Placement', label: 'Place note on grid', description: 'Place a note with time snapping. Hold to preview placement.', defaults: [mouse(0, true)] },
   { id: 'addNoteFree', group: 'Placement', label: 'Place note off grid', description: 'Place a note without time snapping. Hold to preview placement.', defaults: [mouse(0, false, true)] },
   { id: 'controlWheel', group: 'Controls', label: 'Adjust value', description: 'Scroll over a knob, dropdown, or sequence step to change its value.', defaults: [wheel()] },
@@ -96,7 +97,7 @@ export interface ShortcutContext {
    * Actions claiming a pointer on press overlap both click and drag. */
   readonly phase?: readonly ('click' | 'drag')[];
   /** Held modifiers compose across effects, but compete within the same effect. */
-  readonly effect?: readonly ('section-selection' | 'time-snap' | 'pitch-retention' | 'precision')[];
+  readonly effect?: readonly ('section-selection' | 'time-snap' | 'pitch-retention' | 'velocity-scale' | 'precision')[];
 }
 const parameterContext: ShortcutContext = { surface: ['knob', 'dropdown'] };
 const overviewContext: ShortcutContext = { surface: ['overview'] };
@@ -114,6 +115,7 @@ export const SHORTCUT_CONTEXTS = {
   rangeSections: [{ ...overviewContext, target: ['section-header'], effect: ['section-selection'] }],
   freeGrid: [{ ...phraseContext, effect: ['time-snap'] }],
   retainPitch: [{ ...phraseNotes, effect: ['pitch-retention'] }],
+  scaleNoteVelocity: [{ ...phraseContext, target: ['velocity-bar'], selection: ['selected'], effect: ['velocity-scale'] }],
   addNote: [emptyPhrase],
   addNoteFree: [emptyPhrase],
   controlWheel: [parameterContext],

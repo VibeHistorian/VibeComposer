@@ -287,6 +287,8 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
               ensure(trim.kind==='mouse' && trim.input==='0' && trim.ctrl && trim.shift && trim.alt,'start trimming records only modifiers');
               const bypass=await record('Bypass time grid',new KeyboardEvent('keyup',{key:'Control',bubbles:true,cancelable:true}),'freeGrid');
               ensure(bypass.kind==='modifier' && bypass.ctrl,'shared grid bypass can be remapped');
+              const velocityScale=await record('Scale selected velocities',new KeyboardEvent('keyup',{key:'Control',bubbles:true,cancelable:true}),'scaleNoteVelocity');
+              ensure(velocityScale.kind==='modifier' && velocityScale.ctrl,'velocity scaling can use the same modifier as grid bypass');
               const snapped=await record('Place note on grid',new PointerEvent('pointerdown',{button:0,ctrlKey:true,altKey:true,bubbles:true,cancelable:true}),'addNote');
               ensure(snapped.input==='0' && snapped.ctrl && snapped.alt,'snapped placement has its own binding');
               const free=JSON.parse(storedSetting(key)).shortcuts.addNoteFree[0];

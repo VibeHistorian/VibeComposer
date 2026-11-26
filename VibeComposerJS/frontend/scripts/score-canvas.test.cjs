@@ -856,6 +856,49 @@ test('Alt left drag adjusts selection velocity within MIDI bounds without changi
   assert.deepEqual(c.notesChanged.values[0].notes.map(n => n.startBeat), [20, 22]);
 });
 
+test('velocity bar scaling uses selected note onsets and commits one batch per drag', () => {
+  const { component: c, canvas, notes: [first, later] } = editFixture();
+  c.velocityVisible = () => true;
+  c.harmonicHeight = c.scoreHeight;
+  const middle = { ...first, id: 'middle', startBeat: 21, durationBeats: 6, velocity: 107 };
+  const last = { ...later, startBeat: 24, velocity: 90 };
+  const unselected = { ...later, id: 'unselected', startBeat: 26 };
+  c.model.notes = [last, middle, unselected, first];
+  c.selectedNoteIds = () => [middle.id, first.id, last.id];
+  c.hitAreas = c.model.notes.map(note => ({ note, x: c.scoreX(note.startBeat), y: 15, width: 25, height: 10 }));
+  const bounds = canvas.getBoundingClientRect();
+  const bar = (note, modifiers) => pointer(bounds.left + c.scoreX(note.startBeat) * bounds.width / c.width,
+    bounds.top + bounds.height - 5, modifiers);
+  const move = (press, dy) => ({ ...press, clientY: press.clientY + dy });
+  const velocities = () => c.drag.preview.map(note => note.velocity);
+
+  const fromFirst = bar(first, { shiftKey: true });
+  c.onPointerDown(fromFirst);
+  c.onPointerMove(move(fromFirst, -10));
+  assert.deepEqual(velocities(), [90, 122, 100]);
+  c.onPointerMove(move(fromFirst, -100));
+  assert.deepEqual(velocities(), [90, 127, 127]);
+  assert.deepEqual(c.notesChanged.values, []);
+  c.onPointerUp({ ...move(fromFirst, -10), shiftKey: false });
+  assert.deepEqual(c.notesChanged.values, [{ notes: [{ ...middle, velocity: 122 }, { ...first, velocity: 100 }], duplicate: false }]);
+
+  const fromMiddle = bar(middle, { shiftKey: true });
+  c.onPointerDown(fromMiddle);
+  c.onPointerMove(move(fromMiddle, 10));
+  assert.deepEqual(velocities(), [70, 87, 60], 'an interior bar uses the ordinary selection drag');
+  c.onPointerCancel();
+
+  c.preferences.setShortcut('scaleNoteVelocity', { kind: 'modifier', input: 'held', ctrl: true, shift: false, alt: false });
+  const fromLast = bar(last, { ctrlKey: true });
+  c.onPointerDown(fromLast);
+  c.onPointerMove(move(fromLast, 20));
+  assert.deepEqual(velocities(), [50, 97, 80]);
+  assert.equal(c.drag.duplicate, false);
+  c.onLostPointerCapture(fromLast);
+  c.onPointerUp(move(fromLast, 20));
+  assert.equal(c.notesChanged.values.length, 1);
+});
+
 test('left edge trims selection starts while retaining each note end', () => {
   const { component: c } = editFixture();
   c.onPointerDown(pointer(296, 20)); c.onPointerMove(pointer(308.5, 20));

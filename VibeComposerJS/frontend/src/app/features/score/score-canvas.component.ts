@@ -885,15 +885,31 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     }
     const edge = area ? this.noteDragZone(area, x) : null;
     const leftDrag = event.button === 0 && !this.preferences.capturingShortcut();
+    const velocityBar = y >= this.scoreHeight && leftDrag;
+    const selectedIds = this.selectedNoteIds();
+    const ids = area && !selectedIds.includes(area.note.id) ? [area.note.id] : selectedIds;
+    const velocitySelection = area && velocityBar && ids.length > 1 && this.preferences.matchesModifiers('scaleNoteVelocity', event)
+      ? (this.model?.notes ?? []).filter(note => ids.includes(note.id)) : undefined;
+    let velocityAnchor: number | undefined;
+    if (area && velocitySelection && velocitySelection.length > 1) {
+      const onsets = velocitySelection.map(note => note.startBeat);
+      const first = Math.min(...onsets);
+      const last = Math.max(...onsets);
+      if (first < last) {
+        if (area.note.startBeat === first) velocityAnchor = last;
+        else if (area.note.startBeat === last) velocityAnchor = first;
+      }
+    }
     const timeScale = area && edge && y < this.scoreHeight && this.preferences.matchesShortcut('scaleNoteSelection', event)
       ? this.selectionTimeScale(area.note, edge) : undefined;
     const noteGestures = ['dragVelocity', 'dragDuration', 'dragPitch', 'trimStart', 'duplicateNotes', 'shapePitch', 'shapeVelocity', 'splitNote', 'deleteNote', 'boxSelect', 'boxExtend'] as const;
     const exactGesture = timeScale || noteGestures.some(id => this.preferences.matchesShortcut(id, event));
-    const matches = (id: import('../../core/ui/shortcuts').ShortcutId) => exactGesture || id === 'addNote' || id === 'addNoteFree'
-      ? this.preferences.matchesShortcut(id, event) : this.preferences.matchesGesture(id, event);
+    const matches = (id: import('../../core/ui/shortcuts').ShortcutId) => velocityAnchor === undefined
+      && (exactGesture || id === 'addNote' || id === 'addNoteFree'
+        ? this.preferences.matchesShortcut(id, event) : this.preferences.matchesGesture(id, event));
     const trimStart = leftDrag && (matches('trimStart') || edge === 'start');
     const trimEnd = leftDrag && edge === 'duration';
-    const velocity = matches('dragVelocity') || (y >= this.scoreHeight && leftDrag);
+    const velocity = velocityBar || matches('dragVelocity');
     if (matches('boxSelect') || matches('boxExtend') || (area && (matches('splitNote') || matches('deleteNote')))) {
       this.box = { x, y, endX: x, endY: y, pointerId: event.pointerId, previous: matches('boxExtend') ? this.selectedNoteIds() : [], split: matches('splitNote'), delete: matches('deleteNote'), select: matches('boxSelect') || matches('boxExtend') };
     } else if (!area && (matches('addNote') || matches('addNoteFree')) && !matches('shapePitch')) {
@@ -903,19 +919,18 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       this.shape = { mode: matches('shapeVelocity') ? 'velocity' : 'pitch', pointerId: event.pointerId, notes: new Map() };
       this.onPointerMove(event);
     } else if (area && (velocity || (y < this.scoreHeight && (leftDrag || matches('duplicateNotes') || trimStart || trimEnd || matches('dragDuration') || matches('dragPitch'))))) {
-      const ids = this.selectedNoteIds().includes(area.note.id) ? this.selectedNoteIds() : [area.note.id];
       this.selectionChanged.emit(ids);
       const mode: PhraseDragMode = timeScale ? (edge === 'start' ? 'start' : 'duration')
         : velocity ? 'velocity' : matches('dragDuration') ? 'duration' : matches('dragPitch') ? 'pitch'
         : matches('duplicateNotes') ? 'move'
         : trimStart ? 'start'
         : trimEnd ? 'duration' : 'move';
-      const originals = (this.model?.notes ?? []).filter(note => ids.includes(note.id));
+      const originals = velocitySelection ?? (this.model?.notes ?? []).filter(note => ids.includes(note.id));
       const gesture = noteGestures.find(id => matches(id));
       const gestureModifiers = gesture ? this.preferences.shortcuts()[gesture].find(b => b.kind === 'mouse'
         && (!b.ctrl || event.ctrlKey || event.metaKey) && (!b.shift || event.shiftKey) && (!b.alt || event.altKey)) : undefined;
       this.drag = { note: area.note, x: event.clientX, y: event.clientY, pointerId: event.pointerId,
-        current: area.note, mode, originals, preview: originals, gestureModifiers, timeScale,
+        current: area.note, mode, originals, preview: originals, gestureModifiers, timeScale, velocityAnchor,
         duplicate: !timeScale && matches('duplicateNotes'), lockPitch: area.note.color === 'drums' };
       this.auditionRequested.emit(originals);
       this.lastAudition = performance.now();
@@ -967,7 +982,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         this.selectionChanged.emit([...new Set([...box.previous, ...ids])]);
       }
     }
-    if (this.drag?.pointerId === event.pointerId && this.drag.timeScale) this.onPointerMove(event);
+    if (this.drag?.pointerId === event.pointerId && (this.drag.timeScale || this.drag.velocityAnchor !== undefined)) this.onPointerMove(event);
     if (this.drag || this.shape) this.timeTooltip.set(null);
     if (this.shape?.pointerId === event.pointerId) {
       this.notesChanged.emit({ notes: [...this.shape.notes.values()], duplicate: false });
@@ -975,11 +990,14 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     }
     if (this.drag?.pointerId === event.pointerId) {
       const changed = scoreDragChanged(this.drag);
-      const { current, preview, duplicate } = this.drag;
+      const { current, preview, duplicate, velocityAnchor, originals } = this.drag;
       this.drag = null;
       if (changed) {
         if (preview.length === 1 && !duplicate) this.noteChanged.emit(current);
-        else this.notesChanged.emit({ notes: preview, duplicate });
+        else {
+          const notes = velocityAnchor === undefined ? preview : preview.filter((note, index) => note.velocity !== originals[index].velocity);
+          this.notesChanged.emit({ notes, duplicate });
+        }
       }
     }
     if (this.app?.canvas.hasPointerCapture(event.pointerId)) this.app.canvas.releasePointerCapture(event.pointerId);
@@ -1008,7 +1026,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   };
   private readonly onLostPointerCapture = (event: PointerEvent): void => {
     if (this.seekDrag?.pointerId === event.pointerId) this.seekDrag = null;
-    if (this.drag?.pointerId === event.pointerId && this.drag.timeScale) this.onPointerCancel(event);
+    if (this.drag?.pointerId === event.pointerId && (this.drag.timeScale || this.drag.velocityAnchor !== undefined)) this.onPointerCancel(event);
   };
   private readonly onAuxClick = (event: MouseEvent): void => {
     if (!this.preferences.matchesShortcut('applyPhrase', event)) return;

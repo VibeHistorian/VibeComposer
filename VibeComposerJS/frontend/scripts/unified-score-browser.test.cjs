@@ -793,6 +793,35 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     document.querySelector('vc-score-canvas canvas').dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true, cancelable: true }));
     await wait(() => [...document.querySelectorAll('.score-display-header button')].find(button => button.textContent === 'Apply').disabled);
   })()`);
+
+  const velocityPoint = await evaluate(`(async () => { ${waitCode}
+    const canvas = document.querySelector('vc-score-canvas canvas');
+    canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', ctrlKey: true, bubbles: true, cancelable: true }));
+    await wait(() => document.querySelector('.inspector-copy')?.textContent.includes('4 notes selected'));
+    return { x: document.querySelector('.score-ruler-section').getBoundingClientRect().left + 2, y: canvas.getBoundingClientRect().bottom - 10 };
+  })()`);
+  const velocityTarget = { ...velocityPoint, y: velocityPoint.y - 20 };
+  await command('Input.dispatchMouseEvent', { type: 'mousePressed', ...velocityPoint, button: 'left', buttons: 1, modifiers: 8, clickCount: 1 });
+  await command('Input.dispatchMouseEvent', { type: 'mouseMoved', ...velocityTarget, button: 'left', buttons: 1, modifiers: 8 });
+  await evaluate(`(async () => { ${waitCode}
+    await wait(() => document.querySelector('.time-tooltip')?.textContent.trim() === 'Velocity 110 [+20]');
+  })()`);
+  assert.equal(await evaluate(`Number(document.querySelector('#note-velocity').value)`), 90, 'velocity scaling previews the change before release');
+  await command('Input.dispatchMouseEvent', { type: 'mouseReleased', ...velocityTarget, button: 'left', modifiers: 8, clickCount: 1 });
+  const scaledVelocities = await evaluate(`(async () => { ${waitCode}
+    const canvas = document.querySelector('vc-score-canvas canvas');
+    const apply = () => [...document.querySelectorAll('.score-display-header button')].find(button => button.textContent === 'Apply');
+    const shortcut = key => canvas.dispatchEvent(new KeyboardEvent('keydown', { key, ctrlKey: true, bubbles: true, cancelable: true }));
+    await wait(() => Number(document.querySelector('#note-velocity')?.value) === 110);
+    shortcut('z');
+    await wait(() => apply().disabled);
+    shortcut('y');
+    await wait(() => Number(document.querySelector('#note-velocity')?.value) === 110 && !apply().disabled);
+    apply().click();
+    const notes = await wait(() => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks[0].phraseEdits?.at(-1).notes);
+    return notes.map(note => [note.startBeat, note.velocity]);
+  })()`);
+  assert.deepEqual(scaledVelocities, [[0, 110], [4.125, 104], [13, 90], [13, 90]]);
  } finally {
     await closeBrowser({ child, server, socket });
   }

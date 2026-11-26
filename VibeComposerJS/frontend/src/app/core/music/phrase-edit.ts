@@ -43,6 +43,18 @@ export function dragPhraseNotes(notes: readonly PhraseNote[], mode: PhraseDragMo
   }));
 }
 
+/** Taper the dragged note's velocity change to zero at the opposite onset. */
+export function scalePhraseVelocities(notes: readonly PhraseNote[], edge: PhraseNote, anchor: number, delta: number): readonly PhraseNote[] {
+  const span = edge.startBeat - anchor;
+  const change = clamp(edge.velocity + delta, 1, 127) - edge.velocity;
+  if (!span || !change) return notes;
+  return notes.map(note => {
+    const weight = (note.startBeat - anchor) / span;
+    const velocity = clamp(Math.round(note.velocity + change * weight), 1, 127);
+    return velocity === note.velocity ? note : { ...note, velocity };
+  });
+}
+
 /** Stretch around the opposite selection edge, keeping the same scale factor for every note. */
 export function scalePhraseNotes(notes: readonly PhraseNote[], anchor: number, edge: number, target: number,
   start: number, end: number): readonly PhraseNote[] {
