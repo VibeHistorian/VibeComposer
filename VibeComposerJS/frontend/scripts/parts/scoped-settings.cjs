@@ -356,21 +356,33 @@ test('P5f durations share chord boundaries across all roles, score ranges, tempo
   const id = service.project().arrangement[0].id;
   const before = service.exportProjectJson();
   const baseline = Object.fromEntries(service.project().tracks.map(track => [track.id, phrase.layOutTrackPhrase(service.project(), track)]));
-  assert.equal(service.setSectionMusicalState(id, { customDurations: [2,6,1,3], context: { tempoBpm: 90, beatDurationMultiplier: 2 } }), 'changed');
+  assert.equal(service.setSectionMusicalState(id, { customDurations: [2,6,1,3.125], context: { tempoBpm: 90, beatDurationMultiplier: 2 } }), 'changed');
   const after = service.exportProjectJson();
   service.undo(); assert.equal(service.exportProjectJson(), before); service.redo(); assert.equal(service.exportProjectJson(), after);
   const current = service.project(), section = current.arrangement[0];
-  assert.equal(timing.sectionDurationBeats(current, section), 24);
-  assert.equal(workspace.totalBeats(), 40);
-  ui.selectSection(id); assert.deepEqual(ui.sectionRange(), { startBeat: 0, endBeat: 24 });
-  assert.equal(workspace.timelineSections()[1].startBeat, 24);
+  const sectionEnd = 24.25;
+  assert.equal(timing.sectionDurationBeats(current, section), sectionEnd);
+  assert.equal(workspace.totalBeats(), sectionEnd + 16);
+  ui.selectSection(id); assert.deepEqual(ui.sectionRange(), { startBeat: 0, endBeat: sectionEnd });
+  assert.equal(workspace.timelineSections()[1].startBeat, sectionEnd);
   for (const track of current.tracks) {
     const notes = phrase.layOutTrackPhrase(current, track);
-    assert.deepEqual(notes.filter(note => note.startBeat < 24), timing.mapChordNotes(baseline[track.id].filter(note => note.startBeat < 16), [4,12,2,6]), track.role);
-    assert.deepEqual(notes.filter(note => note.startBeat >= 24), baseline[track.id].filter(note => note.startBeat >= 16).map(note => ({ ...note, startBeat: note.startBeat + 8 })), track.role + ' following section');
+    const musicalEvents = notes => notes.map(({ midi, startBeat, durationBeats, velocity }) =>
+      [midi, Math.round(startBeat * 1e9), Math.round(durationBeats * 1e9), velocity]);
+    const original = baseline[track.id];
+    const chord = index => original.filter(note => note.startBeat >= index * 4 && note.startBeat < (index + 1) * 4);
+    const shifted = (notes, offset, end = Infinity) => notes.flatMap(note => {
+      const startBeat = note.startBeat + offset;
+      return startBeat < end ? [{ ...note, startBeat, durationBeats: Math.min(note.durationBeats, end - startBeat) }] : [];
+    });
+    const expected = [...chord(0), ...shifted(chord(1), 0, 16), ...shifted(chord(1), 4, 16), ...shifted(chord(1), 8, 16),
+      ...shifted(chord(2), 8, 18), ...shifted(chord(3), 6, sectionEnd), ...shifted(chord(3), 10, sectionEnd)];
+    assert.deepEqual(musicalEvents(notes.filter(note => note.startBeat < sectionEnd)), musicalEvents(expected), track.role);
+    assert.deepEqual(musicalEvents(notes.filter(note => note.startBeat >= sectionEnd)),
+      musicalEvents(shifted(original.filter(note => note.startBeat >= 16), sectionEnd - 16)), track.role + ' following section');
   }
   const exported = new Midi(midi.generateCompositionMidi(current));
-  assert.deepEqual(exported.header.tempos.map(event => [event.ticks / exported.header.ppq,Math.round(event.bpm)]), [[0,90],[24,current.tempoBpm]]);
+  assert.deepEqual(exported.header.tempos.map(event => [event.ticks / exported.header.ppq,Math.round(event.bpm)]), [[0,90],[sectionEnd,current.tempoBpm]]);
   const map = timing.projectTempoMap(current);
   for (const track of current.tracks) {
     const notes = phrase.layOutTrackPhrase(current, track), output = exported.tracks.find(candidate => candidate.name === track.name).notes;
@@ -386,6 +398,18 @@ test('P5f durations share chord boundaries across all roles, score ranges, tempo
   const restored = new ProjectService(); assert.deepEqual(restored.project(),service.project());
   service.flushPersistence();
   assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).arrangement[0].context.tempoBpm, 90);
+});
+
+test('a fractional chord boundary excludes an onset that rounds onto the next chord', () => {
+  const { service, phrase } = fixture();
+  const base = service.project();
+  const arp = base.tracks.find(track => track.role === 'arpeggio');
+  const track = { ...arp, generatorSettings: { ...arp.generatorSettings, rhythm: 'full', hitsPerPattern: 20,
+    chordSpan: 1, patternRepeat: 1, chordSpanFill: 'ALL', swingPercent: 50, pauseChance: 0, exceptionChance: 0 } };
+  const section = { ...base.arrangement[0], measures: 1, customDurations: [1.6], trackPresence: { [track.id]: true } };
+  const project = { ...base, tracks: [track], arrangement: [section] };
+  const notes = phrase.layOutTrackPhrase(project, track);
+  assert.deepEqual(notes.map(note => Math.round(note.startBeat * 10)), [0, 2, 4, 6, 8, 10, 12, 14]);
 });
 
 test('P5f section Chordlets, timing and key edits preserve scopes, manual ownership and exact transposition', () => {

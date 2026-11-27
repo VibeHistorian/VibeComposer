@@ -95,8 +95,7 @@ export function sectionProject(project: CompositionProject, section?: Arrangemen
   return { ...project, scale: context.scale ?? project.scale, tempoBpm: context.tempoBpm ?? project.tempoBpm };
 }
 
-/** Seeded generators work in normalized four-beat slots. Map onset and end separately,
- * including notes crossing a chord boundary, then add absolute part offsets/feedback. */
+/** Restore actual timing from a normalized grid, e.g. for directly rendered contextual Melody plans. */
 export function mapChordBeat(beat: number, durations: readonly number[]): number {
   if (beat < 0) return beat * durations[0] / 4;
   const slot = Math.floor((beat + 1e-9) / 4);
@@ -112,17 +111,6 @@ export function mapChordNotes(notes: readonly PhraseNote[], durations: readonly 
     mapped.durationBeats = mapChordBeat(note.startBeat + note.durationBeats, durations) - mapped.startBeat;
     return mapped;
   });
-}
-
-/** Convert section beats back to the generator's four-beat chord grid. */
-export function chordGridBeat(beat: number, durations: readonly number[]): number {
-  if (beat < 0) return beat * 4 / durations[0];
-  const cycleLength = durations.reduce((sum, duration) => sum + duration, 0);
-  const cycle = Math.floor(beat / cycleLength);
-  let remaining = beat - cycle * cycleLength;
-  let slot = 0;
-  while (slot < durations.length - 1 && remaining >= durations[slot]) remaining -= durations[slot++];
-  return (cycle * durations.length + slot) * 4 + remaining * 4 / durations[slot];
 }
 
 export interface TempoPoint { readonly beat: number; readonly bpm: number; readonly seconds: number; }

@@ -51,7 +51,7 @@ export function applyArpSubdivision<T extends PhraseNote>(notes: readonly T[], w
     if (!slot) continue;
     const factor = (note.startBeat < midpoint ? 8 : 16) / hits;
     if (factor <= 1) continue;
-    const baseGap = (slot.endBeat - slot.startBeat) / hits;
+    const baseGap = 4 / hits;
     const next = ordered.find(other => other.note.startBeat > note.startBeat + 1e-9)?.note.startBeat ?? window.endBeat;
     const end = Math.min(note.startBeat + baseGap, next, slot.endBeat, window.endBeat,
       note.startBeat < midpoint ? midpoint : window.endBeat);

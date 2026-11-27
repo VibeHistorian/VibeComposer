@@ -23,7 +23,7 @@ import { applyPartTiming } from './part-processing';
 import { melodyContext, type MelodyContext } from './melody-context';
 import { baseGenerationHarmony, sectionGenerationHarmony, withTrackSeed } from './project-harmony';
 import type { GenerationHarmony } from './harmony-voicing';
-import { chordGridBeat, mapChordBeat, mapChordNotes, sectionDurationBeats, sectionProject, sectionTranspose } from './section-context';
+import { sectionDurationBeats, sectionProject, sectionTranspose } from './section-context';
 import { trackHasSectionHarmony, trackHasSectionRhythm } from './harmony-display';
 import { applyPhraseRangeEdits, hasManualPhrase } from './phrase-range-edit';
 import { sectionPhraseBounds } from './phrase-bounds';
@@ -245,6 +245,35 @@ export function resolvedTrackPhrase(project: CompositionProject, track: Composit
   return notes;
 }
 
+function patternHarmony(harmony: GenerationHarmony): GenerationHarmony {
+  // Contextual Melody also reads these durations when planning its rhythm.
+  return harmony.durations?.some(duration => duration !== 4)
+    ? { ...harmony, durations: harmony.durations.map(() => 4) } : harmony;
+}
+
+function chordPatterns(notes: readonly PhraseNote[], chordCount: number): PhraseNote[][] {
+  const patterns = Array.from({ length: chordCount }, (): PhraseNote[] => []);
+  for (const note of notes) patterns[Math.floor(note.startBeat / 4)]?.push(note);
+  return patterns;
+}
+
+/** Repeat a generated chord's four-beat pattern at its original rate. */
+function appendChordPattern(target: PhraseNote[], pattern: readonly PhraseNote[],
+  sourceStart: number, targetStart: number, duration: number, repeats?: readonly (readonly PhraseNote[])[]): void {
+  for (let offset = 0; offset < duration; offset += 4) {
+    const pass = offset / 4;
+    for (const note of repeats?.[pass - 1] ?? pattern) {
+      const localBeat = offset + (note.startBeat - sourceStart);
+      const remaining = duration - localBeat;
+      if (duration !== 4 && remaining <= 1e-9) continue;
+      target.push({ ...note, id: pass === 0 ? note.id : `${note.id}-repeat-${pass}`,
+        startBeat: targetStart + offset + note.startBeat - sourceStart,
+        // Keep ordinary four-beat articulations, including intentional overlapping sustains.
+        durationBeats: duration === 4 ? note.durationBeats : Math.min(note.durationBeats, remaining) });
+    }
+  }
+}
+
 function buildTrackLayout(project: CompositionProject, track: CompositionTrack, includeSource: boolean): ArrangedNote[] {
   const result: ArrangedNote[] = [];
   const transpose = track.role === 'drums' ? 0 : project.transposeSemitones ?? 0;
@@ -283,32 +312,40 @@ function buildTrackLayout(project: CompositionProject, track: CompositionTrack, 
     } as CompositionTrack;
     const harmony = sectionGenerationHarmony(project, section, track.role);
     const progression = !manual ? harmony.degrees : project.progression;
+    const patternProject = { ...sectionProject(project, section), progression, progressionChords: harmony.customChords };
+    const generationHarmony = patternHarmony(harmony);
+    const melody = !manual && usesMelodyRhythm(effectiveTrack) ? sectionMelodyContext(project, section) : undefined;
     const generated = !manual
-      ? generatedTrackPhrase({ ...sectionProject(project, section), progression, progressionChords: harmony.customChords }, effectiveTrack,
-        usesMelodyRhythm(effectiveTrack) ? sectionMelodyContext(project, section) : undefined, harmony)
+      ? generatedTrackPhrase(patternProject, effectiveTrack, melody, generationHarmony)
       : manualNotesInSection(track.editedPhrase!, section, track.role);
     const expandedPhrase = effectiveTrack.role === 'bass' && !manual
       ? withBassOctaveInterval(generated, effectiveTrack.generatorSettings.octaveInterval) : generated;
     const durations = harmony.durations;
-    const sectionPhrase = !manual ? mapChordNotes(expandedPhrase, durations) : expandedPhrase;
+    const patterns = manual ? undefined : chordPatterns(expandedPhrase, progression.length);
+    const repeatPatterns = melody?.repeats?.map(context => chordPatterns(
+      generatedTrackPhrase(patternProject, effectiveTrack, context, generationHarmony), progression.length));
     const sectionNotes: PhraseNote[] = [];
     for (let measure = 0; measure < section.measures; measure++) {
+      const duration = durations[measure % durations.length];
       if (partEnters) {
         const sourceMeasure = measure % progression.length;
-        const sourceStartBeat = !manual ? durations.slice(0, sourceMeasure).reduce((sum, value) => sum + value, 0) : sourceMeasure * 4;
-        const sourceEndBeat = sourceStartBeat + (!manual ? durations[sourceMeasure] : 4);
-        for (const note of sectionPhrase) {
-          if (note.startBeat >= sourceStartBeat && note.startBeat < sourceEndBeat
-            || manual && sourceMeasure === 0 && note.startBeat < 0
-            || manual && measure === section.measures - 1 && note.startBeat >= sourceEndBeat && note.startBeat < sourceEndBeat + 4
-            || manual && sourceMeasure === progression.length - 1 && note.startBeat >= progression.length * 4) {
-            const placed = { ...note };
-            placed.startBeat = arrangementBeat + note.startBeat - sourceStartBeat;
-            sectionNotes.push(placed);
+        const sourceStartBeat = sourceMeasure * 4;
+        if (patterns) {
+          appendChordPattern(sectionNotes, patterns[sourceMeasure], sourceStartBeat, arrangementBeat, duration,
+            repeatPatterns?.map(pass => pass[sourceMeasure]));
+        } else {
+          const sourceEndBeat = sourceStartBeat + 4;
+          for (const note of expandedPhrase) {
+            if (note.startBeat >= sourceStartBeat && note.startBeat < sourceEndBeat
+              || sourceMeasure === 0 && note.startBeat < 0
+              || measure === section.measures - 1 && note.startBeat >= sourceEndBeat && note.startBeat < sourceEndBeat + 4
+              || sourceMeasure === progression.length - 1 && note.startBeat >= progression.length * 4) {
+              sectionNotes.push({ ...note, startBeat: arrangementBeat + note.startBeat - sourceStartBeat });
+            }
           }
         }
       }
-      arrangementBeat += durations[measure % durations.length];
+      arrangementBeat += duration;
     }
     const timed = !manual ? applyPartTiming(sectionNotes, effectiveTrack.generatorSettings) : sectionNotes;
     const edits = partEnters ? manualEditsInSection(track, section) : undefined;
@@ -335,13 +372,41 @@ function manualEditsInSection(track: CompositionTrack, section: ArrangementSecti
   })) : track.phraseEdits;
 }
 
-const melodyContexts = new WeakMap<CompositionProject, Map<ArrangementSection | undefined, MelodyContext>>();
+interface SectionMelodyContext extends MelodyContext {
+  readonly repeats?: readonly MelodyContext[];
+}
+
+/** Retain authored onsets on each pass of a long chord at the original sixteenth-note rate. */
+function placedMelodyContext(notes: readonly PhraseNote[], durations: readonly number[],
+  shift: (midi: number) => number): SectionMelodyContext {
+  const starts: number[] = [];
+  let start = 0;
+  for (const duration of durations) {
+    starts.push(start);
+    start += duration;
+  }
+  const grid = (offset: number) => melodyContext(durations.flatMap((duration, index) => {
+    // Keep the first pass for chords that never use this repeat.
+    const pass = offset < duration ? offset : 0;
+    const from = starts[index] + pass;
+    const until = starts[index] + Math.min(pass + 4, duration);
+    return notes.filter(note => note.startBeat >= from && note.startBeat < until)
+      .map(note => ({ midi: shift(note.midi), startBeat: index * 4 + (note.startBeat - from) }));
+  }), durations.length);
+  const first = grid(0);
+  const repeatCount = Math.ceil(Math.max(...durations) / 4) - 1;
+  return repeatCount === 0 ? first : {
+    ...first, repeats: Array.from({ length: repeatCount }, (_, index) => grid((index + 1) * 4)),
+  };
+}
+
+const melodyContexts = new WeakMap<CompositionProject, Map<ArrangementSection | undefined, SectionMelodyContext>>();
 
 /** First melody by track order owns dependencies, including an absent arrangement cell.
  * No melody or generation disabled yields an empty grid. Manual melody owns its onset grid.
  * Generated melody publishes its pre-swing/pre-feedback onset map, as Java does.
  */
-export function sectionMelodyContext(project: CompositionProject, section?: ArrangementSection): MelodyContext {
+export function sectionMelodyContext(project: CompositionProject, section?: ArrangementSection): SectionMelodyContext {
   let cache = melodyContexts.get(project);
   if (!cache) { cache = new Map(); melodyContexts.set(project, cache); }
   const cached = cache.get(section);
@@ -351,7 +416,7 @@ export function sectionMelodyContext(project: CompositionProject, section?: Arra
   return result;
 }
 
-function buildSectionMelodyContext(project: CompositionProject, section?: ArrangementSection): MelodyContext {
+function buildSectionMelodyContext(project: CompositionProject, section?: ArrangementSection): SectionMelodyContext {
   const harmony = section ? sectionGenerationHarmony(project, section, 'melody') : baseGenerationHarmony(project);
   const progression = harmony.degrees;
   const source = project.tracks.find(track => track.role === 'melody');
@@ -363,8 +428,8 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   const effective = resolvePartTrack(source, section, project.melodyGlobal);
   const shift = sectionTranspose(section, 'melody');
   const shifted = (midi: number) => midi < 0 || !shift ? midi : Math.max(0, Math.min(127, midi + shift));
-  if (local !== undefined) return melodyContext(processManualPhrase(local, effective.generatorSettings, 'melody').map(note => ({ ...note, midi: shifted(note.midi),
-    startBeat: chordGridBeat(note.startBeat, harmony.durations) })), progression.length);
+  if (local !== undefined) return placedMelodyContext(processManualPhrase(local, effective.generatorSettings, 'melody'),
+    harmony.durations, shifted);
   if (source.editedPhrase !== undefined && !section?.generatedTrackIds?.includes(source.id)) {
     return melodyContext(processManualPhrase(applyPhraseRangeEdits(manualNotesInSection(source.editedPhrase, section, 'melody'), edits, sectionEnd, bounds),
       effective.generatorSettings, 'melody').map(note => ({ ...note, midi: shifted(note.midi) })), progression.length);
@@ -372,18 +437,26 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   if (effective.role !== 'melody') {
     return { ...melodyContext([], progression.length), available: false };
   }
-  let result = melodyContext([], progression.length);
+  let result: SectionMelodyContext = melodyContext([], progression.length);
   const contextual = sectionProject(project, section);
   const seeded = withTrackSeed(contextual, source);
   generateMelody(BigInt(seeded.seed), BASE_KEY, contextual.scale, progression, effective.generatorSettings, 0,
     notes => {
       const generated = notes.map((note, index) => ({ ...note, id: `context-${index}`, durationBeats: .25, velocity: 90 }));
       // Keep the generated pre-swing/pre-feedback grid outside edited windows.
-      const resolved = edits?.length ? applyPhraseRangeEdits(generated.map(note => ({ ...note,
-        startBeat: mapChordBeat(note.startBeat, harmony.durations) })), edits, sectionEnd, bounds)
-        .map(note => ({ ...note, startBeat: chordGridBeat(note.startBeat, harmony.durations) })) : generated;
-      result = melodyContext(resolved.map(note => ({ ...note, midi: shifted(note.midi) })), progression.length);
+      if (edits?.length) {
+        const placed: PhraseNote[] = [];
+        const patterns = chordPatterns(generated, progression.length);
+        let start = 0;
+        harmony.durations.forEach((duration, index) => {
+          appendChordPattern(placed, patterns[index], index * 4, start, duration);
+          start += duration;
+        });
+        result = placedMelodyContext(applyPhraseRangeEdits(placed, edits, sectionEnd, bounds), harmony.durations, shifted);
+      } else {
+        result = melodyContext(generated.map(note => ({ ...note, midi: shifted(note.midi) })), progression.length);
+      }
     }, project.melodyGlobal,
-    harmony.customChords, harmony);
+    harmony.customChords, patternHarmony(harmony));
   return result;
 }

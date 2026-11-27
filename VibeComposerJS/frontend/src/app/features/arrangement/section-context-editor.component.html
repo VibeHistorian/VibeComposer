@@ -54,7 +54,7 @@
   <label>Transition<vc-select [options]="[{ value: 'direct', label: 'Direct' }, { value: 'two-five-one', label: 'Ending ii–V' }]" selectDefault="direct" [disabled]="!!section().customChords || !!section().chordDegrees || durations().length < 3"
     [mixed]="contextMixed('keyChangeType')" [value]="section().context?.keyChangeType ?? 'direct'" (valueChange)="choose('keyChangeType', $event)"></vc-select></label>
   @if (section().customChords || section().chordDegrees) { <p>Explicit section chords take precedence over the ending cadence.</p> }
-  <label>Beat duration<vc-select [options]="[{ value: '0.5', label: 'Half' }, { value: '1', label: 'Normal' }, { value: '2', label: 'Double' }]" [selectDefault]="1" [mixed]="contextMixed('beatDurationMultiplier')" [value]="section().context?.beatDurationMultiplier ?? 1" (valueChange)="choose('beatDurationMultiplier', $event, true)"></vc-select></label>
+  <label>Bar duration<vc-select [options]="[{ value: '0.5', label: 'Half' }, { value: '1', label: 'Normal' }, { value: '2', label: 'Double' }]" [selectDefault]="1" [mixed]="contextMixed('beatDurationMultiplier')" [value]="section().context?.beatDurationMultiplier ?? 1" (valueChange)="choose('beatDurationMultiplier', $event, true)"></vc-select></label>
   <button type="button" (click)="resetTiming()">Inherit all timing and key</button>
 </fieldset>
 

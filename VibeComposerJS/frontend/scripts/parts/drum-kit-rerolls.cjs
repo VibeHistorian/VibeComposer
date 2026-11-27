@@ -88,7 +88,7 @@ test('a styled section reroll fits its section and retains authored swing and no
   assert.equal(after.arrangement[0].trackPartOverrides[kick.id].swingPercent, 50);
   assert.equal(after.arrangement[0].trackPartOverrides[kick.id].pitch, undefined);
   const hits = phrase.resolvedTrackPhrase(after, drums(after)[0]);
-  assert.ok(hasAccents([{ pitch: kick.generatorSettings.pitch, hits }], [36], [0, .5, 1, 1.5]));
+  assert.ok(hasAccents([{ pitch: kick.generatorSettings.pitch, hits }], [36], [0, 1, 2, 3]));
 });
 
 test('Kit respects track, instrument, parameter and pan locks, manual notes, scoped overrides and undo', () => {

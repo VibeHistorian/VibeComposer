@@ -12,7 +12,7 @@ import { partPatchesEqual, resolvePartTrack, sectionTrackSettingsDifferences } f
 import type { DrumSettings, PartSettingsPatch } from '../music/part-settings.model';
 import type { PhraseNote } from '../music/phrase-note';
 import { resolvedTrackPhrase } from '../music/phrase';
-import { chordGridBeat, sectionChordDurations, sectionDurationBeats } from '../music/section-context';
+import { sectionChordDurations, sectionDurationBeats } from '../music/section-context';
 
 type DrumTrack = Extract<CompositionTrack, { role: 'drums' }>;
 type Bands = [number, number, number];
@@ -133,18 +133,30 @@ function measureLayer(slice: Slice, notes: readonly PhraseNote[], gain: number, 
 /** Score only accents that survived settings resolution, timing and manual replacements. */
 function styleAccentFit(slice: Slice, notes: readonly PhraseNote[], guide: DrumPatternGuide, partners: readonly PhraseNote[]): number {
   const durations = sectionChordDurations(slice.project, slice.section);
+  const stepBeats = 4 / guide.grid;
+  const accents: number[] = [];
+  let slotStart = 0;
+  for (let slot = 0; slot < slice.section.measures; slot++) {
+    const duration = durations[slot % durations.length];
+    for (let pass = 0; pass < duration; pass += 4) {
+      for (const accent of guide.accents) {
+        const offset = pass + accent * stepBeats;
+        if (offset < duration) accents.push(slotStart + offset);
+      }
+    }
+    slotStart += duration;
+  }
   const matches = new Map<number, number>();
   for (const note of notes) {
-    const beat = chordGridBeat(note.startBeat, durations);
-    const step = Math.round(beat * guide.grid / 4);
-    if (step < 0 || step >= slice.section.measures * guide.grid || !guide.accents.includes(step % guide.grid)
-      || Math.abs(beat - step * 4 / guide.grid) > .15) continue;
+    if (note.startBeat < 0 || note.startBeat >= slotStart) continue;
+    const time = accents.find(beat => Math.abs(note.startBeat - beat) <= Math.min(.15, stepBeats / 2));
+    if (time === undefined) continue;
 
     const paired = partners.some(partner => Math.abs(partner.startBeat - note.startBeat) * slice.millisecondsPerBeat <= BIN_MS);
     const merit = Math.min(1, note.velocity / 75) * (paired ? 7.6 : 6);
-    matches.set(step, Math.max(matches.get(step) ?? 0, merit));
+    matches.set(time, Math.max(matches.get(time) ?? 0, merit));
   }
-  return [...matches.values()].reduce((total, merit) => total + merit, 0) / (slice.section.measures * guide.accents.length);
+  return [...matches.values()].reduce((total, merit) => total + merit, 0) / Math.max(1, accents.length);
 }
 
 function placeKit(layers: readonly Layer[], eligible: ReadonlySet<string>, width: number, direction: number): DrumTrack[] {

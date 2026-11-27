@@ -954,6 +954,12 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(()=>!section().customDurations,'duration undo');
       (await wait(()=>{const button=document.querySelector('[aria-label="Redo"]');return button&&!button.disabled?button:null;},'duration redo enabled')).click();
       await wait(()=>section().customDurations?.[0]===2,'duration redo');
+      const barDuration = [...editor.querySelectorAll('label')].find(label =>
+        label.firstChild?.textContent.trim() === 'Bar duration')?.querySelector('vc-select');
+      await change(barDuration,'2');
+      await wait(()=>section().context?.beatDurationMultiplier===2,'double bar duration');
+      await change(barDuration,'1');
+      await wait(()=>section().context?.beatDurationMultiplier===1,'normal bar duration');
       editor.querySelector('[aria-label="Use Melody harmony"]').click();
       await wait(()=>!section().useMelodyHarmony && !editor.querySelector('.chordlet-label').disabled,'authored chord editing restored');
       const chord=editor.querySelector('.chordlet-label');

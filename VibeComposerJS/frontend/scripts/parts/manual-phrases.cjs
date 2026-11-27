@@ -250,10 +250,20 @@ test('melody consumers resolve global replacement windows even when the melody t
   const local = phrase.sectionMelodyContext(project, { ...section, trackPhrases: { [id]: [{ ...notes[0], midi: 57 }] } });
   assert.equal(local.pitches[0][0], 57, 'local replacement takes precedence over track-owned ranges');
   service.setSectionMusicalState(section.id, { customDurations: [2, 6, 3, 5] });
-  assert.equal(service.applyPhraseEdits([{ trackId: id, notes: [{ ...notes[0], startBeat: 3 }],
+  assert.equal(service.applyPhraseEdits([{ trackId: id, notes: [
+    { ...notes[0], startBeat: 3 }, { ...notes[0], id: 'late-lead-edit', startBeat: 7.25, midi: 76 }],
     range: { startBeat: 2, endBeat: 8 } }]), true);
   const custom = phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]);
-  assert.equal(custom.pitches[1][2], 79, 'actual section beats map back to the dependent part chord grid');
+  assert.equal(custom.pitches[1][4], 79, 'a one-beat offset in the chord stays one beat on the dependent part grid');
+  assert.equal(custom.repeats[0].pitches[1][5], 76, 'a late authored onset belongs to the second pass');
+  const arpeggioId = 'track-arpeggio-1';
+  service.setSectionTrackPresence(0, arpeggioId, true);
+  service.updatePartSettings({ kind: 'global-track', trackId: arpeggioId }, {
+    rhythm: 'melody', swingPercent: 50, pauseChance: 0, exceptionChance: 0, chordSpanFill: 'ALL', patternFlip: false });
+  const arranged = service.project();
+  const arpeggio = arranged.tracks.find(track => track.id === arpeggioId);
+  assert.deepEqual(phrase.layOutTrackPhrase(arranged, arpeggio)
+    .filter(note => note.startBeat >= 2 && note.startBeat < 8).map(note => note.startBeat), [3, 7.25]);
 });
 
 test('section pickups and late notes survive editing, local apply, history, reload and MIDI export', () => {
