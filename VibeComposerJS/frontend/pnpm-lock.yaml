@@ -206,6 +206,9 @@ importers:
       '@tonejs/midi':
         specifier: 2.0.28
         version: 2.0.28
+      '@zip.js/zip.js':
+        specifier: 2.25.0
+        version: 2.25.0
       midi-file:
         specifier: 1.2.4
         version: 1.2.4
@@ -1336,6 +1339,10 @@ packages:
   '@xmldom/xmldom@0.8.15':
     resolution: {integrity: sha512-/5NV/vDALVFDXgLmfsy9TRCBlKwO2LNBFzpzvb9iIj+jR+eSc6DLYYvVOdivT/jm7MtU6TebYuRmzEOI7w40UA==}
     engines: {node: '>=10.0.0'}
+
+  '@zip.js/zip.js@2.25.0':
+    resolution: {integrity: sha512-oNRqUuU1XFu6G5d7Z0jufJ9dS9WteO0xiU/PNxsUrb4itZCsSbn191jpJzU00Gmc6S680X3DPZeF5EV4zAEMAg==}
+    engines: {bun: '>=0.7.0', deno: '>=1.0.0', node: '>=18.0.0'}
 
   agent-base@9.0.0:
     resolution: {integrity: sha512-TQf59BsZnytt8GdJKLPfUZ54g/iaUL2OWDSFCCvMOhsHduDQxO8xC4PNeyIkVcA5KwL2phPSv0douC0fgWzmnA==}
@@ -2973,6 +2980,8 @@ snapshots:
   '@webgpu/types@0.1.74': {}
 
   '@xmldom/xmldom@0.8.15': {}
+
+  '@zip.js/zip.js@2.25.0': {}
 
   agent-base@9.0.0: {}
 

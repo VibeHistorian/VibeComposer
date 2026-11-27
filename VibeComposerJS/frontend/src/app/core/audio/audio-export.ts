@@ -1,6 +1,7 @@
 import { protectedAudioOutput } from './output-limiter';
 import { resolveProjectTimeline } from '../music/project-timeline';
 import type { CompositionProject } from '../project/project.model';
+import type { CompositionTrack } from '../project/track.model';
 import { mixEnabled } from './mix-values';
 import { createInstrumentEngine } from './create-instrument-engine';
 import type { Sf2Bank } from './sf2-resolver';
@@ -22,27 +23,55 @@ const MAX_RELEASE_TAIL_SECONDS = 40;
 
 export interface AudioExportRegion { readonly startBeat: number; readonly endBeat: number; }
 
-/** Render the arrangement or a bounded region with the playback instruments, tempo map and mix. */
-export async function renderProjectAudio(project: CompositionProject, onProgress?: (percent: number) => void, kind: InstrumentEngineKind = 'synth', bank?: Sf2Bank, region?: AudioExportRegion,
-  normalize = false, calibrationProgress?: (message: string) => void, onWarning?: (message: string) => void): Promise<AudioBuffer> {
+export interface AudioExportTrack {
+  readonly track: CompositionTrack;
+  readonly notes: readonly VoiceNote[];
+}
+
+interface AudioRenderOptions {
+  readonly kind?: InstrumentEngineKind;
+  readonly bank?: Sf2Bank;
+  readonly normalize?: boolean;
+  readonly onProgress?: (percent: number) => void;
+  readonly calibrationProgress?: (message: string) => void;
+  readonly onWarning?: (message: string) => void;
+}
+
+/** Resolve audibility and timing against the full project before splitting tracks into stems. */
+export function prepareProjectAudio(project: CompositionProject, region?: AudioExportRegion) {
   if (!globalThis.OfflineAudioContext) throw new Error('This browser does not support offline audio export.');
   if (region && (!Number.isFinite(region.startBeat) || !Number.isFinite(region.endBeat) || region.endBeat <= region.startBeat)) {
     throw new Error('The audio export region is invalid.');
   }
   const timeline = resolveProjectTimeline(project);
   const anySolo = project.tracks.some(track => track.mix.solo);
-  const phrases = project.tracks.map(track => {
-    const notes: readonly VoiceNote[] = planVoices(timeline.notesByTrack[track.id], track, timeline.beatToSeconds);
-    return { track, notes: region ? notes.filter(note => note.startBeat < region.endBeat
-      && note.startBeat + note.durationBeats > region.startBeat).map(note => ({ ...note,
-        startBeat: Math.max(region.startBeat, note.startBeat),
-        durationBeats: Math.min(region.endBeat, note.startBeat + note.durationBeats) - Math.max(region.startBeat, note.startBeat),
-      })) : notes };
-  });
-  const tracks = phrases.filter(({ track }) => mixEnabled(track.mix, anySolo) && track.mix.volumePercent > 0);
-  if (!tracks.some(({ notes }) => notes.some(note => note.velocity > 0))) {
+  const tracks: readonly AudioExportTrack[] = project.tracks
+    .filter(track => mixEnabled(track.mix, anySolo) && track.mix.volumePercent > 0)
+    .map(track => {
+      const notes = planVoices(timeline.notesByTrack[track.id], track, timeline.beatToSeconds);
+      return { track, notes: region ? notes.filter(note => note.startBeat < region.endBeat
+        && note.startBeat + note.durationBeats > region.startBeat).map(note => ({ ...note,
+          startBeat: Math.max(region.startBeat, note.startBeat),
+          durationBeats: Math.min(region.endBeat, note.startBeat + note.durationBeats) - Math.max(region.startBeat, note.startBeat),
+        })) : notes };
+    })
+    .filter(({ notes }) => notes.some(note => note.velocity > 0));
+  if (!tracks.length) {
     throw new Error('There are no audible notes to export.');
   }
+  const glides = glidesByChannel(project.tracks, timeline.glidesByTrack);
+  return { project, region, timeline, tracks, glides };
+}
+
+/** Render the arrangement or a bounded region with the playback instruments, tempo map and mix. */
+export async function renderProjectAudio(project: CompositionProject, onProgress?: (percent: number) => void, kind: InstrumentEngineKind = 'synth', bank?: Sf2Bank, region?: AudioExportRegion,
+  normalize = false, calibrationProgress?: (message: string) => void, onWarning?: (message: string) => void): Promise<AudioBuffer> {
+  const prepared = prepareProjectAudio(project, region);
+  return renderPreparedAudio(prepared, prepared.tracks, { kind, bank, normalize, onProgress, calibrationProgress, onWarning });
+}
+
+export async function renderPreparedAudio({ project, region, timeline, glides }: ReturnType<typeof prepareProjectAudio>,
+  tracks: readonly AudioExportTrack[], { kind = 'synth', bank, normalize = false, onProgress, calibrationProgress, onWarning }: AudioRenderOptions): Promise<AudioBuffer> {
   const { startBeat, endBeat } = region ?? timeline.soundingBounds;
   const offsetSeconds = -timeline.beatToSeconds(startBeat);
   const songSeconds = timeline.beatToSeconds(endBeat) + offsetSeconds;
@@ -55,7 +84,6 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
   master.gain.value = 0.8 * (project.masterVolumePercent ?? 100) / 100;
   master.connect(protectedAudioOutput(context));
   const nodes: AudioNode[] = [master];
-  const glides = glidesByChannel(project.tracks, timeline.glidesByTrack);
   const channels = createChannelGlideAudio(context, master, glides);
   try {
     for (const [channel, { pitch, volume }] of channels) {

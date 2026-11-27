@@ -7,8 +7,8 @@ const test = require('node:test');
 const { DEFAULT_PROJECT } = require('./music-loader.cjs').loadMusic('../project/project-defaults.ts');
 const browser = findBrowser();
 
-for (const { width, missingMethod, sampler, chiptune, lateClock } of [
-  { width: 1440 }, { width: 780 }, { width: 1440, sampler: true },
+for (const { width, missingMethod, sampler, chiptune, lateClock, stems } of [
+  { width: 1440, stems: true }, { width: 780 }, { width: 1440, sampler: true },
   { width: 1440, chiptune: true },
   { width: 1440, missingMethod: 'suspend' },
   { width: 1440, missingMethod: 'resume' },
@@ -26,6 +26,21 @@ for (const { width, missingMethod, sampler, chiptune, lateClock } of [
     { id: 'second', type: 'VERSE2', measures: 1, trackPresence: presence, context: { tempoBpm: 60 },
       trackPhrases: { [trackId]: [{ id: 'late', midi: 48, startBeat: 3.6, durationBeats: .125, velocity: 100 }] } },
   ] };
+  const stemTracks = stems ? [
+    ...project.tracks.map(track => ({ ...track, mix: { ...track.mix,
+      solo: track.role !== 'drums', muted: track.role === 'chords', volumePercent: track.role === 'arpeggio' ? 0 : 100,
+    } })),
+    { ...project.tracks[1], id: 'track-bass-2', name: 'B2', midiChannel: 5, mix: { ...project.tracks[1].mix, panPercent: 100 } },
+    { ...project.tracks[1], id: 'track-bass-3', name: 'B3', midiChannel: 6, mix: { ...project.tracks[1].mix, muted: true } },
+  ] : [];
+  const stemProject = { ...project, name: 'Stem test', tracks: stemTracks, arrangement: project.arrangement.map((section, index) => ({
+    ...section,
+    trackPresence: Object.fromEntries(stemTracks.map(track => [track.id, index === 0 || track.role !== 'melody'])),
+    trackPhrases: Object.fromEntries(stemTracks.map(track => [track.id, [{
+      id: `note-${track.id}`, midi: track.role === 'drums' ? 36 : 48, durationBeats: .4, velocity: 100,
+      startBeat: track.name === 'B1' ? .5 : track.name === 'B2' ? 2 : 3.3,
+    }]])),
+  })) };
   const script = `<script>${observeSettings}
     sessionStorage.setItem('vibecomposer.project.v12', ${JSON.stringify(JSON.stringify(project))});
     (async () => {
@@ -82,8 +97,26 @@ for (const { width, missingMethod, sampler, chiptune, lateClock } of [
       const menu = () => document.querySelector('[role="menu"][aria-label="Export"]');
       const item = label => [...menu().querySelectorAll('button')].find(button=>button.textContent.trim()===label);
       const key = (target, value) => target.dispatchEvent(new KeyboardEvent('keydown', {
-        key:value, keyCode: {ArrowDown:40,Escape:27}[value], bubbles:true,cancelable:true,
+        key:value, keyCode: {ArrowDown:40,ArrowRight:39,Escape:27}[value], bubbles:true,cancelable:true,
       }));
+      const audioMenu = async (region = false, keyboard = false) => {
+        const label = region ? 'Export Audio (region)' : 'Export Audio';
+        const parent = await wait(() => menu() && item(label), label);
+        if (keyboard) { parent.focus(); key(parent, 'ArrowRight'); }
+        else parent.click();
+        const submenu = await wait(() => document.querySelector('[role="menu"][aria-label="' + label + '"]'), label + ' submenu');
+        const buttons = [...submenu.querySelectorAll('button')];
+        ensure(buttons.map(button => button.textContent.trim()).join(',') === 'Mix,Role Stems,Individual Stems', 'audio export choices');
+        const bounds = submenu.getBoundingClientRect();
+        ensure(bounds.left >= 0 && bounds.right <= innerWidth && bounds.top >= 0 && bounds.bottom <= innerHeight, 'audio submenu inside viewport');
+        if (keyboard) ensure(document.activeElement === buttons[0], 'keyboard submenu focus');
+        return choice => buttons.find(button => button.textContent.trim() === choice).click();
+      };
+      const selectSecondSection = () => {
+        const overview = document.querySelector('vc-arrangement-overview canvas');
+        const bounds = overview.getBoundingClientRect();
+        overview.dispatchEvent(new MouseEvent('click', {bubbles:true, clientX:bounds.left+bounds.width*.8, clientY:bounds.top+15}));
+      };
       const NativeAudioContext = window.AudioContext;
       let realtimeContexts = 0;
       window.AudioContext = class { constructor() { realtimeContexts++; throw Error('Export opened a realtime context'); } };
@@ -169,7 +202,7 @@ for (const { width, missingMethod, sampler, chiptune, lateClock } of [
         await wait(()=>downloads.length===2,'MIDI download');
         const midi=await (await downloads[1].blob).arrayBuffer();
         ensure(new TextDecoder().decode(midi.slice(0,4))==='MThd' && filenamePattern.test(downloads[1].name) && downloads[1].name.endsWith('.mid'),'MIDI export');
-        trigger.click(); await wait(menu,'audio menu'); item('Export Audio').click();
+        trigger.click(); (await audioMenu(false, true))('Mix');
         trigger.click(); await wait(menu,'busy menu');
         ensure([...menu().querySelectorAll('button')].some(b=>b.disabled && b.textContent.includes('Audio')),'duplicate audio export disabled');
         key(document.activeElement,'Escape');
@@ -230,7 +263,7 @@ for (const { width, missingMethod, sampler, chiptune, lateClock } of [
           ensure(mute,'track mute control '+label); mute.click();
           await wait(()=>document.querySelector('[aria-label="Unmute '+label+'"]'),'track muted '+label);
         }
-        trigger.click(); await wait(menu,'silent audio menu'); item('Export Audio').click();
+        trigger.click(); (await audioMenu())('Mix');
         await wait(()=>document.querySelector('.project-message')?.textContent.includes('no audible notes'),'export failure feedback');
         ensure(!document.querySelector('.export-finishing'),'failure clears animated border');
         ensure(downloads.length===4,'failed export does not download');
@@ -238,12 +271,8 @@ for (const { width, missingMethod, sampler, chiptune, lateClock } of [
         ensure(!item('Export Audio (region)'), 'no region action without selection');
         key(document.activeElement,'Escape');
         document.querySelector('[aria-label="Unmute B1"]').click();
-        const overview = document.querySelector('vc-arrangement-overview canvas');
-        const bounds = overview.getBoundingClientRect();
-        overview.dispatchEvent(new MouseEvent('click', {bubbles:true, clientX:bounds.left+bounds.width*.8, clientY:bounds.top+15}));
-        trigger.click(); await wait(menu,'region menu');
-        await wait(()=>item('Export Audio (region)'), 'region export action');
-        item('Export Audio (region)').click();
+        selectSecondSection();
+        trigger.click(); (await audioMenu(true))('Mix');
         await wait(()=>downloads.length===5, 'region download');
         const regionContext = new NativeAudioContext({sampleRate:48000});
         try {
@@ -251,6 +280,59 @@ for (const { width, missingMethod, sampler, chiptune, lateClock } of [
           ensure(Math.abs(decoded.duration-4)<.05, 'region uses second section tempo and exact bounds: '+decoded.duration);
           ensure(decoded.getChannelData(0).some(value=>Math.abs(value)>.001), 'note crossing region start remains audible');
         } finally { await regionContext.close(); }
+        if (${Boolean(stems)}) {
+          const input = document.querySelector('.project-file-tools input[type="file"]');
+          const transfer = new DataTransfer();
+          transfer.items.add(new File([${JSON.stringify(JSON.stringify(stemProject))}], 'stems.vibe.json'));
+          input.files = transfer.files;
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          await wait(() => document.querySelector('.project-message')?.textContent.includes('Loaded Stem test.'), 'stem project loaded');
+          const stemContext = new NativeAudioContext({ sampleRate: 48000 });
+          try {
+            for (const region of [false, true]) {
+              if (region) selectSecondSection();
+              for (const mode of ['Role Stems', 'Individual Stems']) {
+                const index = downloads.length;
+                trigger.click(); (await audioMenu(region))(mode);
+                const download = await wait(() => downloads[index], mode + ' archive');
+                ensure(download.name === 'Stem test' + (region ? '-region-' : '-') + mode.toLowerCase().replace(' ', '-') + '.zip', 'stem archive name');
+                const archive = await download.blob;
+                ensure(archive.type === 'application/zip', 'ZIP MIME type');
+                const bytes = await archive.arrayBuffer();
+                const zip = new DataView(bytes);
+                const end = bytes.byteLength - 22;
+                ensure(zip.getUint32(end, true) === 0x06054b50, 'ZIP end record');
+                let offset = zip.getUint32(end + 16, true);
+                const entries = new Map();
+                for (let i = 0; i < zip.getUint16(end + 10, true); i++) {
+                  ensure(zip.getUint32(offset, true) === 0x02014b50 && zip.getUint16(offset + 10, true) === 0, 'stored ZIP entry');
+                  const length = zip.getUint16(offset + 28, true);
+                  const name = new TextDecoder().decode(bytes.slice(offset + 46, offset + 46 + length));
+                  const local = zip.getUint32(offset + 42, true);
+                  const start = local + 30 + zip.getUint16(local + 26, true) + zip.getUint16(local + 28, true);
+                  entries.set(name, await stemContext.decodeAudioData(bytes.slice(start, start + zip.getUint32(offset + 20, true))));
+                  offset += 46 + length + zip.getUint16(offset + 30, true) + zip.getUint16(offset + 32, true);
+                }
+                const roleStems = mode === 'Role Stems';
+                const expected = roleStems ? ['Bass.opus'] : ['02 - B1.opus', '06 - B2.opus'];
+                if (!region) expected.unshift(roleStems ? 'Melody.opus' : '01 - M1.opus');
+                ensure([...entries.keys()].join(',') === expected.join(','), 'audible stem filenames: ' + [...entries.keys()]);
+                for (const decoded of entries.values()) {
+                  ensure(decoded.numberOfChannels === 2, 'stereo stem');
+                  ensure(region ? Math.abs(decoded.duration - 4) < .05 : decoded.duration >= 6, 'stem spans export bounds');
+                }
+                const left = entries.get(roleStems ? 'Bass.opus' : '02 - B1.opus');
+                const right = entries.get(roleStems ? 'Bass.opus' : '06 - B2.opus');
+                const audible = (audio, channel, time) => audio.getChannelData(channel)
+                  .subarray(time * 48000, (time + .15) * 48000).some(value => Math.abs(value) > .001);
+                const second = region ? 0 : 2;
+                ensure(audible(left, 0, second + .5) && audible(right, 1, second + 2), 'bass tracks retain timing and pan');
+                ensure(!audible(left, 1, second + .5) && !audible(right, 0, second + 2), 'bass notes stay isolated in the mix');
+                ensure(!audible(left, 0, second + 3.3), 'muted bass is absent from the role mix');
+              }
+            }
+          } finally { await stemContext.close(); }
+        }
         await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
       } catch(error) { await fetch('/result',{method:'POST',body:JSON.stringify({error:error.stack,
         notice:document.querySelector('.project-message')?.textContent,downloads:downloads.map(d=>d.name),

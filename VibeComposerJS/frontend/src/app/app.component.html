@@ -44,12 +44,22 @@
         <div cdkMenu class="export-menu" aria-label="Export">
           <button type="button" cdkMenuItem (cdkMenuItemTriggered)="exportMidi()">Export MIDI</button>
           <button type="button" cdkMenuItem (cdkMenuItemTriggered)="exportProject()">Export Project</button>
-          <button type="button" cdkMenuItem [cdkMenuItemDisabled]="audioExport.busy()" [disabled]="audioExport.busy()"
-            (cdkMenuItemTriggered)="exportAudio()" vcTooltip="Export full song as stereo Opus audio">{{ audioExport.busy() ? 'Exporting Audio…' : 'Export Audio' }}</button>
+          <button type="button" cdkMenuItem class="audio-menu-trigger" [cdkMenuItemDisabled]="audioExport.busy()" [disabled]="audioExport.busy()"
+            [cdkMenuTriggerFor]="audioMenu" [cdkMenuTriggerData]="{ regionOnly: false }">Export Audio</button>
           @if (workspaceUi.sectionRange()) {
-            <button type="button" cdkMenuItem [cdkMenuItemDisabled]="audioExport.busy()" [disabled]="audioExport.busy()"
-              (cdkMenuItemTriggered)="exportAudio(true)" vcTooltip="Export selected region as stereo Opus audio">Export Audio (region)</button>
+            <button type="button" cdkMenuItem class="audio-menu-trigger" [cdkMenuItemDisabled]="audioExport.busy()" [disabled]="audioExport.busy()"
+              [cdkMenuTriggerFor]="audioMenu" [cdkMenuTriggerData]="{ regionOnly: true }">Export Audio (region)</button>
           }
+        </div>
+      </ng-template>
+      <ng-template #audioMenu let-regionOnly="regionOnly">
+        <div cdkMenu class="export-menu" [attr.aria-label]="regionOnly ? 'Export Audio (region)' : 'Export Audio'">
+          <button type="button" cdkMenuItem (cdkMenuItemTriggered)="exportAudio('mix', regionOnly)"
+            vcTooltip="Download the current mix as stereo Opus audio">Mix</button>
+          <button type="button" cdkMenuItem (cdkMenuItemTriggered)="exportAudio('role-stems', regionOnly)"
+            vcTooltip="Download one Opus mix per audible role in a ZIP archive">Role Stems</button>
+          <button type="button" cdkMenuItem (cdkMenuItemTriggered)="exportAudio('individual-stems', regionOnly)"
+            vcTooltip="Download one Opus file per audible track in a ZIP archive">Individual Stems</button>
         </div>
       </ng-template>
       <button type="button" (click)="projectFile.click()" vcTooltip="Open project">Open...</button>

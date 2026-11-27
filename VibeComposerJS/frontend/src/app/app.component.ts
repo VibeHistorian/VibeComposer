@@ -4,7 +4,7 @@ import { installPointerActionFocus } from './shared/pointer-action-focus';
 import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, effect, untracked, inject, signal, viewChild } from '@angular/core';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { CdkMenuModule } from '@angular/cdk/menu';
-import { AudioExportService } from './core/audio/audio-export.service';
+import { AudioExportService, type AudioExportMode } from './core/audio/audio-export.service';
 import { AudioPlaybackService } from './core/audio/audio-playback.service';
 import { MidiOutputService } from './core/audio/midi-output.service';
 import { generateCompositionMidi } from './core/music/midi-export';
@@ -135,15 +135,17 @@ export class AppComponent {
     }
   }
 
-  async exportAudio(regionOnly = false): Promise<void> {
+  async exportAudio(mode: AudioExportMode, regionOnly: boolean): Promise<void> {
     if (this.audioExport.busy()) return;
     const region = regionOnly ? this.workspaceUi.sectionRange() ?? undefined : undefined;
     if (regionOnly && !region) return;
     const project = this.project();
     this.projectMessage.set('');
     try {
-      const { blob, warnings } = await this.audioExport.export(project, region);
-      downloadProjectFile(blob, exportFilename(project, this.preferences.exportNameFields()), 'opus');
+      const { blob, warnings } = await this.audioExport.export(project, region, mode);
+      const filename = exportFilename(project, this.preferences.exportNameFields());
+      if (mode === 'mix') downloadProjectFile(blob, filename, 'opus');
+      else downloadProjectFile(blob, `${filename}${regionOnly ? '-region' : ''}-${mode}`, 'zip');
       this.projectMessage.set(['Audio exported.', ...warnings].join(' '));
     } catch (error) {
       this.projectMessage.set(error instanceof Error ? `Could not export audio: ${error.message}` : 'Could not export audio.');
