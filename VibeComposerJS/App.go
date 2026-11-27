@@ -16,6 +16,6 @@ func NewApp() *App {
 func (a *App) GetAppInfo() AppInfo {
 	return AppInfo{
 		Name:    "VibeComposer",
-		Version: "rewrite-in-progress",
+		Version: "0.2.0",
 	}
 }

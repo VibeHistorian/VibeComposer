@@ -1,4 +1,4 @@
-import type { CompositionProject } from './project.model';
+import { PROJECT_SCHEMA_VERSION, type CompositionProject } from './project.model';
 import type { CompositionTrack, MixChannelSettings } from './track.model';
 import type { ArrangementSection, SectionType } from './arrangement.model';
 import type { ArrangedPart } from '../music/part-role';
@@ -69,7 +69,7 @@ export const DEFAULT_TRACKS: readonly CompositionTrack[] = [
 
 export const DEFAULT_PROJECT: CompositionProject = {
   drumSlots: { 36: 37 },
-  schemaVersion: 12,
+  schemaVersion: PROJECT_SCHEMA_VERSION,
   name: 'Untitled vibe',
   scale: 'major',
   transposeSemitones: 0,

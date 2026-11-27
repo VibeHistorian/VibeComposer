@@ -6,13 +6,15 @@ import type { TrackGenerationPolicies, InstrumentGenerationPolicy } from '../mus
 import type { ArrangementSection } from './arrangement.model';
 import type { CompositionTrack } from './track.model';
 
+export const PROJECT_SCHEMA_VERSION = 13;
+
 export interface CompositionProject {
   readonly drumSlots?: import('../music/drum-instruments').DrumSlots;
   readonly humanization?: { readonly timingBeats: number; readonly durationBeats: number };
   readonly midiPadding?: Readonly<Partial<Record<ArrangedPart, number>>>;
   readonly harmonySettings?: import('../music/harmony-voicing').HarmonySettings;
   readonly melodyGlobal?: MelodyGlobalSettings;
-  readonly schemaVersion: 12;
+  readonly schemaVersion: typeof PROJECT_SCHEMA_VERSION;
   readonly name: string;
   readonly scale: ScaleMode;
   readonly transposeSemitones?: number;

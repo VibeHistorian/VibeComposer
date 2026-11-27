@@ -3,7 +3,7 @@ import { validDrumKit, reconcileDrumKit } from './project-drum-kit';
 import { validOutputSettings } from '../music/output-processing';
 import { validVariationPolicy } from '../music/arrangement-variations';
 import type { ArrangedPart } from '../music/part-role';
-import type { CompositionProject } from './project.model';
+import { PROJECT_SCHEMA_VERSION, type CompositionProject } from './project.model';
 import type { TrackGenerationPolicies } from '../music/generation-policy.model';
 import { validProgressionChords } from '../music/harmony';
 import { isScaleMode } from '../music/scales';
@@ -75,7 +75,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
   const trackIds = new Set(tracks.map((track) => track.id));
   if (arrangement.some((section) => Object.keys(section.trackPresence).some((trackId) => !trackIds.has(trackId)))) return undefined;
   const decoded: CompositionProject = {
-    schemaVersion: 12,
+    schemaVersion: PROJECT_SCHEMA_VERSION,
     name: project.name!,
     scale: project.scale!,
     transposeSemitones: project.transposeSemitones ?? 0,
