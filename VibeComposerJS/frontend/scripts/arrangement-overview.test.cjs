@@ -33,6 +33,7 @@ function fixture(reactivity) {
     '../../core/music/part-role': { ARRANGED_PARTS: ['melody', 'chords', 'arpeggio', 'bass', 'drums'] },
     '../../core/project/arrangement.model': { SECTION_TYPES: [] },
     '../../core/music/arrangement-generator': { shouldGenerateTrackInSection: (section, track) => section.presentTracks.includes(track.id) },
+    '../../core/music/arrangement-variation-catalogue': require('./music-loader.cjs').loadMusic('arrangement-variation-catalogue.ts'),
     '../../core/music/phrase': { layOutTrackPhrase: (project, track) => track.notes.map(note => ({ ...note, sectionId: note.sectionId ?? project.arrangement.find((section, index, all) => {
       const start = all.slice(0, index).reduce((sum, s) => sum + s.measures * 4, 0); return note.startBeat >= start && note.startBeat < start + section.measures * 4; })?.id })) },
   };
@@ -608,6 +609,38 @@ test('cell bodies select role settings while section selection is header-only', 
   assert.equal(component.cellSelected.values.length, 1, 'middle-click preserves selection');
   component.onCanvasAuxclick({ button: 1, shiftKey: true, clientX: cell.x + 5, clientY: cell.y + 5, preventDefault() {} });
   assert.equal(component.groupPresenceToggled.values.length, 1, 'Shift-middle-click only rerolls');
+});
+
+test('track hover lists enabled variations for that section and track, and role cells clear the tooltip', () => {
+  const { component } = fixture();
+  const project = component.project();
+  const track = { ...project.tracks[0], id: 'chords-1', name: 'Keys', role: 'chords', notes: [] };
+  const choice = (trackId, kind, enabled = true) => ({ trackId, kind, enabled, amount: 1 });
+  component.project.set({
+    ...project,
+    tracks: [...project.tracks, track],
+    arrangement: project.arrangement.map(section => ({
+      ...section,
+      variations: { seed: '1', policy: { chance: 100, maxChanges: 4 }, choices: section.id === 'intro' ? [
+        choice(track.id, 'chord-transition', false),
+        choice(track.id, 'chord-space'),
+        choice(track.id, 'accompaniment-velocity-ramp'),
+        choice('bass-1', 'bass-weight'),
+      ] : [] },
+    })),
+  });
+  component.drawOverview();
+  const hover = (key, yOffset) => {
+    const area = component.hits.find(hit => hit.key === key);
+    component.onPointerMove({ clientX: area.x + area.width / 2, clientY: area.y + (yOffset ?? area.height / 2) });
+  };
+
+  hover('toggle:intro:chords-1');
+  assert.equal(component.hoverTooltip().text, 'Keys\nChord spacing\nAccompaniment velocity ramp');
+  hover('cell:intro:chords', 5);
+  assert.equal(component.hoverTooltip(), null);
+  hover('toggle:verse:chords-1');
+  assert.equal(component.hoverTooltip().text, 'Keys');
 });
 
 test('manual section notes replace nearby freeze markers, including an empty saved phrase', () => {

@@ -4,6 +4,7 @@ import { trackColor } from '../../core/ui/track-color';
 import { ModifierKeysService } from '../../core/ui/modifier-keys.service';
 import type { ArrangementPhraseSource, ArrangementPhraseTarget, ArrangementPhraseCopy } from '../../core/project/arrangement-phrase-copy';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
+import { VARIATION_DEFINITIONS } from '../../core/music/arrangement-variation-catalogue';
 import { sectionDurationBeats, sectionChordDurations } from '../../core/music/section-context';
 import type { SectionHarmonyDisplay } from '../../core/music/harmony-display';
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
@@ -550,7 +551,6 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         const roleCell = { sectionId: item.section.id, role: group.role };
         hit({ roleCell, copySource: roleCell, key: `cell:${item.section.id}:${group.role}`, x, y, width, height: this.rowHeight,
           label: `Select ${group.name} settings in ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}. ${customized ? 'Customized' : 'Inherited'}. Right-click for presets. Presence controls: Settings > Shortcuts.`,
-          summary: `${group.name} · ${this.sectionLabel(item.section.type)} · Bars ${this.measureLabel(item)}\n${customized ? 'Customized' : 'Inherited'} settings · ${activeTracks}/${group.tracks.length} present`,
           activate: () => this.cellSelected.emit(roleCell),
           togglePresence: () => this.groupPresenceToggled.emit({ sectionId: item.section.id, role: group.role }),
           reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reroll' }),
@@ -604,7 +604,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           }
           const trackCustomized = Object.keys(item.section.trackPartOverrides?.[track.id] ?? {}).length > 0
             || Object.keys(item.section.rolePartOverrides?.[group.role] ?? {}).length > 0;
-          const variation = item.section.variations?.choices.find(choice => choice.trackId === track.id);
+          const trackVariations = item.section.variations?.choices.filter(choice => choice.trackId === track.id) ?? [];
+          const [variation] = trackVariations;
           if (variation) text(variation.enabled ? '◆' : '◇', centerX - buttonHalf, centerY + buttonHalf, '--text-secondary', `8px ${monoFont}`);
           const manualNotes = item.section.trackPhrases?.[track.id] !== undefined
             || hasManualPhrase(track) && !item.section.generatedTrackIds?.includes(track.id);
@@ -619,13 +620,14 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           const hitRadius = buttonPitch / 2;
           const buttonLeft = Math.max(x, centerX - hitRadius), buttonRight = Math.min(x + width, centerX + hitRadius);
           const trackName = track.name ?? group.name + ' track ' + trackNumber;
-          const trackStatus = [present ? 'Present' : 'Absent', manualNotes ? 'Manual notes' : trackCustomized ? 'Customized settings' : '',
-            variation ? `Variation ${variation.enabled ? 'enabled' : 'disabled'}` : ''].filter(Boolean).join(' · ');
+          const enabledVariationNames = trackVariations.filter(choice => choice.enabled)
+            .map(choice => VARIATION_DEFINITIONS[choice.kind].label);
           hit({ copySource: present ? { sectionId: item.section.id, trackId: track.id } : undefined,
             copyTarget: { sectionId: item.section.id, trackId: track.id }, key: `toggle:${item.section.id}:${track.id}`, x: buttonLeft, y: Math.max(y, centerY - hitRadius),
             width: buttonRight - buttonLeft, height: Math.min(y + this.rowHeight, centerY + hitRadius) - Math.max(y, centerY - hitRadius),
             label: `Select ${trackName} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${manualNotes ? 'Manual notes override part settings.' : trackCustomized ? 'Customized track part.' : ''} ${variation ? `Saved variation ${variation.enabled ? 'enabled' : 'disabled'}; inspect Variations in the selection inspector.` : ''} Presence controls: Settings > Shortcuts.`,
-            summary: `${trackName} · ${this.sectionLabel(item.section.type)}\n${trackStatus}`,
+            summary: [trackName, manualNotes ? 'Manual notes' : trackCustomized ? 'Customized settings' : '',
+              ...enabledVariationNames].filter(Boolean).join('\n'),
             activate: () => this.trackSelected.emit({ sectionId: item.section.id, trackId: track.id }),
             reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, trackId: track.id, action: 'reroll' }),
             reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, trackId: track.id, action: 'reset' }),
@@ -938,7 +940,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     }
     const canvas = this.scoreCanvas().nativeElement;
     canvas.style.cursor = area ? 'pointer' : 'default';
-    if (area) this.showHoverTooltip(area.summary ?? area.label, event, area);
+    if (area && !area.roleCell) this.showHoverTooltip(area.summary ?? area.label, event, area);
     else this.hoverTooltip.set(null);
   }
 
