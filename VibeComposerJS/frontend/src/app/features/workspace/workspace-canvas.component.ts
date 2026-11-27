@@ -23,6 +23,7 @@ import { MAX_GLIDE_MS, VOICE_MODES, type VoiceMode } from '../../core/music/trac
 import { clipGlideSegments, glidesByChannel, shiftGlideSegments, withGlidePreview, type GlideReplacement, type GlideSegment, type PhraseGlides } from '../../core/music/phrase-glides';
 import type { ScoreGlideReference } from '../score/score-glide-lane.component';
 import { sectionDurationBeats } from '../../core/music/section-context';
+import { sectionPhraseBounds } from '../../core/music/phrase-bounds';
 import { sectionHarmonyDisplay } from '../../core/music/harmony-display';
 import { MAX_VOLUME_PERCENT, mixEnabled, validVolumePercent } from '../../core/audio/mix-values';
 import { INSTRUMENT_TONE_CONTROLS, type InstrumentToneKey } from '../../core/audio/instrument-tone';
@@ -481,8 +482,8 @@ export class WorkspaceCanvasComponent {
   readonly editor = viewChild<EditWorkspaceComponent>('phraseEditor');
   readonly editSectionId = signal<string | null>(null);
   readonly editStartBeat = signal(0);
-  readonly editPhraseOffset = signal(0);
   readonly editPhraseLength = signal(16);
+  readonly editNoteBeat = signal<number | null>(null);
   readonly displayedRoles = signal(new Set<ArrangedPart>(ARRANGED_PARTS));
   toggleScoreRole(role: ArrangedPart): void {
     this.displayedRoles.update(roles => { const next = new Set(roles); if (next.has(role)) next.delete(role); else next.add(role); return next; });
@@ -516,7 +517,10 @@ export class WorkspaceCanvasComponent {
   readonly scoreViewport = signal<ScoreViewport>({ scale: 1, offsetPercent: 0, width: 0, laneHeight: 40, verticalOffset: 0, scoreHeight: 0 });
 
   readonly scoreEditBounds = computed(() => {
-    const bounds = this.editor()?.editBounds() ?? { startBeat: 0, endBeat: this.editPhraseLength() };
+    const project = this.projects.projectWithoutVolumeChanges();
+    const section = project.arrangement.find(section => section.id === this.editSectionId());
+    const bounds = this.editor()?.editBounds() ?? (section ? sectionPhraseBounds(project, section)
+      : { startBeat: -4, endBeat: this.editPhraseLength() + 4 });
     return { startBeat: this.editStartBeat() + bounds.startBeat, endBeat: this.editStartBeat() + bounds.endBeat };
   });
   private readonly glidePreview = computed<GlideReplacement | null>(() => {
@@ -950,36 +954,33 @@ export class WorkspaceCanvasComponent {
   dismissPartWorkflowFeedback(): void { this.workflowFeedback.set(null); }
 
   openTrackEditor(trackId: string): void {
-    if (this.editing() || !this.project().tracks.some((track) => track.id === trackId)) return;
-    this.selectionBeforeEditing = this.workspaceUi.captureSettingsSelection();
-    const target = this.settingsTarget();
-    const sectionId = 'sectionId' in target ? target.sectionId : this.selectedSectionId() ?? this.project().arrangement[0]?.id ?? null;
-    const item = this.timelineSections().find(item => item.section.id === sectionId);
-    this.editSectionId.set(sectionId);
-    this.editPhraseOffset.set(0);
-    this.editStartBeat.set(item?.startBeat ?? 0);
-    this.editPhraseLength.set(Math.min(this.project().progression.length * 4, item ? sectionDurationBeats(this.project(), item.section) : this.totalBeats()));
-    this.workspaceUi.selectedTrackId.set(trackId);
-    this.editingNoteId.set(null);
-    this.projects.beginPhraseHistory();
-    this.editing.set(true);
+    this.openPhraseEditor(trackId);
   }
 
   openNoteEditor(note: ScoreNote): void {
-    if (this.editing() || !this.project().tracks.some((track) => track.id === note.part)) return;
-    const item = this.timelineSections().find((item, index, all) => note.sectionId ? item.section.id === note.sectionId
-      : note.startBeat >= item.startBeat && note.startBeat < (all[index + 1]?.startBeat ?? this.totalBeats()));
-    this.openTrackEditor(note.part);
-    if (item) {
-      const length = this.project().progression.length * 4;
-      const offset = Math.max(0, Math.min(Math.ceil(sectionDurationBeats(this.project(), item.section) / length) - 1,
-        Math.floor((note.startBeat - item.startBeat) / length))) * length;
-      this.editSectionId.set(item.section.id);
-      this.editPhraseOffset.set(offset);
-      this.editStartBeat.set(item.startBeat + offset);
-      this.editPhraseLength.set(Math.min(length, sectionDurationBeats(this.project(), item.section) - offset));
-    }
-    this.editingNoteId.set(note.id);
+    this.openPhraseEditor(note.part, note);
+  }
+
+  private openPhraseEditor(trackId: string, note?: ScoreNote): void {
+    const project = this.project();
+    if (this.editing() || !project.tracks.some(track => track.id === trackId)) return;
+    this.selectionBeforeEditing = this.workspaceUi.captureSettingsSelection();
+    const target = this.settingsTarget();
+    const sectionId = 'sectionId' in target ? target.sectionId : this.selectedSectionId() ?? project.arrangement[0]?.id ?? null;
+    const sections = this.timeline().sections;
+    const owner = note && sections.find(section => note.sectionId ? section.sectionId === note.sectionId
+      : note.startBeat >= section.startBeat && note.startBeat < section.endBeat);
+    const timing = owner ?? sections.find(section => section.sectionId === sectionId);
+    const section = project.arrangement.find(section => section.id === timing?.sectionId);
+    const startBeat = timing?.startBeat ?? 0;
+    this.editSectionId.set(section?.id ?? null);
+    this.editStartBeat.set(startBeat);
+    this.editPhraseLength.set(section ? sectionDurationBeats(project, section) : Math.min(project.progression.length * 4, this.totalBeats()));
+    this.workspaceUi.selectedTrackId.set(trackId);
+    this.editingNoteId.set(note?.id ?? null);
+    this.editNoteBeat.set(note ? note.startBeat - startBeat : null);
+    this.projects.beginPhraseHistory();
+    this.editing.set(true);
   }
 
   closeEditor(): void {
@@ -989,6 +990,7 @@ export class WorkspaceCanvasComponent {
     }
     this.editing.set(false);
     this.editingNoteId.set(null);
+    this.editNoteBeat.set(null);
     this.projects.endPhraseHistory();
   }
 

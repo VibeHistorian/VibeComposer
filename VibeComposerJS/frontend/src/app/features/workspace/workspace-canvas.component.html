@@ -182,7 +182,7 @@
   <main class="song-canvas" [class.editing]="editing()" [class.settings-in-inspector]="usePartSettingsInspector()" [class.group-track-settings]="showGroupTrackSettings()">
     @defer (when editing()) {
     @if (editing()) {
-      <vc-edit-workspace #phraseEditor [initialNoteId]="editingNoteId()" [sectionId]="editSectionId()" [phraseStartBeat]="editPhraseOffset()"
+      <vc-edit-workspace #phraseEditor [initialNoteId]="editingNoteId()" [initialNoteBeat]="editNoteBeat()" [sectionId]="editSectionId()"
         [phraseLength]="editPhraseLength()" (applied)="closeEditor()" (cancelled)="closeEditor()" />
     }
     }

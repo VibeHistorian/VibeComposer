@@ -195,6 +195,7 @@ export class EditWorkspaceComponent {
   readonly phraseStartBeat = input<number>(0);
   readonly phraseLength = input<number | null>(null);
   readonly initialNoteId = input<string | null>(null);
+  readonly initialNoteBeat = input<number | null>(null);
   readonly applied = output<void>();
   readonly cancelled = output<void>();
   readonly drumVoices = computed(() => {
@@ -274,7 +275,7 @@ export class EditWorkspaceComponent {
     try {
       const buffer = await file.arrayBuffer();
       const { readMidiFile } = await import('../../core/ui/midi-file-import');
-      const imported = await readMidiFile(buffer, Math.min(132, this.editBounds().endBeat), 2048, controller.signal, {
+      const imported = await readMidiFile(buffer, this.editBounds().endBeat, 2048, controller.signal, {
         injector: this.injector, transpose: this.displayTranspose(), root: this.snappingHarmony().tonic - this.displayTranspose(),
         mode: this.snappingHarmony().scale, snap: this.snapToScale(),
         ...(track.role === 'drums' ? { drumSlots: resolvedDrumSlots(this.project()) } : {}),
@@ -559,9 +560,7 @@ export class EditWorkspaceComponent {
   private readonly restoredTrackIds = signal<readonly string[]>([]);
 
   ngOnInit(): void {
-    this.loadTrackDraft(this.selectedTrack());
-    if (this.initialNoteId()) this.selectNote(this.initialNoteId()!);
-    this.history.reset({ notes: this.draftNotes(), glides: this.draftGlides(), selection: this.selectedNoteIds(), restore: false });
+    this.loadTrackDraft(this.selectedTrack(), this.initialNoteId());
     this.draftReady.set(true);
   }
 
@@ -817,29 +816,40 @@ export class EditWorkspaceComponent {
         generatedTrackIds: generatedOnly ? [...(section.generatedTrackIds ?? []), trackId] : section.generatedTrackIds }] }, track);
   }
 
-  private loadTrackDraft(track: CompositionTrack): void {
+  private loadTrackDraft(track: CompositionTrack, initialNoteId: string | null = null): void {
     this.freeTranspose.set(0);
     this.midiDragOver.set(false);
     const section = this.project().arrangement.find(section => section.id === this.sectionId());
     const tracks = track.role === 'drums' ? [track, ...this.project().tracks.filter(candidate => candidate.role === 'drums' && candidate.id !== track.id)] : [track];
     const ids = new Set<string>();
     const sourceProject = withoutManualAdjustments(this.project());
-    this.baselineNotes = tracks.flatMap(track => {
-      const source = section ? this.sectionDraftNotes(sourceProject, section.id, track.id)
+    const initialBeat = this.initialNoteBeat();
+    let selectedId: string | undefined;
+    let closestDistance = Infinity;
+    this.baselineNotes = tracks.flatMap(candidate => {
+      const source = section ? this.sectionDraftNotes(sourceProject, section.id, candidate.id)
         .filter(note => note.startBeat >= this.phraseStartBeat() + this.editBounds().startBeat
           && note.startBeat < this.phraseStartBeat() + this.editBounds().endBeat)
         .map(note => ({ ...note, startBeat: note.startBeat - this.phraseStartBeat() }))
-        : phraseForTrack(sourceProject, sourceProject.tracks.find(candidate => candidate.id === track.id)!);
+        : phraseForTrack(sourceProject, sourceProject.tracks.find(sourceTrack => sourceTrack.id === candidate.id)!);
       return source.map(note => {
         const id = ids.has(note.id) ? this.makeNoteId() : note.id; ids.add(id);
-        return { ...note, id, trackId: track.id };
+        // Repeated patterns can share a source ID. Match the clicked occurrence before assigning draft IDs.
+        if (candidate.id === track.id && note.id === initialNoteId) {
+          const distance = initialBeat === null ? 0 : Math.abs(note.startBeat - initialBeat);
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            selectedId = id;
+          }
+        }
+        return { ...note, id, trackId: candidate.id };
       });
     });
     this.draftNotes.set([...this.baselineNotes]);
     this.loadGlideDraft(tracks, section);
     this.restoredTrackIds.set([]);
-    this.selectedNoteIds.set([]);
-    this.history.reset({ notes: this.draftNotes(), glides: this.draftGlides(), selection: [], restore: false });
+    this.selectedNoteIds.set(selectedId === undefined ? [] : [selectedId]);
+    this.history.reset({ notes: this.draftNotes(), glides: this.draftGlides(), selection: this.selectedNoteIds(), restore: false });
     this.historyRevision.update(value => value + 1);
   }
 

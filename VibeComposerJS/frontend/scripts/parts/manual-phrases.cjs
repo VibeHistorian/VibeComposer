@@ -303,7 +303,7 @@ test('section pickups and late notes survive editing, local apply, history, relo
   assert.equal(owned.sectionId, section.id);
   workspace.openNoteEditor({ ...owned, part: id, color: 'bass', opacity: 1, topPercent: 0 });
   assert.equal(workspace.editSectionId(), section.id, 'late onset still opens its owning section');
-  assert.equal(workspace.editPhraseOffset(), 0);
+  assert.equal(workspace.editStartBeat(), 0);
   const parsed = new Midi(midi.generateCompositionMidi(service.project()));
   const exported = parsed.tracks.find(t => t.name === track.name).notes;
   assert.ok(exported.some(note => note.midi === 48 && note.ticks === 0));
@@ -326,6 +326,74 @@ test('section allowance follows the first and last custom measure durations', ()
   editor.addNoteAt({ midi: 48, startBeat: -2.25 });
   editor.addNoteAt({ midi: 48, startBeat: 14 });
   assert.equal(editor.notes().length, count);
+});
+
+test('Double and Half open the same complete section from either end or Edit notes', () => {
+  const { service, workspace, ui, load } = fixture();
+  const { EditWorkspaceComponent } = load('features/edit/edit-workspace.component.ts');
+  const trackId = 'track-bass-1', sectionId = service.project().arrangement[1].id;
+  service.updateSection(1, { measures: 4 });
+  service.setSectionTrackPresence(1, trackId, true);
+  ui.selectSectionTrack(sectionId, trackId);
+
+  for (const multiplier of [2, 0.5]) {
+    service.setSectionMusicalState(sectionId, { customDurations: [3, 5], context: { beatDurationMultiplier: multiplier } });
+    const { startBeat, endBeat } = workspace.timeline().sections[1];
+    const length = 16 * multiplier;
+    const relativeBounds = { startBeat: -3 * multiplier, endBeat: length + 5 * multiplier };
+    const scoreBounds = { startBeat: startBeat + relativeBounds.startBeat, endBeat: endBeat + 5 * multiplier };
+    const original = [-multiplier, 0, length - multiplier, length + multiplier].map((beat, index) =>
+      ({ id: 'scaled-' + index, midi: 48 + index, startBeat: beat, durationBeats: multiplier, velocity: 90 }));
+    assert.equal(service.updateSectionTrackPhrase(sectionId, trackId, original), true);
+    const scoreNotes = workspace.scoreNotes().filter(note => note.part === trackId && note.sectionId === sectionId);
+
+    for (const clicked of [scoreNotes[0], scoreNotes.at(-1), null]) {
+      if (clicked) workspace.openNoteEditor(clicked);
+      else workspace.openTrackEditor(trackId);
+      assert.equal(workspace.editSectionId(), sectionId);
+      assert.equal(workspace.editStartBeat(), startBeat);
+      assert.equal(workspace.editPhraseLength(), length);
+      assert.deepEqual(workspace.scoreSectionFocus(), scoreBounds);
+      const editor = new EditWorkspaceComponent();
+      editor.sectionId.set(workspace.editSectionId());
+      editor.phraseLength.set(workspace.editPhraseLength());
+      editor.initialNoteId.set(workspace.editingNoteId());
+      editor.initialNoteBeat.set(workspace.editNoteBeat());
+      editor.ngOnInit();
+      assert.deepEqual(editor.editBounds(), relativeBounds);
+      assert.deepEqual(editor.draftNotes().map(({ trackId, ...note }) => note), original);
+      assert.equal(editor.selectedNote()?.id ?? null, clicked?.id ?? null);
+      workspace.closeEditor();
+    }
+  }
+});
+
+test('opening a later repeat selects that occurrence of a legacy track-owned note', () => {
+  const { service, workspace, load } = fixture();
+  const { EditWorkspaceComponent } = load('features/edit/edit-workspace.component.ts');
+  const trackId = 'track-bass-1', sectionId = service.project().arrangement[0].id;
+  service.updateSection(0, { measures: 8 });
+  service.setSectionMusicalState(sectionId, { context: { beatDurationMultiplier: 2 } });
+  service.setSectionTrackPresence(0, trackId, true);
+  service.updateTrackPhrase(trackId, [{ id: 'repeating', midi: 48, startBeat: 1, durationBeats: 1, velocity: 90 }]);
+  const notes = workspace.scoreNotes().filter(note => note.part === trackId && note.sectionId === sectionId);
+  assert.deepEqual(notes.map(note => note.startBeat), [1, 33]);
+  workspace.openNoteEditor(notes[1]);
+
+  const editor = new EditWorkspaceComponent();
+  editor.sectionId.set(workspace.editSectionId());
+  editor.phraseLength.set(workspace.editPhraseLength());
+  editor.initialNoteId.set(workspace.editingNoteId());
+  editor.initialNoteBeat.set(workspace.editNoteBeat());
+  editor.ngOnInit();
+  assert.deepEqual(editor.draftNotes().map(note => note.startBeat), [1, 33]);
+  assert.equal(editor.selectedNote().startBeat, 33);
+  editor.updateSelected('velocity', { target: { value: '105' } });
+  editor.applyChanges();
+  assert.equal(editor.applyError(), null);
+  const track = service.project().tracks.find(track => track.id === trackId);
+  assert.equal(track.phraseEdits[0].endBeat, 64);
+  assert.deepEqual(track.phraseEdits[0].notes.map(note => [note.startBeat, note.velocity]), [[1, 90], [33, 105]]);
 });
 
 test('global Apply retains pickups and the extra measure when a section is shorter than the global phrase', () => {
