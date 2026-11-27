@@ -26,6 +26,8 @@ Paths below are relative to `src/app/`. See the [feature map](src/app/features/R
 ## Project JSON authoring tools
 
 The project authoring CLI is available from `frontend/` as `node scripts/song-project.cjs <command>`. Its `--help` option lists command syntax.
+Generated projects should primarily use native controls (track parameters, section overrides, section variations) rather than direct MIDI manipulation/manual phrases
+(small adjustments via MIDI can be used for effect or transitions).
 
 - `template` emits a starter project with app defaults in the native JSON format.
 - `reference <role>` lists stored generator keys and values. `reference variations` lists compatible roles, protected settings, and supported strengths.
