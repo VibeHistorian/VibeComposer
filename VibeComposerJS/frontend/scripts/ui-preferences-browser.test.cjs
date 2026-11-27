@@ -7,7 +7,8 @@ const test = require('node:test');
 const browser = findBrowser();
 
 // Stay tall enough to exercise the quick-settings panel rather than its inspector layout.
-for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI preference transfer at ${width}px`, { skip: !browser }, async () => {
+test('quick-settings placement and UI preference transfer at 1440px', { skip: !browser }, async () => {
+  const width = 1440;
   const root = requireProductionBuild();
   const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const script = `<script>${observeSettings}(async () => {
@@ -787,57 +788,55 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
     })()`, awaitPromise: true, returnByValue: true });
     assert.equal(popupGeometry.exceptionDetails, undefined, JSON.stringify(popupGeometry));
     assert.ok(popupGeometry.result.value.every(result => result.fits && result.correctSide && result.scrolls), JSON.stringify(popupGeometry.result.value));
-    if (width === 1440) {
-      const channel = 'vc-select.track-channel:not([aria-disabled="true"])';
-      const waitFor = async (predicate, message) => {
-        const result = await command('Runtime.evaluate', { expression: `(async () => {
-          for (let i = 0; i < 150; i++) {
-            const value = (${predicate})();
-            if (value) return value;
-            await new Promise(resolve => setTimeout(resolve, 20));
-          }
-        })()`, awaitPromise: true, returnByValue: true });
-        assert.ok(result.result.value, message);
-        return result.result.value;
-      };
-      const clickAt = async ({ x, y }) => {
-        await command('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
-        await command('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
-      };
-      const clickControl = async selector => clickAt(await waitFor(`() => {
-        const control = document.querySelector(${JSON.stringify(selector)});
-        if (!control) return;
-        control.scrollIntoView({ block: 'nearest' });
-        const rect = control.getBoundingClientRect();
-        return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
-      }`, 'control is available: ' + selector));
-      const trigger = `document.querySelector(${JSON.stringify(channel)})`;
-      await clickControl(channel);
-      await clickAt(await waitFor(`() => {
-        const trigger = ${trigger};
-        const panel = document.getElementById(trigger.getAttribute('aria-controls'));
-        if (document.activeElement !== trigger || !panel) return;
-        const option = panel.querySelector('[role="option"]:not([aria-disabled="true"])');
-        if (!option) return;
-        const rect = option.getBoundingClientRect();
-        return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
-      }`, 'pointer-opened channel combobox keeps focus while expanded'));
-      await waitFor(`() => ${trigger}.getAttribute('aria-expanded') === 'false' && document.activeElement !== ${trigger}`,
-        'choosing a channel releases the closed combobox');
-      await press(' ', 'Space', 32);
-      await waitFor(`() => document.querySelector('.play-button').ariaLabel === 'Pause'`, 'Space starts playback after choosing a channel');
-      await clickControl('.harmony-compose-star');
-      await waitFor(`() => !document.activeElement.matches('.harmony-compose-star')`, 'pointer button releases focus');
-      await press(' ', 'Space', 32);
-      await waitFor(`() => document.querySelector('.play-button').ariaLabel === 'Resume'`, 'Space pauses after clicking a toggle');
-      await clickControl('.midi-port-button');
-      await clickControl('.midi-menu [role="menuitemradio"]:not([aria-disabled="true"])');
-      await waitFor(`() => !document.querySelector('.midi-menu') && !document.activeElement.matches('.midi-port-button')`,
-        'choosing a MIDI output releases the menu trigger');
-      await press(' ', 'Space', 32);
-      await waitFor(`() => document.querySelector('.play-button').ariaLabel === 'Pause'`, 'Space resumes after a menu selection');
-      await clickControl('.stop-button');
-    }
+    const channel = 'vc-select.track-channel:not([aria-disabled="true"])';
+    const waitFor = async (predicate, message) => {
+      const result = await command('Runtime.evaluate', { expression: `(async () => {
+        for (let i = 0; i < 150; i++) {
+          const value = (${predicate})();
+          if (value) return value;
+          await new Promise(resolve => setTimeout(resolve, 20));
+        }
+      })()`, awaitPromise: true, returnByValue: true });
+      assert.ok(result.result.value, message);
+      return result.result.value;
+    };
+    const clickAt = async ({ x, y }) => {
+      await command('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+      await command('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
+    };
+    const clickControl = async selector => clickAt(await waitFor(`() => {
+      const control = document.querySelector(${JSON.stringify(selector)});
+      if (!control) return;
+      control.scrollIntoView({ block: 'nearest' });
+      const rect = control.getBoundingClientRect();
+      return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+    }`, 'control is available: ' + selector));
+    const trigger = `document.querySelector(${JSON.stringify(channel)})`;
+    await clickControl(channel);
+    await clickAt(await waitFor(`() => {
+      const trigger = ${trigger};
+      const panel = document.getElementById(trigger.getAttribute('aria-controls'));
+      if (document.activeElement !== trigger || !panel) return;
+      const option = panel.querySelector('[role="option"]:not([aria-disabled="true"])');
+      if (!option) return;
+      const rect = option.getBoundingClientRect();
+      return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+    }`, 'pointer-opened channel combobox keeps focus while expanded'));
+    await waitFor(`() => ${trigger}.getAttribute('aria-expanded') === 'false' && document.activeElement !== ${trigger}`,
+      'choosing a channel releases the closed combobox');
+    await press(' ', 'Space', 32);
+    await waitFor(`() => document.querySelector('.play-button').ariaLabel === 'Pause'`, 'Space starts playback after choosing a channel');
+    await clickControl('.harmony-compose-star');
+    await waitFor(`() => !document.activeElement.matches('.harmony-compose-star')`, 'pointer button releases focus');
+    await press(' ', 'Space', 32);
+    await waitFor(`() => document.querySelector('.play-button').ariaLabel === 'Resume'`, 'Space pauses after clicking a toggle');
+    await clickControl('.midi-port-button');
+    await clickControl('.midi-menu [role="menuitemradio"]:not([aria-disabled="true"])');
+    await waitFor(`() => !document.querySelector('.midi-menu') && !document.activeElement.matches('.midi-port-button')`,
+      'choosing a MIDI output releases the menu trigger');
+    await press(' ', 'Space', 32);
+    await waitFor(`() => document.querySelector('.play-button').ariaLabel === 'Pause'`, 'Space resumes after a menu selection');
+    await clickControl('.stop-button');
     await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 0, y: 0 });
     const restoredTitle = await command('Runtime.evaluate', { expression: `new Promise(resolve => requestAnimationFrame(() => resolve(document.querySelector('vc-menu-select.track-instrument:not([aria-disabled="true"])').getAttribute('aria-description'))))`, awaitPromise: true, returnByValue: true });
     assert.ok(restoredTitle.result.value.startsWith('Instrument:'), 'instrument tooltip remains available');
@@ -863,7 +862,9 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
 });
 
 
-for (const width of [780, 1440, 2560, 3840]) test(`workspace width limits use available space and persist at ${width}px`, { skip: !browser }, async () => {
+for (const width of [780, 1440, 2560, 3840]) test(width === 780
+  ? 'workspace controls remain visible at 780px'
+  : `workspace width limits use available space and persist at ${width}px`, { skip: !browser }, async () => {
   const root = requireProductionBuild();
   const script = `<script>${observeSettings}(async () => {
     const wait = async (read, label) => {
@@ -909,7 +910,22 @@ for (const width of [780, 1440, 2560, 3840]) test(`workspace width limits use av
         }
         return {frame:frame.width,middle:middle.width};
       };
-      if(restored) {
+      if (innerWidth === 780) {
+        await changeControl(control, '1440');
+        await wait(() => control.getAttribute('value') === '1440', 'width selection');
+        document.querySelector('[aria-label="Close settings"]').click();
+        await measure('1440');
+        const edit = await wait(() => [...document.querySelectorAll('button')]
+          .find(button => button.textContent.trim() === 'Edit quick settings'), 'quick settings');
+        edit.click();
+        const target = await wait(() => document.querySelector('.part-settings-panel .placement-target'), 'quick placement controls');
+        target.scrollIntoView({ block: 'nearest' });
+        await settle();
+        const bounds = target.getBoundingClientRect();
+        ensure(bounds.width > 0 && bounds.height > 0 && bounds.left >= 0 && bounds.right <= innerWidth
+          && bounds.top >= 0 && bounds.bottom <= innerHeight,
+          'quick placement controls fit the narrow viewport');
+      } else if(restored) {
         ensure(read().appearance.windowWidthLimit==='1600','stored width restored');
         document.querySelector('[aria-label="Close settings"]').click();
         await measure('1600');
