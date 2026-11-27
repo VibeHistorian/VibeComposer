@@ -1,8 +1,16 @@
 @if (expanded()) {
-  <div class="policy-controls instrument-policy" role="group" [attr.aria-label]="role() + ' instrument reroll rules'">
+  <div class="policy-controls instrument-policy" [class.with-reroll-style]="kitControls().length > 0"
+    role="group" [attr.aria-label]="role() + ' instrument reroll rules'">
       <label><span>Instrument pool</span>
         <vc-select [options]="poolSelectOptions()" [selectDefault]="defaultInstrumentPolicies[role()].pool" aria-label="Instrument pool" [value]="instrumentPolicy().pool" [disabled]="disabled()" (valueChange)="changeInstrument('pool', $event)"></vc-select>
       </label>
+    @if (kitControls().length) {
+      <label class="reroll-style" title="Favor this style’s grooves and sounds on future Kit rerolls">
+        <span>Reroll style</span>
+        <vc-select aria-label="Reroll style" [options]="drumStyleOptions" selectDefault="any"
+          [value]="values()['rerollStyle'] ?? 'any'" [disabled]="disabled()" (valueChange)="changeDrumStyle($event)" />
+      </label>
+    }
     @if (role() === 'chords' && instrumentPolicy().pool === 'AUTO') {
       <vc-compact-knob [mini]="true" label="Instrument sustain chance %" [defaultValue]="50" shortLabel="SUST" unit="%"
         description="Chance to choose a sustained chord instrument from the automatic pool."

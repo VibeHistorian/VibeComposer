@@ -253,7 +253,7 @@ for (const width of [1440,780]) test(`whole arrangement toolbar reroll and undo 
   }
 });
 
-for (const width of [1440,780]) test(`role reseeding controls at ${width}px`, { skip: !browser }, async () => {
+for (const width of [1440,780,700]) test(`role reseeding controls at ${width}px`, { skip: !browser }, async () => {
   const root = requireProductionBuild(), index = fs.readFileSync(path.join(root,'index.html'),'utf8');
   const script = `<script>(async () => {
     const wait=async(read)=>{for(let i=0;i<200;i++){if(read())return;await new Promise(r=>setTimeout(r,30));}throw new Error('arrangement reroll timed out');};
@@ -280,6 +280,12 @@ for (const width of [1440,780]) test(`role reseeding controls at ${width}px`, { 
         checkbox.click(); await wait(()=>reseed.disabled&&same.disabled);
         const row=controls.parentElement.getBoundingClientRect(), bounds=controls.getBoundingClientRect();
         ensure(bounds.right<=row.right+1&&bounds.left>=row.left-1,role+' fits pool row');
+        if (role==='drums') {
+          const pool=controls.parentElement.querySelector('[aria-label="Instrument pool"]').getBoundingClientRect();
+          const style=controls.parentElement.querySelector('[aria-label="Reroll style"]').getBoundingClientRect();
+          ensure(pool.left>=row.left-1&&pool.right<=style.left&&style.right<=bounds.left,'Kit controls fit side by side in order');
+          ensure(Math.abs(pool.bottom-style.bottom)<1&&Math.abs(style.bottom-bounds.bottom)<1,'Kit controls share one row');
+        }
       }
       await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
     } catch(error) {await fetch('/result',{method:'POST',body:JSON.stringify({error:error.message,stack:error.stack})});}

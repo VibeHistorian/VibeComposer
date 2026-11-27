@@ -6,6 +6,13 @@ input { box-sizing: border-box; width: 58px; min-width: 0; padding: 3px; border:
 vc-select { width: 87px; padding: 3px; border-radius: var(--radius-tight); background: var(--surface-base); font: 10px var(--font-mono); }
 input:disabled, vc-select[aria-disabled="true"] { opacity: .5; }
 
+/* Kit instrument row */
+.instrument-policy.with-reroll-style { flex-wrap: nowrap; align-items: flex-end; }
+.with-reroll-style > label { flex: 0 1 87px; min-width: 0; }
+.with-reroll-style > .reroll-style { flex-basis: 122px; }
+.with-reroll-style vc-select { width: 100%; }
+.with-reroll-style .seed-controls { flex: none; }
+
 /* Role reseeding */
 .seed-controls { display: flex; align-items: center; gap: 5px; margin-left: auto; }
 .seed-controls input { width: 13px; height: 13px; margin: 0; accent-color: var(--accent-primary); }

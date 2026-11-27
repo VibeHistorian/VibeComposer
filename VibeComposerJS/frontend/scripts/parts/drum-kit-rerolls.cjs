@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const { createHash } = require('node:crypto');
 const test = require('node:test');
 const { Midi } = require('@tonejs/midi');
 const { fixture, projectData } = require('../support/project-fixture.cjs');
@@ -15,6 +16,21 @@ function drumsFixture(count = 6) {
   return app;
 }
 
+function seededKitProject(load) {
+  const { DEFAULT_PROJECT } = load('core/project/project-defaults.ts');
+  const drum = drums(DEFAULT_PROJECT)[0];
+  const kit = [36, 37, 42, 53, 44, 60].map((pitch, index) => ({ ...drum,
+    id: `track-drums-${index + 1}`, name: `D${index + 1}`, generatorSettings: { ...drum.generatorSettings, pitch },
+  }));
+  const tracks = [...DEFAULT_PROJECT.tracks.filter(track => track.role !== 'drums'), ...kit];
+  const trackPresence = Object.fromEntries(tracks.map(track => [track.id, true]));
+  return { ...DEFAULT_PROJECT, seed: '9007199254740993', tempoBpm: 112, tracks, arrangement: [
+    { id: 'kit-verse', type: 'VERSE1', measures: 4, trackPresence },
+    { id: 'kit-bridge', type: 'BREAKDOWN', measures: 2,
+      trackPresence: { ...trackPresence, [kit[4].id]: false, [kit[5].id]: false } },
+  ] };
+}
+
 test('Kit is the default and Legacy is a saved application preference', () => {
   const { load, uiPreferences } = fixture();
   const { decodeUiPreferences } = load('core/ui/ui-preferences.ts');
@@ -24,6 +40,158 @@ test('Kit is the default and Legacy is a saved application preference', () => {
   assert.equal(decodeUiPreferences({ ...uiPreferences.preferences(), drumRerollMode: 'unknown' }), null);
   uiPreferences.setDrumRerollMode('legacy');
   assert.equal(new UiPreferencesService().drumRerollMode(), 'legacy');
+});
+
+test('Any and older policies replay the original Kit draws for global, local and instrument-only rerolls', () => {
+  const { load } = fixture();
+  const { rerollDrumKit } = load('core/project/project-drum-reroll.ts');
+  const { DEFAULT_TRACK_POLICIES } = load('core/music/track-generation.ts');
+  const { DEFAULT_INSTRUMENT_POLICIES } = load('core/music/instrument-generation.ts');
+  const project = seededKitProject(load);
+  const ids = drums(project).map(track => track.id);
+  const scopes = [{}, { sectionId: project.arrangement[0].id }, { instrumentsOnly: true, forceInstruments: true }];
+  const plans = policy => [0n, 42n, 9007199254740993n, -9223372036854775808n].flatMap(seed => scopes.map(scope =>
+    rerollDrumKit(project, ids, seed, policy, DEFAULT_INSTRUMENT_POLICIES.drums, scope)));
+  const original = plans(DEFAULT_TRACK_POLICIES.drums);
+  assert.deepEqual(plans({ ...DEFAULT_TRACK_POLICIES.drums, rerollStyle: 'any' }), original);
+  // Captured before adding style, covering pitches, full patterns and velocities, and auto pan.
+  assert.equal(createHash('sha256').update(JSON.stringify(original)).digest('hex'),
+    '3641e900963913dbfc30dbc7cada119e6840ac8a2257bebd5a45928034d6dbc8');
+});
+
+function hasAccents(layers, pitches, beats) {
+  return layers.some(layer => pitches.includes(layer.pitch) && beats.every(beat => layer.hits.some(hit =>
+    Math.abs(hit.startBeat - beat) < .04 && hit.velocity >= 45)));
+}
+
+test('every factory style favors audible signature hits while seeded rerolls still vary the kit', async (t) => {
+  const { service, phrase, load } = fixture();
+  const { DRUM_REROLL_STYLE_OPTIONS } = load('core/music/drum-reroll-styles.ts');
+  const { BUILTIN_TRACK_PRESETS } = load('core/project/builtin-track-presets.ts');
+  const factoryStyles = BUILTIN_TRACK_PRESETS.filter(preset => preset.role === 'drums').map(preset => preset.name.split(' · ')[0]);
+  const source = JSON.stringify(seededKitProject(load));
+  const kicks = [35, 36], snares = [37, 38, 39, 40];
+  const quarters = [0, 1, 2, 3], offbeats = [.5, 1.5, 2.5, 3.5];
+  const eighths = [0, .5, 1, 1.5, 2, 2.5, 3, 3.5];
+  const closedHats = [42, 44];
+  const signatures = {
+    'deep-house': layers => hasAccents(layers, kicks, quarters) && hasAccents(layers, [42, 44, 69, 82], offbeats),
+    trap: layers => hasAccents(layers, snares, [2]) && !hasAccents(layers, snares, [1]) && !hasAccents(layers, snares, [3]),
+    reggae: layers => hasAccents(layers, kicks, [2]) && hasAccents(layers, [37], [2]) && !hasAccents(layers, kicks, [0]),
+    'swing-jazz': layers => hasAccents(layers, [51, 53, 59], [1, 5 / 3, 3, 11 / 3]),
+    dnb: layers => hasAccents(layers, kicks, [0, 2.5]) && hasAccents(layers, snares, [1, 3]),
+    funk: layers => hasAccents(layers, kicks, [0, 1.5, 2, 3.5]) && hasAccents(layers, snares, [1.12, 3.12]),
+    trance: layers => hasAccents(layers, kicks, quarters) && hasAccents(layers, [46], offbeats),
+    samba: layers => hasAccents(layers, [37], [.5, 1.25, 2.5, 3.25]) && hasAccents(layers, [70, 82], [0, .5, 1, 1.5, 2, 2.5, 3, 3.5]),
+    techno: layers => hasAccents(layers, kicks, quarters) && hasAccents(layers, closedHats, [.75, 2.75]),
+    synthwave: layers => hasAccents(layers, kicks, [0, 2, 2.5]) && hasAccents(layers, [40], [1, 3]),
+    disco: layers => hasAccents(layers, kicks, quarters) && hasAccents(layers, closedHats, [.25, 1.25, 2.25, 3.25]),
+    'boom-bap': layers => hasAccents(layers, kicks, [0, 2, 2.75]) && hasAccents(layers, snares, [1.1, 3.1]),
+    'lo-fi-hip-hop': layers => hasAccents(layers, kicks, [0, 2, 3.5]) && hasAccents(layers, [37], [1.08, 3.08]),
+    'uk-garage': layers => hasAccents(layers, kicks, [0, 1.5, 2.5]) && hasAccents(layers, [38, 39], [1.12, 3.12])
+      && hasAccents(layers, closedHats, [1.75, 3.75]),
+    dubstep: layers => hasAccents(layers, kicks, [0, 3.5]) && hasAccents(layers, [38, 40], [2])
+      && !hasAccents(layers, snares, [1]) && !hasAccents(layers, snares, [3]),
+    dub: layers => hasAccents(layers, kicks, [2]) && !hasAccents(layers, kicks, [0])
+      && hasAccents(layers, [37], [2]) && hasAccents(layers, [44, 82], offbeats),
+    afrobeat: layers => hasAccents(layers, kicks, [0, 1.5, 2, 3.5]) && hasAccents(layers, [42, 70, 82], [.75, 1.25, 2.75, 3.25]),
+    'bossa-nova': layers => hasAccents(layers, [37], [.75, 2.5, 3.25]) && hasAccents(layers, [44, 69, 82], eighths),
+    'blues-shuffle': layers => hasAccents(layers, snares, [1, 3]) && hasAccents(layers, [42, 44, 51, 53], [2 / 3, 5 / 3, 8 / 3, 11 / 3]),
+    'indie-rock': layers => hasAccents(layers, kicks, [0, 2, 2.5]) && hasAccents(layers, [38, 37], [1, 3])
+      && hasAccents(layers, closedHats, eighths),
+    'pop-punk': layers => hasAccents(layers, kicks, [0, 1.5, 2, 3.5]) && hasAccents(layers, [38, 40], [1, 3])
+      && hasAccents(layers, closedHats, eighths),
+    'acoustic-folk': layers => hasAccents(layers, kicks, [0, 2]) && hasAccents(layers, [37], [1, 3])
+      && hasAccents(layers, [54, 70, 82], quarters),
+    ambient: layers => hasAccents(layers, kicks, [0]) && !hasAccents(layers, kicks, [2])
+      && hasAccents(layers, [37, 38], [3]) && hasAccents(layers, [42, 44, 82], [1.5, 3.5]),
+    'cinematic-pulse': layers => hasAccents(layers, kicks, [0, 2, 3.5]) && hasAccents(layers, [38, 40], [3])
+      && hasAccents(layers, [41, 47, 50], [1.5, 3.5]),
+  };
+  const namedOptions = DRUM_REROLL_STYLE_OPTIONS.filter(option => option.value !== 'any');
+  assert.deepEqual(namedOptions.map(({ value }) => value), Object.keys(signatures));
+  assert.deepEqual(namedOptions.map(({ label }) => label === 'DnB' ? 'Drum and Bass' : label).sort(), factoryStyles.sort());
+  const rolls = 24;
+  const sample = style => {
+    assert.equal(service.importProjectJson(source), true);
+    assert.equal(service.updateTrackGenerationPolicy('drums', { rerollStyle: style }), 'changed');
+    const outcomes = [];
+    for (let roll = 0; roll < rolls; roll++) {
+      assert.equal(service.rerollRoleTracks('drums'), 'changed');
+      const project = service.project();
+      outcomes.push(drums(project).map(track => ({
+        pitch: track.generatorSettings.pitch,
+        hits: phrase.resolvedTrackPhrase(project, track).filter(hit => hit.startBeat < 4),
+      })));
+    }
+    return outcomes;
+  };
+  const neutral = sample('any');
+  for (const [style, matches] of Object.entries(signatures)) await t.test(style, t => {
+    const outcomes = sample(style);
+    const styledMatches = outcomes.filter(matches).length;
+    const neutralMatches = neutral.filter(matches).length;
+    const variants = new Set(outcomes.map(layers => JSON.stringify(layers.map(layer => [layer.pitch,
+      layer.hits.map(hit => hit.startBeat.toFixed(2))]).sort(([a], [b]) => a - b))));
+    t.diagnostic(`${style}: ${styledMatches}/${rolls} signature matches, Any ${neutralMatches}/${rolls}, ${variants.size} distinct kits`);
+    assert.ok(styledMatches >= 20 && styledMatches >= neutralMatches + 12, style);
+    assert.ok(variants.size >= 16, style);
+  });
+});
+
+test('Kit style selection is historical project policy and Legacy ignores it', () => {
+  const { service, uiPreferences } = drumsFixture();
+  const original = service.project();
+  const unstyled = service.exportProjectJson();
+  assert.equal(service.updateTrackGenerationPolicy('drums', { rerollStyle: 'unknown' }), 'invalid');
+  assert.equal(service.updateTrackGenerationPolicy('bass', { rerollStyle: 'trap' }), 'invalid');
+  assert.equal(service.updateTrackGenerationPolicy('drums', { rerollStyle: 'trap' }), 'changed');
+  assert.equal(service.project().tracks, original.tracks);
+  assert.equal(service.project().trackRerollCounts, original.trackRerollCounts);
+  const styled = service.exportProjectJson();
+  service.undo();
+  assert.equal(service.exportProjectJson(), unstyled);
+  service.redo();
+  assert.equal(service.exportProjectJson(), styled);
+  assert.equal(service.importProjectJson(styled), true);
+  assert.equal(service.project().trackGenerationPolicies.drums.rerollStyle, 'trap');
+  assert.equal(service.rerollRoleTracks('drums'), 'changed');
+  const generated = service.exportProjectJson();
+  assert.equal(service.importProjectJson(styled), true);
+  assert.equal(service.rerollRoleTracks('drums'), 'changed');
+  assert.deepEqual(projectData(service.exportProjectJson()), projectData(generated));
+
+  uiPreferences.setDrumRerollMode('legacy');
+  assert.equal(service.importProjectJson(styled), true);
+  assert.equal(service.rerollRoleTracks('drums'), 'changed');
+  const legacy = drums(service.project());
+  assert.equal(service.importProjectJson(unstyled), true);
+  assert.equal(service.rerollRoleTracks('drums'), 'changed');
+  assert.deepEqual(drums(service.project()), legacy);
+});
+
+test('a styled section reroll fits its section and retains authored swing and notes', () => {
+  const { service, phrase, load } = fixture();
+  const project = seededKitProject(load);
+  const [kick, manual, ...remaining] = drums(project);
+  const section = project.arrangement[0];
+  for (const track of remaining) section.trackPresence[track.id] = false;
+  section.context = { swingPercent: 60, beatDurationMultiplier: .5 };
+  section.trackPartOverrides = { [kick.id]: { swingPercent: 50 } };
+  section.trackPhrases = { [manual.id]: [{ id: 'rim', midi: 37, startBeat: .5, durationBeats: .12, velocity: 75 }] };
+  assert.equal(service.importProjectJson(JSON.stringify(project)), true);
+  assert.equal(service.updateTrackGenerationPolicy('drums', { rerollStyle: 'deep-house' }), 'changed');
+  const before = service.project();
+  const target = { kind: 'section-track', sectionId: section.id, trackId: kick.id };
+  assert.equal(service.changeOverviewTracks(target, 'reroll'), 'changed');
+  const after = service.project();
+  assert.equal(after.tracks, before.tracks);
+  assert.equal(after.arrangement[1], before.arrangement[1]);
+  assert.deepEqual(after.arrangement[0].trackPhrases, before.arrangement[0].trackPhrases);
+  assert.equal(after.arrangement[0].trackPartOverrides[kick.id].swingPercent, 50);
+  assert.equal(after.arrangement[0].trackPartOverrides[kick.id].pitch, undefined);
+  const hits = phrase.resolvedTrackPhrase(after, drums(after)[0]);
+  assert.ok(hasAccents([{ pitch: kick.generatorSettings.pitch, hits }], [36], [0, .5, 1, 1.5]));
 });
 
 test('seeded Kit rerolls reduce loud low-end collisions and duplicate sounds while retaining groove and kit variety', (t) => {
@@ -130,6 +298,7 @@ test('Kit uses pool, width, local scope and instrument-only permissions independ
   const saved = service.exportProjectJson();
   assert.equal(service.importProjectJson(saved), true);
   const before = drums(service.project());
+  service.updateTrackGenerationPolicy('drums', { rerollStyle: 'trance' });
   service.updateInstrumentPolicy('drums', { pool: 'DRUM_ACOUSTIC', randomize: false });
   assert.equal(service.rerollRoleInstruments('drums'), 'changed');
   const changed = drums(service.project());

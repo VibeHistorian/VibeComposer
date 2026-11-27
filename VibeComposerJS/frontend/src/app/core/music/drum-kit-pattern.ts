@@ -70,10 +70,16 @@ const VELOCITIES: Readonly<Record<DrumJob, readonly [number, number]>> = {
   pulse: [81, 103], answer: [69, 96], time: [46, 72], reply: [52, 79], accent: [55, 81],
 };
 
+export interface DrumPatternGuide {
+  readonly grid: number;
+  readonly accents: readonly number[];
+  readonly ornaments: readonly number[];
+}
+
 export function kitPattern(random: JavaRandom, policy: DrumGenerationPolicy, source: DrumSettings, job: DrumJob,
-  groove: DrumGroove, swing: number, offset: number, load: number, accentSpan: number): DrumSettings {
+  groove: DrumGroove, swing: number, offset: number, load: number, accentSpan: number, guide?: DrumPatternGuide): DrumSettings {
   const anchor = job === 'pulse' || job === 'answer';
-  const span = job === 'accent' ? accentSpan : 1;
+  const span = job === 'accent' && !guide ? accentSpan : 1;
   const [minimum, maximum] = VELOCITIES[job];
   const next: DrumSettings = { ...source, swingPercent: swing,
     ...(policy.patterns || policy.randomOffset ? { offset: anchor ? 0 : offset } : {}),
@@ -84,7 +90,8 @@ export function kitPattern(random: JavaRandom, policy: DrumGenerationPolicy, sou
     }
     return next;
   }
-  const steps = Math.max(1, Math.min(32, Math.round(groove.grid * span * HITS_MULTIPLIERS[policy.hitsMultiplier])));
+  const subdivision = guide?.grid ?? groove.grid;
+  const steps = Math.max(1, Math.min(32, Math.round(subdivision * span * HITS_MULTIPLIERS[policy.hitsMultiplier])));
   const grid = Array<number>(32).fill(0), velocities = Array<number>(32).fill(minimum);
   const put = (step: number, velocity: number) => {
     velocities[step] = grid[step] ? Math.max(velocities[step], velocity) : velocity;
@@ -92,10 +99,19 @@ export function kitPattern(random: JavaRandom, policy: DrumGenerationPolicy, sou
   };
   const attack = (step: number, main: boolean) => put(step, main ? maximum - random.nextInt(10)
     : minimum + random.nextInt(Math.max(1, maximum - minimum - 9)));
-  const roundStep = (step: number) => Math.min(steps - 1, Math.round(step * steps / groove.grid / span));
+  const roundStep = (step: number) => Math.min(steps - 1, Math.round(step * steps / subdivision / span));
   const shifted = random.nextInt(100) < policy.shiftChance;
   const pulses = Math.max(1, Math.min(steps, Math.round(load * span)));
-  if (anchor) {
+  const ornamentSteps = guide ? [...new Set(guide.ornaments.map(roundStep))] : [];
+  if (guide) {
+    const accents = [...new Set(guide.accents.map(roundStep))];
+    for (const step of accents) attack(step, true);
+    const available = ornamentSteps.filter(step => !grid[step]);
+    for (let count = accents.length; count < pulses && available.length; count++) {
+      const pick = shifted ? random.nextInt(available.length) : 0;
+      attack(available.splice(pick, 1)[0], false);
+    }
+  } else if (anchor) {
     const positions: readonly number[] = job === 'pulse' ? groove.pulse : groove.answer;
     positions.slice(0, pulses).forEach((position, index) => attack(roundStep(position), index === 0));
     if (pulses > positions.length) attack(random.nextInt(steps), false);
@@ -112,7 +128,8 @@ export function kitPattern(random: JavaRandom, policy: DrumGenerationPolicy, sou
     }
   }
   if (job !== 'accent' && steps > 2 && random.nextInt(100) < (policy.dynamicChance ?? 50)) {
-    const rests = grid.slice(0, steps).flatMap((value, step) => value === 0 ? [step] : []);
+    const rests = guide ? ornamentSteps.filter(step => !grid[step])
+      : grid.slice(0, steps).flatMap((value, step) => value === 0 ? [step] : []);
     if (rests.length) put(rests[random.nextInt(rests.length)], Math.round(minimum * .55));
   }
   const alternateBars = policy.fills && span === 1 && (job === 'accent' || job === 'reply') && random.nextInt(4) === 0;

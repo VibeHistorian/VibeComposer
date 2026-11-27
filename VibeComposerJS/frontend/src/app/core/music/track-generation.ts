@@ -8,6 +8,7 @@ import { CHORD_SPAN_FILLS } from './chord-span-fill';
 import { partPatchesEqual } from './part-settings';
 import { STATIC_RHYTHM_DEFINITIONS, type StaticRhythm, type RhythmPattern } from './rhythm-patterns';
 import { bakeDrumPattern, bakeRerollPauses, growRerollPattern, type DrumRerollContext } from './drum-reroll';
+import { DRUM_REROLL_STYLE_OPTIONS } from './drum-reroll-styles';
 import type { StrumType } from './chord-strum';
 
 export const DEFAULT_CHORD_POLICY_EXTENSION = Object.freeze({ strum: true, struminess: 50, split: false,
@@ -93,6 +94,7 @@ export const TRACK_POLICY_CONTROLS: Readonly<Record<ArrangedPart, readonly Polic
     { key: 'overrandomizeChance', label: 'Overrandomize %', minimum: 0, maximum: 100, advanced: true },
     { key: 'melodyChance', label: 'Follow Melody %', minimum: 0, maximum: 100, advanced: true },
     { key: 'shiftChance', label: 'Shift chance %', minimum: 0, maximum: 100, advanced: true },
+    { key: 'rerollStyle', label: 'Reroll style', options: DRUM_REROLL_STYLE_OPTIONS.map(option => option.value) },
     ...DRUM_KIT_CONTROLS,
   ],
   melody: [{ key: 'onCompose', label: 'On Compose' },
@@ -115,7 +117,7 @@ export function decodeTrackGenerationPolicy<R extends ArrangedPart>(role: R, val
     const field = fields[control.key];
     if (field === undefined && (['rerollSeeds', 'sameSeed'].includes(control.key) && role !== 'melody' || AUTOMATIC_POLICY_KEYS.includes(control.key)
       || role === 'chords' && control.key in DEFAULT_CHORD_POLICY_EXTENSION
-      || role === 'drums' && control.key in DEFAULT_DRUM_POLICY_EXTENSION)) continue;
+      || role === 'drums' && (control.key === 'rerollStyle' || control.key in DEFAULT_DRUM_POLICY_EXTENSION))) continue;
     if (control.options ? !control.options.includes(field as string)
       : control.minimum !== undefined ? !Number.isInteger(field) || (field as number) < control.minimum || (field as number) > control.maximum!
         : typeof field !== 'boolean') return undefined;

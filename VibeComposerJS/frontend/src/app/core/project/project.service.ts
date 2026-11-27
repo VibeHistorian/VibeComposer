@@ -2,7 +2,7 @@ import { transferManualParameters } from '../music/manual-phrase-processing';
 import { followHarmonyMode } from '../music/harmony-mode';
 import { MAX_DRUM_SOUNDS } from '../music/drum-instruments';
 import { projectDrumPitches, reconcileDrumKit } from './project-drum-kit';
-import { rerollDrumKit, type DrumKitRerollScope } from './project-drum-reroll';
+import { drumKitSectionPatch, rerollDrumKit, type DrumKitRerollScope } from './project-drum-reroll';
 import { copyArrangementPhrase, type ArrangementPhraseCopy } from './arrangement-phrase-copy';
 import { samePhraseInputs, sameProjectExceptVolume } from '../music/phrase-inputs';
 import type { TrackDuplicationOptions } from './track-duplication';
@@ -653,12 +653,13 @@ export class ProjectService {
         const count = counts[role] ?? 0;
         if (count >= 2147483647) return 'invalid';
         if (role === 'drums' && this.uiPreferences.drumRerollMode() === 'kit') {
+          const policy = current.trackGenerationPolicies?.drums ?? DEFAULT_TRACK_POLICIES.drums;
           const plans = this.planDrumKit(current, sources, count, { sectionId: section.id });
           let changed = false;
           for (const track of plans) {
             const base = current.tracks.find(item => item.id === track.id);
             if (base?.role !== 'drums' || base === track || !sources.some(source => source.id === track.id)) continue;
-            const patch = sectionTrackSettingsDifferences(base, section, track.generatorSettings, current.melodyGlobal);
+            const patch = drumKitSectionPatch(current, section, base, track.generatorSettings, policy);
             if (partPatchesEqual(patch, trackPartOverrides[track.id] ?? {})) continue;
             if (Object.keys(patch).length) trackPartOverrides[track.id] = patch;
             else delete trackPartOverrides[track.id];

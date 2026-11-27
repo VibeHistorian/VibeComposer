@@ -3,6 +3,7 @@ import type { ArrangedPart } from '../../core/music/part-role';
 import type { InstrumentGenerationPolicy, TrackGenerationPolicy, TrackGenerationPolicyPatch } from '../../core/music/generation-policy.model';
 import { DEFAULT_INSTRUMENT_POLICIES, instrumentPoolOptions } from '../../core/music/instrument-generation';
 import { DRUM_KIT_CONTROLS, TRACK_POLICY_CONTROLS, DEFAULT_TRACK_POLICIES, automaticPolicyDefault, type PolicyControl } from '../../core/music/track-generation';
+import { DRUM_REROLL_STYLE_OPTIONS } from '../../core/music/drum-reroll-styles';
 import type { DrumRerollMode } from '../../core/ui/ui-preferences';
 import { CompactToggleComponent } from '../../shared/compact-toggle.component';
 import { SelectComponent } from '../../shared/select.component';
@@ -38,9 +39,10 @@ export class TrackGenerationPolicyComponent {
   readonly poolLabels = { AUTO: 'Chord / Pluck', ALL: 'All', MELODY: 'Melody', BASS: 'Bass', CHORD: 'Chord',
     PLUCK: 'Pluck', LONG_PAD: 'Long pad', DRUM: 'Classic drums', DRUM_FULL: 'Full percussion', DRUM_ACOUSTIC: 'Acoustic kit', DRUM_HAND: 'Hand percussion' };
   readonly drumRerollMode = input<DrumRerollMode>('kit');
+  readonly drumStyleOptions = DRUM_REROLL_STYLE_OPTIONS;
   readonly kitControls = computed(() => this.role() === 'drums' && this.drumRerollMode() === 'kit' ? DRUM_KIT_CONTROLS : []);
   readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()].filter(control =>
-    !['onCompose', 'rerollSeeds', 'sameSeed'].includes(control.key) && !DRUM_KIT_CONTROLS.includes(control)
+    !['onCompose', 'rerollSeeds', 'sameSeed', 'rerollStyle'].includes(control.key) && !DRUM_KIT_CONTROLS.includes(control)
     && (control.key !== 'overrandomizeChance' || this.drumRerollMode() === 'legacy')));
 
   readonly defaultInstrumentPolicies = DEFAULT_INSTRUMENT_POLICIES;
@@ -89,6 +91,13 @@ export class TrackGenerationPolicyComponent {
     if (this.disabled()) return;
     const pool = this.instrumentPools().find(pool => pool === value);
     if (pool) this.instrumentPolicyChanged.emit({ [key]: pool });
+  }
+
+  changeDrumStyle(value: string): void {
+    const style = this.drumStyleOptions.find(option => option.value === value);
+    if (!this.disabled() && style && style.value !== (this.values()['rerollStyle'] ?? 'any')) {
+      this.policyChanged.emit({ rerollStyle: style.value });
+    }
   }
 
   change(control: PolicyControl, value: string): void {

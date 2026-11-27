@@ -3,15 +3,16 @@ import type { CompositionProject } from './project.model';
 import { projectDrumPitches } from './project-drum-kit';
 import { drumPanIsAutomatic, type CompositionTrack } from './track.model';
 import { MAX_DRUM_SOUNDS } from '../music/drum-instruments';
-import { chooseDrumGroove, drumProfile, kitPattern, type DrumJob } from '../music/drum-kit-pattern';
+import { chooseDrumGroove, drumProfile, kitPattern, type DrumJob, type DrumPatternGuide } from '../music/drum-kit-pattern';
+import { DRUM_REROLL_STYLES } from '../music/drum-reroll-styles';
 import { DEFAULT_DRUM_KIT_POLICY, type DrumGenerationPolicy, type InstrumentGenerationPolicy } from '../music/generation-policy.model';
 import { INSTRUMENT_POOLS } from '../music/instrument-generation';
 import { JavaRandom } from '../music/java-random';
 import { partPatchesEqual, resolvePartTrack, sectionTrackSettingsDifferences } from '../music/part-settings';
-import type { DrumSettings } from '../music/part-settings.model';
+import type { DrumSettings, PartSettingsPatch } from '../music/part-settings.model';
 import type { PhraseNote } from '../music/phrase-note';
 import { resolvedTrackPhrase } from '../music/phrase';
-import { sectionDurationBeats } from '../music/section-context';
+import { chordGridBeat, sectionChordDurations, sectionDurationBeats } from '../music/section-context';
 
 type DrumTrack = Extract<CompositionTrack, { role: 'drums' }>;
 type Bands = [number, number, number];
@@ -64,10 +65,19 @@ function kitSlices(project: CompositionProject, tracks: readonly DrumTrack[], ta
   });
 }
 
-function layerNotes(slice: Slice, track: DrumTrack, original?: DrumTrack): readonly PhraseNote[] {
+export function drumKitSectionPatch(project: CompositionProject, section: ArrangementSection, track: DrumTrack,
+  settings: DrumSettings, policy: DrumGenerationPolicy): PartSettingsPatch {
+  const patch = sectionTrackSettingsDifferences(track, section, settings, project.melodyGlobal);
+  const explicitSwing = section.trackPartOverrides?.[track.id]?.swingPercent;
+  // A track swing equal to its base can still override the section-wide swing.
+  return policy.patterns && policy.rerollStyle && policy.rerollStyle !== 'any' && explicitSwing !== undefined
+    ? { ...patch, swingPercent: explicitSwing } : patch;
+}
+
+function layerNotes(slice: Slice, track: DrumTrack, policy: DrumGenerationPolicy, original?: DrumTrack): readonly PhraseNote[] {
   if (!slice.section.trackPresence[track.id]) return [];
   if (!original) return resolvedTrackPhrase(slice.project, track);
-  const patch = sectionTrackSettingsDifferences(original, slice.section, track.generatorSettings, slice.project.melodyGlobal);
+  const patch = drumKitSectionPatch(slice.project, slice.section, original, track.generatorSettings, policy);
   const section = { ...slice.section, trackPartOverrides: { ...slice.section.trackPartOverrides, [track.id]: patch } };
   return resolvedTrackPhrase({ ...slice.project, arrangement: [section] }, original);
 }
@@ -118,6 +128,23 @@ function measureLayer(slice: Slice, notes: readonly PhraseNote[], gain: number, 
   const ringBudget = .07 + ring * .75;
   const tailOverflow = Math.max(0, slice.ring + ringing - ringBudget) - Math.max(0, slice.ring - ringBudget);
   return (shared * (layering * 2.8 - .8) - collision - overflow * 2.5) / slice.section.measures - tailOverflow * 6;
+}
+
+/** Score only accents that survived settings resolution, timing and manual replacements. */
+function styleAccentFit(slice: Slice, notes: readonly PhraseNote[], guide: DrumPatternGuide, partners: readonly PhraseNote[]): number {
+  const durations = sectionChordDurations(slice.project, slice.section);
+  const matches = new Map<number, number>();
+  for (const note of notes) {
+    const beat = chordGridBeat(note.startBeat, durations);
+    const step = Math.round(beat * guide.grid / 4);
+    if (step < 0 || step >= slice.section.measures * guide.grid || !guide.accents.includes(step % guide.grid)
+      || Math.abs(beat - step * 4 / guide.grid) > .15) continue;
+
+    const paired = partners.some(partner => Math.abs(partner.startBeat - note.startBeat) * slice.millisecondsPerBeat <= BIN_MS);
+    const merit = Math.min(1, note.velocity / 75) * (paired ? 7.6 : 6);
+    matches.set(step, Math.max(matches.get(step) ?? 0, merit));
+  }
+  return [...matches.values()].reduce((total, merit) => total + merit, 0) / (slice.section.measures * guide.accents.length);
 }
 
 function placeKit(layers: readonly Layer[], eligible: ReadonlySet<string>, width: number, direction: number): DrumTrack[] {
@@ -197,6 +224,9 @@ export function rerollDrumKit(project: CompositionProject, ids: readonly string[
   const layering = (policy.layering ?? DEFAULT_DRUM_KIT_POLICY.layering) / 100;
   const ring = (policy.ring ?? DEFAULT_DRUM_KIT_POLICY.ring) / 100;
   const experiment = (policy.experiment ?? DEFAULT_DRUM_KIT_POLICY.experiment) / 100;
+  const style = policy.rerollStyle && policy.rerollStyle !== 'any' ? DRUM_REROLL_STYLES[policy.rerollStyle] : undefined;
+  const rhythmStyle = policy.patterns && !scope.instrumentsOnly ? style : undefined;
+  const styledJobs = Object.keys(style?.voices ?? {}) as DrumJob[];
   const random = new JavaRandom(BigInt.asIntN(64, seed ^ 0x4452554d4b495421n));
   const groove = chooseDrumGroove(random, experiment);
   const pool = INSTRUMENT_POOLS[instruments.pool as Exclude<InstrumentGenerationPolicy['pool'], 'AUTO'>];
@@ -205,7 +235,9 @@ export function rerollDrumKit(project: CompositionProject, ids: readonly string[
   const sharedSwing = [...fixed, ...targets.filter(track => track.parameterLocks?.includes('swingPercent'))]
     .map(track => resolvePartTrack(track, section, project.melodyGlobal).generatorSettings as DrumSettings)
     .find(settings => settings.swingPercent !== 50)?.swingPercent;
-  const swing = sharedSwing ?? 50 + random.nextInt(policy.maxSwing * 2 + 1) - policy.maxSwing;
+  const swing = rhythmStyle?.grid === 12 ? 50 : sharedSwing ?? (rhythmStyle
+    ? Math.min(50 + policy.maxSwing, Math.max(50 - policy.maxSwing, rhythmStyle.swing))
+    : 50 + random.nextInt(policy.maxSwing * 2 + 1) - policy.maxSwing);
   const offset = policy.randomOffset ? random.nextInt(101) - 50 : 0;
   const jobs = new Map<DrumJob, number>(), pitches = new Set<number>(), layers: Layer[] = [];
   const add = (layer: Layer) => {
@@ -218,49 +250,74 @@ export function rerollDrumKit(project: CompositionProject, ids: readonly string[
     }
     layer.notes.forEach((notes, index) => measureLayer(slices[index], notes, layer.track.mix.volumePercent / 100, layering, ring, true));
   };
-  for (const track of fixed) add({ track, job: drumProfile(track.generatorSettings.pitch).job, notes: slices.map(slice => layerNotes(slice, track)) });
+  for (const track of fixed) add({ track, job: drumProfile(track.generatorSettings.pitch).job,
+    notes: slices.map(slice => layerNotes(slice, track, policy)) });
   const reserved = new Set(projectDrumPitches(project, targets.filter(canPitch).map(track => track.id)));
   for (const [index, original] of targets.entries()) {
     const source = resolvePartTrack(original, section, project.melodyGlobal) as DrumTrack;
+    const keepLocalSwing = rhythmStyle && (section?.context?.swingPercent !== undefined
+      || section?.rolePartOverrides?.drums?.swingPercent !== undefined || section?.trackPartOverrides?.[source.id]?.swingPercent !== undefined);
+    const patternSwing = keepLocalSwing ? source.generatorSettings.swingPercent : swing;
+    const pitchCanChange = canPitch(source);
+    const preferredStyle = rhythmStyle ?? (pitchCanChange ? style : undefined);
     const occupied = new Set([...reserved, ...targets.slice(index + 1).map(track => track.generatorSettings.pitch)]);
-    const allowed = canPitch(source) ? pool.filter(pitch => (occupied.size < MAX_DRUM_SOUNDS || occupied.has(pitch))
+    const allowed = pitchCanChange ? pool.filter(pitch => (occupied.size < MAX_DRUM_SOUNDS || occupied.has(pitch))
       && (!scope.instrumentsOnly || pitch !== source.generatorSettings.pitch)) : [];
     const options = (allowed.length ? allowed : [source.generatorSettings.pitch]).flatMap(pitch => {
       const profile = drumProfile(pitch);
-      return [profile.job, ...(profile.substitute ? [profile.substitute] : [])].map(job => {
+      const compatibleJobs = new Set([profile.job, ...(profile.substitute ? [profile.substitute] : []),
+        ...styledJobs.filter(job => preferredStyle?.voices[job]?.pitches?.includes(pitch))]);
+      return [...compatibleJobs].map(job => {
         const used = jobs.get(job) ?? 0;
         const coverage = !used ? JOB_PRIORITY[job] : job === 'pulse' ? -11 : job === 'answer' || job === 'time' ? -2 - used : -used * .6;
         const color = profile.decay >= 300 ? (ring - .35) * 8 : 0;
         const duplicate = pitches.has(pitch) ? 5.5 : 0;
         const centered = profile.panLimit === 0 && (!drumPanIsAutomatic(source) || scope.instrumentsOnly) ? Math.abs(source.mix.panPercent) / 12 : 0;
-        const merit = coverage + color - duplicate - centered - (job === profile.job ? 0 : job === 'pulse' ? 4 : 2);
+        const voice = preferredStyle?.voices[job];
+        const preference = voice?.pitches?.indexOf(pitch) ?? -1;
+        const timbre = preference < 0 ? 0 : ((voice?.pitchBias ?? 4) - preference) / (used + 1);
+        const merit = coverage + color - duplicate - centered - (job === profile.job ? 0 : job === 'pulse' ? 4 : 2) + timbre;
         return { pitch, job, merit, priority: merit + random.nextDouble() * (1.8 + experiment * 4) };
       });
     }).sort((a, b) => b.priority - a.priority);
     const shortlist = options.slice(0, 8);
     const trials = Array.from({ length: 16 }, (_, attempt) => {
-      const { pitch, job, merit } = shortlist[attempt % shortlist.length];
+      // Reserve the last four styled trials for ordinary patterns on the highest-ranked voices.
+      const guided = rhythmStyle && attempt < 12;
+      const optionIndex = rhythmStyle ? attempt % 12 : attempt;
+      const { pitch, job, merit } = shortlist[optionIndex % shortlist.length];
       const scale = .52 + density * 1.08;
-      const load = Math.max(.35, JOB_LOAD[job] * scale * (.7 + random.nextDouble() * .6)
-        / (1 + (jobs.get(job) ?? 0) * .5));
+      const used = jobs.get(job) ?? 0;
+      const ordinaryLoad = Math.max(.35, JOB_LOAD[job] * scale * (.7 + random.nextDouble() * .6) / (1 + used * .5));
+      const voice = used === 0 ? rhythmStyle?.voices[job] : undefined;
+      const guide = rhythmStyle && voice && {
+        grid: rhythmStyle.grid, accents: voice.accents.slice(0, Math.ceil(voice.accents.length * Math.min(1, .5 + 1.5 * density))),
+        ornaments: voice.ornaments ?? [],
+      };
+      const load = guide ? Math.min(guide.accents.length + guide.ornaments.length, Math.max(guide.accents.length, ordinaryLoad)) : ordinaryLoad;
       const accentSpan = random.nextDouble() < .24 + density * .65 ? 1 : tracks.length > 10 ? 4 : 2;
       // Keep a static option for timekeepers even with Follow Melody at 100%.
       const patternPolicy = attempt % 3 === 0 ? { ...policy, melodyChance: 0 } : policy;
       const settings = scope.instrumentsOnly ? { ...source.generatorSettings, pitch } : preserveDrumLocks(source,
-        kitPattern(random, patternPolicy, { ...source.generatorSettings, pitch }, job, groove, swing, offset, load, accentSpan),
+        kitPattern(random, patternPolicy, { ...source.generatorSettings, pitch }, job, groove, patternSwing, offset, load, accentSpan,
+          guided ? guide : undefined),
         policy.patterns, section ? [] : project.arrangement);
       const track: DrumTrack = partPatchesEqual(source.generatorSettings, settings) ? source : { ...source, generatorSettings: settings };
-      const notes = slices.map(slice => layerNotes(slice, track, section ? original : undefined));
-      let total = 0, weight = 0;
+      const notes = slices.map(slice => layerNotes(slice, track, policy, section ? original : undefined));
+      const partners = guide && rhythmStyle?.sharedPulseAndAnswer && (job === 'pulse' || job === 'answer')
+        ? layers.filter(layer => layer.job === (job === 'pulse' ? 'answer' : 'pulse')) : [];
+      let total = 0, styleTotal = 0, weight = 0;
       for (const [window, slice] of slices.entries()) {
         if (!slice.section.trackPresence[track.id]) continue;
         const realized = notes[window];
         const localLoad = realized.reduce((sum, note) => sum + attackWeight(note), 0) / slice.section.measures;
         const space = measureLayer(slice, realized, track.mix.volumePercent / 100, layering, ring);
         total += slice.weight * (space - Math.abs(localLoad - load) * .55 - (realized.length ? 0 : 7));
+        if (guide) styleTotal += slice.weight * styleAccentFit(slice, realized, guide, partners.flatMap(layer => layer.notes[window]));
         weight += slice.weight;
       }
-      return { track, job, notes, score: merit + total / (weight || 1) * (1 - experiment * .52) };
+      const score = merit + total / (weight || 1) * (1 - experiment * .52) + styleTotal / (weight || 1) * (1 - experiment * .35);
+      return { track, job, notes, score };
     }).sort((a, b) => b.score - a.score);
     const nearBest = trials.filter(trial => trial.score >= trials[0].score - experiment * 5);
     const choice = nearBest[Math.floor(random.nextDouble() ** 2 * nearBest.length)];

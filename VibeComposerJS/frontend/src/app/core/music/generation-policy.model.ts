@@ -1,4 +1,5 @@
 import type { ArrangedPart } from './part-role';
+import type { DrumRerollStyleId } from './drum-reroll-styles';
 
 export type InstrumentPool = 'AUTO' | 'ALL' | 'MELODY' | 'BASS' | 'CHORD' | 'PLUCK' | 'LONG_PAD' | 'DRUM' | 'DRUM_FULL' | 'DRUM_ACOUSTIC' | 'DRUM_HAND';
 
@@ -59,6 +60,7 @@ export interface ChordGenerationPolicy extends SeedGenerationPolicy {
 }
 
 export interface DrumGenerationPolicy extends SeedGenerationPolicy {
+  readonly rerollStyle?: DrumRerollStyleId;
   readonly density?: number;
   readonly stereoWidth?: number;
   readonly experiment?: number;

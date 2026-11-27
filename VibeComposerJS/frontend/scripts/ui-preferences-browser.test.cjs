@@ -44,6 +44,8 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
       if (sessionStorage.getItem('ui-preferences-reloaded')) {
         ensure(JSON.parse(storedSetting(key)).scoreNoteShape==='instrument-log','note shape restored after reload');
         ensure(JSON.parse(storedSetting(key)).drumRerollMode==='legacy','Legacy drum reroll restored after reload');
+        ensure(JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).trackGenerationPolicies.drums.rerollStyle==='dnb',
+          'Kit style restored with project after reload');
         ensure(button('Harmony On Compose').getAttribute('aria-pressed')==='false','harmony Compose toggle restored after reload');
         ensure(getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()==='#dd88ee','main theme restored after reload');
         ensure(getComputedStyle(document.querySelector('.arrangement-panel > .canvas-heading')).backgroundColor==='rgb(56, 40, 72)','app heading restored after reload');
@@ -623,6 +625,20 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
           drumHeader.querySelector('.collapse-group-button').click();
         }
         const kitRules = await wait(()=>drumHeader.querySelector('[aria-label="Drum kit reroll rules"]'),'expanded Drums kit rules');
+        const rerollStyle = drumHeader.querySelector('vc-select[aria-label="Reroll style"]');
+        ensure(rerollStyle?.getAttribute('value')==='any','Any is the default Kit style');
+        ensure((await selectOptions(rerollStyle)).map(option=>option.textContent.trim()).join(',')===
+          'Any,Deep House,Trap,Reggae,Swing Jazz,DnB,Funk,Trance,Samba,Techno,Synthwave,Disco,Boom Bap,Lo-fi Hip Hop,'+
+          'UK Garage,Dubstep,Dub,Afrobeat,Bossa Nova,Blues Shuffle,Indie Rock,Pop Punk,Acoustic Folk,Ambient,Cinematic Pulse','Kit style choices');
+        const drumTracks = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.filter(track=>track.role==='drums');
+        const beforeStyle = JSON.stringify(drumTracks());
+        await changeControl(rerollStyle, 'cinematic-pulse');
+        await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).trackGenerationPolicies?.drums?.rerollStyle==='cinematic-pulse',
+          'last Kit style saved in the project');
+        await changeControl(rerollStyle, 'dnb');
+        await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).trackGenerationPolicies?.drums?.rerollStyle==='dnb',
+          'Kit style saved in the project');
+        ensure(JSON.stringify(drumTracks())===beforeStyle,'selecting a Kit style preserves current tracks');
         for (const [label, value] of [['Density',45],['Stereo width',55],['Experiment',20],['Layering',25],['Ring',25]]) {
           const knob = kitRules.querySelector('input[aria-label="Reroll '+label+' %"]');
           ensure(knob?.matches('input[type="range"]') && +knob.value===value,'Drums kit knob default: '+label);
@@ -648,7 +664,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         await changeControl(rerollMode,'legacy');
         await wait(()=>JSON.parse(storedSetting(key)).drumRerollMode==='legacy','Legacy setting committed');
         document.querySelector('[aria-label="Close settings"]').click();
-        await wait(()=>!drumHeader.querySelector('[aria-label="Drum kit reroll rules"]') &&
+        await wait(()=>!drumHeader.querySelector('[aria-label="Drum kit reroll rules"]') && !drumHeader.querySelector('[aria-label="Reroll style"]') &&
           drumHeader.querySelector('input[aria-label="Reroll Overrandomize %"]'),'Legacy rules shown in the Drums header');
         ensure(!mix.querySelector('button[aria-label^="Auto pan "]') && mix.querySelectorAll('output.knob-value').length===2,'Legacy keeps the plain pan readout');
 
