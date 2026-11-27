@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
+const { compileFixtureSource } = require('./support/compile-fixture-source.cjs');
 
 test('score geometry round-trips negative pickup and post-end beats', () => {
   const { scoreX, scoreBeat } = scoreHelper('score-geometry');
@@ -11,7 +11,6 @@ test('score geometry round-trips negative pickup and post-end beats', () => {
   assert.equal(scoreX(12, geometry), 800);
   for (const beat of [-4, -1, 0, 4, 12]) assert.equal(scoreBeat(scoreX(beat, geometry), geometry), beat);
 });
-const ts = require('typescript');
 
 test('shared modifiers deduplicate repeats, recover from pointer events and clear on focus loss', () => {
   const { ModifierObserver } = loadHelper(path.resolve(__dirname, '../src/app/core/ui/modifier-observer.ts'));
@@ -74,9 +73,7 @@ function scoreHelper(name) {
 }
 
 function loadHelper(filename) {
-  const compiled = ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: {
-    target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS,
-  } }).outputText;
+  const compiled = compileFixtureSource(filename);
   const module = { exports: {} };
   new Function('require', 'module', 'exports', compiled)(name => {
     assert.ok(name.startsWith('.'), `Unexpected helper dependency: ${name}`);
@@ -175,20 +172,15 @@ function fixture(reactivity) {
     effect: reactivity?.effect ?? (() => {}), untracked: reactivity?.untracked ?? (read => read()), inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { appearance: () => 'dark', midiPpq: () => 960, scoreChordGrid: () => false, scoreOutlineOtherTracks: () => false, scoreNoteShape: () => 'classic',
       drumMapping: () => 'general-midi',
       drumLabel: pitch => require('./music-loader.cjs').loadMusic('drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }), input, viewChild, signal: initial => { let value = initial; const read = () => value; read.set = next => value = next; return read; }, output: () => ({ values: [], emit(value) { this.values.push(value); } }) };
-  const source = fs.readFileSync(path.join(__dirname, '../src/app/features/score/score-canvas.component.ts'), 'utf8');
-  const compiled = ts.transpileModule(source, { compilerOptions: {
-    target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
-  } }).outputText;
+  const compiled = compileFixtureSource(path.join(__dirname, '../src/app/features/score/score-canvas.component.ts'),
+    { experimentalDecorators: true });
   const module = { exports: {} };
-  const helperModule = { exports: {} };
-  const helperSource = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/phrase-edit.ts'), 'utf8'),
-    { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
-  new Function('module', 'exports', helperSource)(helperModule, helperModule.exports);
+  const phraseEdit = phraseEditLibrary();
   new Function('require', 'module', 'exports', compiled)(name => name === './score-glide-lane.component' || name === '../../shared/tooltip.directive' ? {}
     : name.startsWith('./score-') ? scoreHelper(name.slice(2))
     : name.includes('musical-time') ? loadHelper(path.resolve(__dirname, '../src/app/core/ui/musical-time.ts'))
     : name.includes('track-color') ? loadHelper(path.resolve(__dirname, '../src/app/core/ui/track-color.ts'))
-    : name.includes('phrase-edit') ? helperModule.exports
+    : name.includes('phrase-edit') ? phraseEdit
     : name.includes('phrase-glides') ? require('./music-loader.cjs').loadMusic('phrase-glides.ts')
     : name.includes('gm-instruments') ? require('./music-loader.cjs').loadMusic('gm-instruments.ts')
     : name.includes('part-role') ? require('./music-loader.cjs').loadMusic('part-role.ts')
@@ -919,8 +911,7 @@ test('right box selects notes; Alt right click requests a grid split', () => {
 });
 
 function phraseEditLibrary() {
-  const source = fs.readFileSync(path.join(__dirname, '../src/app/core/music/phrase-edit.ts'), 'utf8');
-  const compiled = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
+  const compiled = compileFixtureSource(path.join(__dirname, '../src/app/core/music/phrase-edit.ts'));
   const module = { exports: {} };
   new Function('module', 'exports', compiled)(module, module.exports);
   return module.exports;

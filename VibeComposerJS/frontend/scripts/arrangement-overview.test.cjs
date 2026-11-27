@@ -1,8 +1,7 @@
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
-const ts = require('typescript');
+const { compileFixtureSource } = require('./support/compile-fixture-source.cjs');
 
 // Exercise the component's real drawing and hit-testing code without a GPU or Angular bootstrap.
 function fixture(reactivity) {
@@ -16,10 +15,8 @@ function fixture(reactivity) {
     output: () => ({ values: [], emit(value) { this.values.push(value); } }),
     viewChild: { required: (name) => () => ({ nativeElement: refs.get(name) }) },
   };
-  const source = fs.readFileSync(path.join(__dirname, '../src/app/features/arrangement/arrangement-overview.component.ts'), 'utf8');
-  const compiled = ts.transpileModule(source, {
-    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true },
-  }).outputText;
+  const compiled = compileFixtureSource(path.join(__dirname, '../src/app/features/arrangement/arrangement-overview.component.ts'),
+    { experimentalDecorators: true });
   const module = { exports: {} };
   const dependencies = {
     '../../core/ui/track-color': require('./music-loader.cjs').loadMusic('../ui/track-color.ts'),
