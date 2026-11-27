@@ -1,12 +1,17 @@
 import { TooltipDirective } from '../../shared/tooltip.directive';
-import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Dialog } from '@angular/cdk/dialog';
 import { ProjectService } from '../../core/project/project.service';
-import { BASE_KEY, CHORD_SPICES, inversionSuffix, stepChordInversion, SCALE_INTERVALS, scaleIntervalChord, KEYS, chordKeyOverlap, chordRootHue, chordRomanNumeral, effectiveKey, progressionChords, type ProgressionChord } from '../../core/music/harmony';
+import {
+  BASE_KEY, CHORD_SPICES, CHORD_SPICE_GROUPS, KEYS, MAX_CHORD_INTERVAL, MAX_CHORD_TONES, SCALE_INTERVALS,
+  chordIntervals, chordKeyOverlap, chordRomanNumeral, chordRootHue, effectiveKey, inversionSuffix, progressionChords,
+  scaleIntervalChord, stepChordInversion, type ProgressionChord,
+} from '../../core/music/harmony';
 import type { ArrangementSection } from '../../core/project/arrangement.model';
 import { baseGenerationHarmony, sectionGenerationHarmony } from '../../core/music/project-harmony';
 import { sectionProject } from '../../core/music/section-context';
 import { SCALE_DEFINITIONS } from '../../core/music/scales';
-import { CHORD_SPICE_GROUPS } from '../../core/music/harmony';
+import { NumericSequenceDialogComponent, type NumericSequenceDialogData } from '../../shared/numeric-sequence-dialog.component';
 
 @Component({
   selector: 'vc-chordlet-editor', changeDetection: ChangeDetectionStrategy.OnPush,
@@ -16,11 +21,16 @@ import { CHORD_SPICE_GROUPS } from '../../core/music/harmony';
 })
 export class ChordletEditorComponent {
   readonly projects = inject(ProjectService);
+  private readonly dialogs = inject(Dialog);
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly project = this.projects.project;
   readonly section = input<ArrangementSection>();
   readonly allSections = input(false);
   readonly disabled = computed(() => !!this.section()?.useMelodyHarmony);
+  private readonly selectionScope = computed(() => JSON.stringify([
+    this.projects.projectActivation(), this.section()?.id, this.allSections(), this.disabled(),
+  ]));
+  readonly selectedIndex = linkedSignal({ source: this.selectionScope, computation: (): number | null => null });
   readonly mixed = computed(() => this.allSections() && this.project().arrangement.some(section => {
     const harmony = section.useMelodyHarmony ? sectionGenerationHarmony(this.project(), section, 'chords')
       : baseGenerationHarmony(this.project(), section);
@@ -96,8 +106,11 @@ export class ChordletEditorComponent {
   });
   readonly dragging = signal<number | null>(null);
   readonly dropIndex = signal<number | null>(null);
-  private drag: { pointerId: number; x: number; y: number; index: number; project: unknown; sectionId?: string } | null = null;
-  readonly help = 'Drag to move · Right-click: root · Middle-click: spice · Scroll: inversion · Shift+scroll: root · Ctrl+scroll: spice · Double-click: base chord. Keyboard: Enter root, Shift+Enter spice, arrows adjust, Alt+arrows move, Delete remove.';
+  private drag: { pointerId: number; x: number; y: number; index: number; project: unknown; scope: string } | null = null;
+  private suppressPointerClick = false;
+  readonly help = 'Click to select · Click again to edit notes · Drag to move · Right-click: root · Middle-click: spice'
+    + ' · Scroll: inversion · Shift+scroll: root · Ctrl+scroll: spice · Shift+click: base chord.'
+    + ' Keyboard: Space selects or edits, Enter root, Shift+Enter spice, arrows adjust, Alt+arrows move, Delete remove.';
 
   private displayTranspose(): number { return (this.project().transposeSemitones ?? 0) + (this.section()?.context?.keyChange ?? 0); }
   private displayedPitch(root: number): number { return ((root + this.displayTranspose()) % 12 + 12) % 12; }
@@ -113,31 +126,84 @@ export class ChordletEditorComponent {
   }
   symbol(chord: ProgressionChord): string { return this.displayedRoot(chord.root)
     + (chord.intervals ? `[${chord.intervals.join(',')}]` : chord.spice) + inversionSuffix(chord); }
+  activate(index: number, event: MouseEvent): void {
+    if (this.disabled() || (event.detail > 0 && this.suppressPointerClick)) return;
+    const chord = this.chords()[index];
+    if (!chord) return;
+    this.closeMenu();
+    if (event.shiftKey) this.reset(index);
+    else if (this.selectedIndex() === index) this.openNotes(index, chord);
+    else this.selectedIndex.set(index);
+  }
+  private openNotes(index: number, chord: ProgressionChord): void {
+    if (this.dialogs.openDialogs.length) return;
+    const project = this.project(), scope = this.selectionScope();
+    const intervals = chordIntervals(chord);
+    const title = `Chord ${index + 1} notes`;
+    const data: NumericSequenceDialogData = {
+      editor: {
+        title, description: `Enter semitones above ${this.displayedRoot(chord.root)}. Include 0 for the root.`,
+        rows: [{ id: String(index), name: this.symbol(chord), values: intervals }],
+        minimum: 0, maximum: MAX_CHORD_INTERVAL, minimumSteps: 1, maximumSteps: MAX_CHORD_TONES,
+        reorderable: true, saveLabel: 'Save chord',
+        saveHint: this.allSections() ? 'Saving updates this chord slot in sections that have it.' : undefined,
+        validate: values => values.includes(0) ? undefined : 'Include 0 for the root.',
+      },
+      stale: () => this.project() !== project || this.selectionScope() !== scope,
+      save: values => {
+        if (values.length === intervals.length && values.every((value, i) => value === intervals[i]) && !this.mixed()) return undefined;
+        this.projects.dismissGenerationError();
+        const result = this.setChord(index, { ...chord, spice: '', intervals: [...values] });
+        return this.projects.generationError() ?? (result === 'invalid' ? 'This chord could not be saved.' : undefined);
+      },
+    };
+    this.dialogs.open(NumericSequenceDialogComponent, { ariaLabel: title, autoFocus: '.steps input', data });
+  }
   add(): void { if (this.disabled()) return; this.closeMenu(); if (this.allSections()) { if (this.chords().length < 32) this.applyAll([...this.chords(), null]); return; } const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'add'); else this.projects.addChord(); }
-  remove(index: number): void { if (this.disabled()) return; this.closeMenu(); if (this.allSections()) { if (this.chords().length > 1) this.applyAll(this.chords().filter((_, i) => i !== index)); return; } const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'remove', index); else this.projects.removeChord(index); }
+  remove(index: number): void {
+    if (this.disabled()) return;
+    this.closeMenu();
+    this.selectedIndex.set(null);
+    if (this.allSections()) {
+      if (this.chords().length > 1) this.applyAll(this.chords().filter((_, i) => i !== index));
+      return;
+    }
+    const section = this.section();
+    if (section) this.projects.editSectionChordList(section.id, 'remove', index);
+    else this.projects.removeChord(index);
+  }
   generate(event?: MouseEvent): void {
     if (this.disabled()) return;
     this.closeMenu();
+    this.selectedIndex.set(null);
     this.projects.generateProgression(this.section()?.id, this.allSections(), event?.shiftKey === true);
   }
-  private setChord(index: number, chord: ProgressionChord): void {
-    if (this.disabled()) return;
+  private setChord(index: number, chord: ProgressionChord) {
+    if (this.disabled()) return 'invalid';
     if (this.allSections()) {
-      this.projects.editAllSectionMusic(section => {
+      return this.projects.editAllSectionMusic(section => {
         const context = sectionProject(this.project(), section), harmony = baseGenerationHarmony(this.project(), section);
         const chords = progressionChords(BASE_KEY, context.scale, harmony.degrees, harmony.customChords);
         if (index >= chords.length) return section;
         chords[index] = chord;
         return { ...section, customChords: chords, chordDegrees: harmony.degrees };
-      }); return;
+      });
     }
-    const section = this.section(); if (section) this.projects.setSectionChord(section.id, index, chord);
-    else this.projects.setProgressionChord(index, chord);
+    const section = this.section();
+    return section ? this.projects.setSectionChord(section.id, index, chord) : this.projects.setProgressionChord(index, chord);
   }
   private moveChord(from: number, to: number): void {
-    if (this.allSections()) { const chords = [...this.chords()]; chords.splice(to, 0, chords.splice(from, 1)[0]); this.applyAll(chords); return; }
-    const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'move', from, to);
-    else this.projects.moveProgressionChord(from, to);
+    if (from === to) return;
+    if (this.allSections()) {
+      const chords = [...this.chords()];
+      chords.splice(to, 0, chords.splice(from, 1)[0]);
+      this.applyAll(chords);
+    } else {
+      const section = this.section();
+      if (section) this.projects.editSectionChordList(section.id, 'move', from, to);
+      else this.projects.moveProgressionChord(from, to);
+    }
+    this.selectedIndex.set(to);
   }
 
   openMenu(index: number, kind: 'root' | 'spice', event: Event): void {
@@ -191,7 +257,7 @@ export class ChordletEditorComponent {
   }
   key(index: number, event: KeyboardEvent): void {
     if (this.disabled()) return;
-    if (event.key === 'Enter' || event.key === ' ') { this.openMenu(index, event.shiftKey ? 'spice' : 'root', event); return; }
+    if (event.key === 'Enter') { this.openMenu(index, event.shiftKey ? 'spice' : 'root', event); return; }
     if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); this.remove(index); this.focusChord(Math.min(index, this.chords().length - 1)); return; }
     if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) return;
     event.preventDefault(); event.stopPropagation();
@@ -204,14 +270,15 @@ export class ChordletEditorComponent {
   start(index: number, event: PointerEvent): void {
     if (this.disabled()) return;
     if (event.button === 1) { this.openMenu(index, 'spice', event); return; }
-    if (event.button !== 0) return;
+    if (event.button !== 0 || this.drag) return;
+    this.suppressPointerClick = false;
     event.preventDefault(); (event.currentTarget as HTMLElement).focus(); this.closeMenu();
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-    this.drag = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, index, project: this.project(), sectionId: this.section()?.id };
+    this.drag = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, index, project: this.project(), scope: this.selectionScope() };
   }
   move(event: PointerEvent): void {
     if (event.pointerId !== this.drag?.pointerId) return;
-    if (this.drag.project !== this.project() || this.drag.sectionId !== this.section()?.id) { this.cancel(); return; }
+    if (this.drag.project !== this.project() || this.drag.scope !== this.selectionScope()) { this.cancel(); return; }
     if (this.dragging() === null && Math.hypot(event.clientX - this.drag.x, event.clientY - this.drag.y) < 4) return;
     this.dragging.set(this.drag.index);
     const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-chord-index]');
@@ -220,10 +287,19 @@ export class ChordletEditorComponent {
   finish(event: PointerEvent): void {
     if (event.pointerId !== this.drag?.pointerId) return;
     const drag = this.drag, to = this.dropIndex();
-    if (drag.project === this.project() && drag.sectionId === this.section()?.id && to !== null && this.dragging() !== null) this.moveChord(drag.index, to);
+    const moved = this.dragging() !== null;
+    const stale = drag.project !== this.project() || drag.scope !== this.selectionScope();
     this.cancel();
-    if (to !== null) this.focusChord(to);
+    // Pointer capture can still dispatch a click on the source button after a drag.
+    this.suppressPointerClick = moved || stale;
+    if (!stale && moved && to !== null) {
+      this.moveChord(drag.index, to);
+      this.focusChord(to);
+    }
   }
-  cancel(): void { this.drag = null; this.dragging.set(null); this.dropIndex.set(null); }
+  cancel(): void {
+    if (this.drag) this.suppressPointerClick = true;
+    this.drag = null; this.dragging.set(null); this.dropIndex.set(null);
+  }
   private focusChord(index: number): void { setTimeout(() => this.element.nativeElement.querySelector<HTMLElement>(`[data-chord-index="${index}"] .chordlet-label`)?.focus(), 0); }
 }

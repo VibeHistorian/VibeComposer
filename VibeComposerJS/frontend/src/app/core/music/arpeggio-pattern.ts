@@ -44,6 +44,7 @@ export function arpeggioPattern(pattern: ArpeggioPattern, hits: number, voices: 
     let current = used === 'down' || used === 'down-up' || used === 'frog-down' ? voices - 1 : 0;
     let adding = used === 'frog-up' ? 2 : used === 'frog-down' ? -2 : used === 'down-up' ? -1 : 1;
     source = Array.from({ length: hits * 2 }, () => {
+      if (voices === 1) return 0;
       const value = current;
       if (used === 'up') current = current >= voices - 1 ? 0 : current + 1;
       else if (used === 'down') current = current === 0 ? voices - 1 : current - 1;

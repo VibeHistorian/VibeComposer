@@ -12,6 +12,7 @@
 .chordlet-remove { padding: 4px 5px 4px 2px; cursor: pointer; opacity: .65; }
 .chordlet-remove:hover:not(:disabled) { opacity: 1; color: var(--color-danger); }
 .chordlet-remove:disabled { opacity: .2; cursor: default; }
+.chordlet.selected { --chord-function-border: var(--border-focus); }
 .dragging { opacity: .5; }.drop-target { outline: 2px solid var(--accent-primary); outline-offset: 1px; }
 /* Progression actions */
 .chordlet-action { width: 24px; height: 26px; display: grid; place-items: center; padding: 0; line-height: 1; flex: 0 0 auto; border: 1px solid var(--border-strong); border-radius: 5px; background: var(--surface-button); color: var(--text-primary); cursor: pointer; }

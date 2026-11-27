@@ -28,16 +28,16 @@ test('arp popup drafts cancel, validate, commit once in every scope and reject s
   const first = 'track-arpeggio-1';
   for (const kind of ['global-track', 'global-role', 'section-track', 'section-role']) {
     const scope = kind.endsWith('track') ? { kind, trackId: first } : { kind, role: 'arpeggio' };
-    const data = { scope };
+    const data = {};
     const { service, settings, load } = fixture({ dialogData: data });
     if (kind.startsWith('section')) scope.sectionId = service.project().arrangement[0].id;
     const second = service.duplicateTrack(first);
-    const { NumericSequenceDialogComponent } = load('features/part-settings/numeric-sequence-dialog.component.ts');
-    const { partSequenceEditor } = load('features/part-settings/part-sequence-editor.ts');
-    data.editor = partSequenceEditor(service.project(), scope, 'pattern');
+    const { NumericSequenceDialogComponent } = load('shared/numeric-sequence-dialog.component.ts');
+    const { partSequenceDialogData } = load('features/part-settings/part-sequence-editor.ts');
+    Object.assign(data, partSequenceDialogData(service, scope, 'pattern'));
     const before = service.exportProjectJson(), position = service.historyPosition();
     const popup = new NumericSequenceDialogComponent(); popup.dialog.close = () => {};
-    popup.selectTrack(first); popup.choosePreset('down');
+    popup.selectSource(first); popup.choosePreset('down');
     const source = popup.values();
     const drawing = { button: 0, pointerId: 1, clientX: 0, clientY: 56, preventDefault() {},
       currentTarget: { setPointerCapture() {}, getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }) } };
@@ -61,9 +61,9 @@ test('arp popup drafts cancel, validate, commit once in every scope and reject s
     service.undo(); assert.equal(service.exportProjectJson(), before);
     service.redo(); assert.equal(service.exportProjectJson(), saved);
     assert.equal(service.importProjectJson(saved), true);
-    data.editor = partSequenceEditor(service.project(), scope, 'pattern');
+    Object.assign(data, partSequenceDialogData(service, scope, 'pattern'));
     const stale = new NumericSequenceDialogComponent();
-    stale.selectTrack(first); stale.values.set([1, 2]);
+    stale.selectSource(first); stale.values.set([1, 2]);
     service.removeTrack(first); const deleted = service.exportProjectJson();
     stale.save(); assert.equal(service.exportProjectJson(), deleted);
   }
@@ -71,14 +71,14 @@ test('arp popup drafts cancel, validate, commit once in every scope and reject s
 
 test('arp editor retains the complete melody-following cycle beyond 32 steps', () => {
   const scope = { kind: 'global-track', trackId: 'track-arpeggio-1' };
-  const data = { scope };
+  const data = {};
   const { service, phrase, settings, load } = fixture({ dialogData: data });
   service.updatePartSettings(scope, { pattern: 'random', rhythm: 'melody', arpPatternRotate: 4 });
   const track = () => service.project().tracks.find(track => track.id === scope.trackId);
   const original = phrase.generateTrackPhrase(service.project(), track());
-  const { NumericSequenceDialogComponent } = load('features/part-settings/numeric-sequence-dialog.component.ts');
-  const { partSequenceEditor } = load('features/part-settings/part-sequence-editor.ts');
-  data.editor = partSequenceEditor(service.project(), scope, 'pattern');
+  const { NumericSequenceDialogComponent } = load('shared/numeric-sequence-dialog.component.ts');
+  const { partSequenceDialogData } = load('features/part-settings/part-sequence-editor.ts');
+  Object.assign(data, partSequenceDialogData(service, scope, 'pattern'));
   const popup = new NumericSequenceDialogComponent(); popup.dialog.close = () => {};
   assert.equal(popup.values().length, service.project().progression.length * 16);
   assert.ok(popup.values().length > 32); assert.equal(popup.error(), null);
@@ -287,6 +287,67 @@ test('an active chord drag accepts a new target near its starting point and comm
   } finally {
     if (originalDocument === undefined) delete global.document;
     else global.document = originalDocument;
+  }
+});
+
+test('manual chordlet drafts save their order once in primary, section and all-section scopes', () => {
+  for (const scope of ['primary', 'section', 'all sections']) {
+    const data = {};
+    const { service, load } = fixture({ dialogData: data, contextualMelody: false });
+    const { NumericSequenceDialogComponent } = load('shared/numeric-sequence-dialog.component.ts');
+    const { ChordletEditorComponent } = load('features/harmony/chordlet-editor.component.ts');
+    const editor = new ChordletEditorComponent();
+    if (scope !== 'primary') editor.section.set(service.project().arrangement[0]);
+    editor.allSections.set(scope === 'all sections');
+    let popup;
+    editor.dialogs = { openDialogs: [], open(component, { data: draft }) {
+      assert.equal(component, NumericSequenceDialogComponent);
+      Object.assign(data, draft);
+      popup = new component();
+      popup.dialog.close = () => { popup = undefined; };
+    } };
+    const before = service.exportProjectJson(), position = service.historyPosition();
+    const activate = index => editor.activate(index, { detail: 1, shiftKey: false });
+    activate(1);
+    activate(0);
+    assert.equal(editor.selectedIndex(), 0);
+    assert.equal(popup, undefined, 'selection opens no editor');
+    activate(0);
+    assert.deepEqual(popup.values(), [0, 4, 7]);
+    popup.save();
+    assert.equal(popup, undefined);
+    assert.equal(service.historyPosition(), position, 'saving identical values leaves the chord implicit');
+    activate(0);
+    popup.editStep(0, 1);
+    popup.save();
+    assert.equal(popup.error(), 'Include 0 for the root.');
+    assert.equal(service.exportProjectJson(), before);
+    popup.editStep(0, 0);
+    popup.resize({ valueAsNumber: 4 });
+    popup.editStep(3, 14);
+    popup.moveStep(1, -1);
+    const expected = [4, 0, 7, 14];
+    assert.deepEqual(popup.values(), expected);
+    assert.equal(service.exportProjectJson(), before, 'editing stays in the draft');
+    popup.save();
+    assert.equal(popup, undefined);
+    assert.equal(service.historyPosition(), position + 1);
+    const saved = service.exportProjectJson();
+    const verify = () => {
+      const project = service.project();
+      if (scope === 'primary') assert.deepEqual(project.progressionChords[0].intervals, expected);
+      else {
+        assert.equal(project.progressionChords, undefined);
+        assert.deepEqual(project.arrangement[0].customChords[0].intervals, expected);
+        if (scope === 'all sections') assert.ok(project.arrangement.every(section => section.customChords[0].intervals.join() === expected.join()));
+        else assert.ok(project.arrangement.slice(1).every(section => !section.customChords));
+      }
+    };
+    verify();
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    service.redo(); assert.equal(service.exportProjectJson(), saved);
+    assert.equal(service.importProjectJson(saved), true);
+    verify();
   }
 });
 

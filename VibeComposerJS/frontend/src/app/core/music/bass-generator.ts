@@ -127,11 +127,12 @@ export function generateBassline(
         durationMultiplier += skipNotes;
       }
       const soundingDuration = duration * durationMultiplier;
-      let pitch = triads[chordIndex][0];
+      const tones = triads[chordIndex];
+      let pitch = tones[0];
 
       if (isActive && noteIndex > 0 && soundingDuration < QUARTER + 1e-9
-          && noteVariationRandom.nextInt(100) < noteVariation) {
-        pitch = triads[chordIndex][noteVariationRandom.nextInt(triads[chordIndex].length - 1) + 1];
+          && noteVariationRandom.nextInt(100) < noteVariation && tones.length > 1) {
+        pitch = tones[noteVariationRandom.nextInt(tones.length - 1) + 1];
       }
 
       if (isActive && velocity > 0) {

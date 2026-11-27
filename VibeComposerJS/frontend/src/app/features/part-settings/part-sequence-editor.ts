@@ -5,18 +5,19 @@ import { JavaRandom } from '../../core/music/java-random';
 import { DEFAULT_MELODY_GLOBAL } from '../../core/music/melody-global-settings';
 import { chooseMelodyTargets, startingMelodyTarget } from '../../core/music/melody-targets';
 import { PART_CONTROLS, resolvePartTrack, type PartControl } from '../../core/music/part-settings';
-import type { MelodySettings } from '../../core/music/part-settings.model';
+import type { MelodySettings, PartSettingsPatch } from '../../core/music/part-settings.model';
 import { baseGenerationHarmony, sectionGenerationHarmony } from '../../core/music/project-harmony';
 import { sectionProject } from '../../core/music/section-context';
 import { chooseMelodyPattern } from '../../core/music/track-generation';
 import type { PartSettingsScope } from '../../core/project/part-settings-scope';
 import type { CompositionProject } from '../../core/project/project.model';
-import type { NumericSequenceEditor, NumericSequenceRange } from './numeric-sequence-dialog.component';
+import type { ProjectService } from '../../core/project/project.service';
+import type { NumericSequenceDialogData, NumericSequenceEditor, NumericSequenceRange } from '../../shared/numeric-sequence-dialog.component';
 import { partEditorContext } from './part-editor-context';
 
 export type PartSequenceKey = 'pattern' | 'melodyPatternOffsets' | 'chordNoteChoices' | 'arpContour';
 
-export function partSequencePatch(key: PartSequenceKey, values: readonly number[]): ReturnType<NumericSequenceEditor['patch']> {
+export function partSequencePatch(key: PartSequenceKey, values: readonly number[]): PartSettingsPatch {
   return key === 'pattern' ? { pattern: 'custom', arpPatternCustom: values, arpPatternRotate: 0 } : { [key]: values };
 }
 
@@ -32,7 +33,7 @@ export function partSequenceRange(key: PartSequenceKey): NumericSequenceRange {
   return { minimum: control.minimum!, maximum: control.maximum! };
 }
 
-export function partSequenceRows(project: CompositionProject, scope: PartSettingsScope, key: PartSequenceKey): NumericSequenceEditor['rows'] {
+export function partSequenceRows(project: CompositionProject, scope: PartSettingsScope, key: PartSequenceKey) {
   if (key === 'pattern') return arpeggioPreviews(project, scope);
   const { tracks, rows, section } = partEditorContext(project, scope);
   if ('sectionId' in scope && !section) return [];
@@ -43,15 +44,29 @@ function fixedPresets(presets: Readonly<Record<string, readonly number[]>>): Num
   return Object.entries(presets).map(([label, values]) => ({ value: label, label, load: () => values }));
 }
 
+export function partSequenceDialogData(projects: ProjectService, scope: PartSettingsScope, key: PartSequenceKey): NumericSequenceDialogData {
+  const project = projects.project(), activation = projects.projectActivation();
+  return {
+    editor: partSequenceEditor(project, scope, key),
+    stale: () => projects.project() !== project || projects.projectActivation() !== activation,
+    save: values => {
+      projects.dismissGenerationError();
+      projects.updatePartSettings(scope, partSequencePatch(key, values));
+      return projects.generationError() ?? undefined;
+    },
+  };
+}
+
 export function partSequenceEditor(project: CompositionProject, scope: PartSettingsScope, key: PartSequenceKey): NumericSequenceEditor {
   const control = CONTROLS[key];
   const common = {
     ...partSequenceRange(key),
-    rows: partSequenceRows(project, scope, key),
+    rows: partSequenceRows(project, scope, key).map(({ trackId, name, values }) => ({ id: trackId, name, values })),
     minimumSteps: control.allowEmpty ? 0 : 1,
     maximumSteps: 32,
     description: control.description ?? '',
-    patch: (values: readonly number[]) => partSequencePatch(key, values),
+    sourceLabel: 'Starting track',
+    sourceNoun: 'tracks',
   };
   switch (key) {
     case 'pattern':

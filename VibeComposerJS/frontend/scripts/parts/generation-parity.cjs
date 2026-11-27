@@ -434,6 +434,67 @@ test('Chordlet roots and inversions retain Java voicings with the minor ninth th
   assert.equal(harmony.effectiveKey('B', -24), 'B');
 });
 
+test('manual chord order is retained while inversions, voicing, generation and MIDI use pitch order', () => {
+  const { service, load, phrase, midi } = fixture();
+  const { chordPitches } = load('core/music/harmony.ts');
+  const { flattenProgression } = load('core/music/harmony-voicing.ts');
+  const { baseGenerationHarmony, projectMelodyHarmony } = load('core/music/project-harmony.ts');
+  const { reinterpretHarmonyChords } = load('core/music/harmony-mode.ts');
+  const intervals = Object.freeze([7, 0, 4]);
+  const chord = { root: 0, spice: '', inversion: 1, intervals };
+  assert.deepEqual(chordPitches(chord, 60), [64, 67, 72]);
+  assert.deepEqual(chordPitches(chord, 60, true), [67, 72, 76]);
+  assert.deepEqual(chordPitches({ ...chord, inversion: -1 }, 60), [55, 60, 64]);
+  assert.deepEqual(reinterpretHarmonyChords([chord], [1], 'C', 'major', 'natural-minor')[0].intervals, [7, 0, 3]);
+  const roots = [[60, 64, 67], [84, 88, 91]];
+  assert.deepEqual(flattenProgression([[67, 60, 64], roots[1]], roots, 42n), flattenProgression(roots, roots, 42n));
+
+  const base = service.project();
+  const presence = Object.fromEntries(base.tracks.map(track => [track.id, true]));
+  const makeProject = (intervals, contextualMelody) => ({
+    ...base,
+    scale: 'natural-minor',
+    progressionChords: [{ ...chord, intervals }, null, null, null],
+    melodyGlobal: { contextualMelody },
+    arrangement: [
+      { ...base.arrangement[0], measures: 4, trackPresence: presence,
+        customChords: [null, null, { ...chord, root: 8, inversion: 0, intervals }, null] },
+      { ...base.arrangement[1], trackPresence: presence, useMelodyHarmony: true },
+    ],
+  });
+  for (const contextualMelody of [false, true]) {
+    const reordered = makeProject(intervals, contextualMelody);
+    const ascending = makeProject([0, 4, 7], contextualMelody);
+    const harmony = baseGenerationHarmony(reordered);
+    assert.deepEqual(harmony.soundingRoots, baseGenerationHarmony(ascending).soundingRoots);
+    assert.deepEqual(harmony.soundingVoicings, baseGenerationHarmony(ascending).soundingVoicings);
+    const inferred = projectMelodyHarmony(reordered), reference = projectMelodyHarmony(ascending);
+    assert.equal(inferred.available, true);
+    assert.deepEqual(inferred.harmony.soundingVoicings, reference.harmony.soundingVoicings);
+    for (const track of reordered.tracks) {
+      assert.deepEqual(phrase.phraseForTrack(reordered, track), phrase.phraseForTrack(ascending, track), track.role);
+      const notes = phrase.resolvedTrackPhrase(reordered, track);
+      assert.ok(notes.length, track.role);
+      assert.deepEqual(notes, phrase.resolvedTrackPhrase(ascending, track), track.role);
+    }
+    assert.deepEqual(midi.generateCompositionMidi(reordered), midi.generateCompositionMidi(ascending));
+  }
+  assert.deepEqual(intervals, [7, 0, 4]);
+});
+
+test('one-note chords support bass variation and bouncing arp directions', () => {
+  const { load } = fixture();
+  const { generateBassline } = load('core/music/bass-generator.ts');
+  const { generateArpeggio } = load('core/music/arpeggio-generator.ts');
+  const chords = [{ root: 0, spice: '', inversion: 0, intervals: [0] }];
+  const bass = generateBassline(42n, 'C', 'major', [1], 'full', 100, { hitsPerPattern: 8 }, chords);
+  assert.deepEqual(bass.map(note => note.midi), Array(8).fill(36));
+  for (const pattern of ['up-down', 'down-up']) {
+    const arp = generateArpeggio(42n, 'C', 'major', [1], { pattern, octaves: 1, rate: 'eighth' }, chords);
+    assert.deepEqual(arp.map(note => note.midi), Array(8).fill(48));
+  }
+});
+
 test('Chordlet colors follow relative roots and spice overlap uses the actual notes in the active scale', () => {
   const { load } = fixture(), harmony = load('core/music/harmony.ts');
   const chord = (root, spice, inversion = 0) => ({ root, spice, inversion });

@@ -11,9 +11,9 @@ import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { CdkConnectedOverlay, type ConnectedPosition } from '@angular/cdk/overlay';
 import { PatternSequencerComponent } from './pattern-sequencer.component';
 import { DurationsDialogComponent } from './durations-dialog.component';
-import { NumericSequenceDialogComponent } from './numeric-sequence-dialog.component';
+import { NumericSequenceDialogComponent } from '../../shared/numeric-sequence-dialog.component';
 import { NumericSequencePreviewComponent } from './numeric-sequence-preview.component';
-import { partSequenceEditor, partSequencePatch, partSequenceRange, partSequenceRows, type PartSequenceKey } from './part-sequence-editor';
+import { partSequenceDialogData, partSequencePatch, partSequenceRange, partSequenceRows, type PartSequenceKey } from './part-sequence-editor';
 import { durationPreview } from '../../core/music/durations';
 import { validateDurationDraft } from '../../core/music/duration-validation';
 import type { CommonPartSettings, ChordRhythm, PatternJoinMode } from '../../core/music/part-settings.model';
@@ -128,9 +128,8 @@ export class PartSettingsEditorComponent {
   readonly scope = input.required<PartSettingsScope>();
   private readonly context = computed(() => partEditorContext(this.projects.project(), this.scope()));
   openSequence(key: PartSequenceKey): void {
-    const scope = this.scope();
-    const editor = partSequenceEditor(this.projects.project(), scope, key);
-    this.dialogs.open(NumericSequenceDialogComponent, { ariaLabel: editor.title, data: { scope, editor } });
+    const data = partSequenceDialogData(this.projects, this.scope(), key);
+    this.dialogs.open(NumericSequenceDialogComponent, { ariaLabel: data.editor.title, data });
   }
   private readonly arpeggioPreview = computed(() => {
     if (this.role() !== 'arpeggio') return null;

@@ -75,12 +75,12 @@ export function flattenProgression(chords: readonly (readonly number[])[], roots
   chords.forEach((original, index) => {
     const chord = [...original];
     if (!ignored.has(index)) {
-      if (options.progressiveVoicing) chord.sort((a,b) => a-b);
+      chord.sort((a,b) => a-b);
       if (random.nextInt(100) < options.flattenVoicingChance && (chord.length <= 3 || options.flattenLargeChords)) {
         if (mean - chord[0] > 6) chord[0] += 12;
         if (chord[chord.length - 1] - mean > 6) chord[chord.length - 1] -= 12;
+        chord.sort((a,b) => a-b);
       }
-      chord.sort((a,b) => a-b);
     }
     result.push(chord);
     if (options.progressiveVoicing) mean = average(result);

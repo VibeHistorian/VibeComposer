@@ -188,6 +188,92 @@ for (const [width, height] of [[700, 600], ...[700, 780, 1050, 1400, 1440, 1920,
           await command('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
           await command('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
         }
+        if (width === 1440) {
+          const point = index => evaluate(`(() => {
+            const box = document.querySelectorAll('.global-harmony .chordlet-label')[${index}].getBoundingClientRect();
+            return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+          })()`);
+          const readHarmony = `() => {
+            const { progression, progressionChords } = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+            return [progression, progressionChords];
+          }`;
+          const waitForHarmony = predicate => evaluate(`(async () => {
+            const read = ${readHarmony}, matches = ${predicate};
+            for (let i = 0; i < 100; i++) {
+              const harmony = read();
+              if (matches(harmony)) return harmony;
+              await new Promise(resolve => setTimeout(resolve, 20));
+            }
+            throw new Error('Timed out waiting for the chord edit to persist');
+          })()`);
+          const first = await point(0);
+          const before = await waitForHarmony("([, chords]) => chords[0].spice === 'm9'");
+          const settle = () => evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
+          const click = async clickCount => {
+            await command('Input.dispatchMouseEvent', { type: 'mousePressed', ...first, button: 'left', clickCount });
+            await command('Input.dispatchMouseEvent', { type: 'mouseReleased', ...first, button: 'left', clickCount });
+          };
+          const key = async (key, code, windowsVirtualKeyCode) => {
+            for (const type of ['keyDown', 'keyUp']) await command('Input.dispatchKeyEvent', { type, key, code, windowsVirtualKeyCode });
+          };
+          await click(1);
+          await settle();
+          assert.equal(await evaluate(`document.querySelector('.global-harmony .chordlet-label').getAttribute('aria-pressed')`), 'true');
+          assert.equal(await evaluate("!!document.querySelector('vc-numeric-sequence-dialog')"), false);
+          await click(2);
+          const edit = save => evaluate(`(async () => {
+            const settle = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            await settle();
+            const dialog = document.querySelector('vc-numeric-sequence-dialog');
+            const steps = () => [...dialog.querySelectorAll('.steps input')];
+            const initial = steps().map(input => input.valueAsNumber);
+            const count = dialog.querySelector('.step-count');
+            const set = (input, value, event) => { input.value = value; input.dispatchEvent(new Event(event, { bubbles: true })); };
+            set(count, 6, 'change');
+            await settle();
+            set(steps()[5], 17, 'input');
+            dialog.querySelector('[aria-label="Move step 2 left"]').click();
+            await settle();
+            const reordered = steps().map(input => input.valueAsNumber);
+            const button = dialog.querySelector('.save');
+            set(steps()[1], 2, 'input');
+            await settle();
+            const missingRoot = button.disabled;
+            set(steps()[1], 0, 'input');
+            await settle();
+            if (${save}) button.click();
+            await settle();
+            return { initial, reordered, missingRoot, closed: !dialog.isConnected };
+          })()`);
+          const expected = { initial: [0, 3, 7, 10, 14], reordered: [3, 0, 7, 10, 14, 17], missingRoot: true };
+          assert.deepEqual(await edit(false), { ...expected, closed: false });
+          await key('Escape', 'Escape', 27);
+          await settle();
+          assert.deepEqual(await evaluate(`(${readHarmony})()`), before, 'Escape discards the draft');
+          assert.equal(await evaluate("document.activeElement === document.querySelector('.global-harmony .chordlet-label')"), true);
+          await key(' ', 'Space', 32);
+          assert.deepEqual(await edit(true), { ...expected, closed: true });
+          const waitForIntervals = index => waitForHarmony(
+            `([, chords]) => JSON.stringify(chords[${index}].intervals) === '${JSON.stringify(expected.reordered)}'`);
+          await waitForIntervals(0);
+          assert.equal(await evaluate("document.querySelector('.global-harmony .chordlet-label').textContent.trim()"), 'C[3,0,7,10,14,17]');
+
+          const from = await point(0), to = await point(1);
+          await command('Input.dispatchMouseEvent', { type: 'mousePressed', ...from, button: 'left', clickCount: 1 });
+          await command('Input.dispatchMouseEvent', { type: 'mouseMoved', ...to, button: 'left', buttons: 1 });
+          await command('Input.dispatchMouseEvent', { type: 'mouseReleased', ...to, button: 'left', clickCount: 1 });
+          await settle();
+          await waitForIntervals(1);
+          assert.equal(await evaluate("!!document.querySelector('vc-numeric-sequence-dialog')"), false, 'dragging leaves the dialog closed');
+          assert.equal(await evaluate("document.querySelectorAll('.global-harmony .chordlet-label')[1].getAttribute('aria-pressed')"), 'true');
+          await evaluate(`(async () => {
+            for (let i = 0; i < 2; i++) {
+              document.querySelector('[aria-label="Undo"]').click();
+              await new Promise(resolve => requestAnimationFrame(resolve));
+            }
+          })()`);
+          await waitForHarmony(`harmony => JSON.stringify(harmony) === ${JSON.stringify(JSON.stringify(before))}`);
+        }
         const layout = await evaluate(`(async () => {
           const dock = document.querySelector('.transport-dock');
           const list = document.querySelector('.global-harmony .chordlet-list');

@@ -1,5 +1,5 @@
 import type { CompositionProject } from '../project/project.model';
-import { BASE_KEY, CHORD_SPICES, chordPitches, getPitchClass, progressionChords, type ProgressionChord, type ScaleMode } from './harmony';
+import { BASE_KEY, CHORD_SPICES, chordIntervals, chordPitches, getPitchClass, progressionChords, type ProgressionChord, type ScaleMode } from './harmony';
 import { harmonyScaleNotes } from './scales';
 import { sectionProject } from './section-context';
 
@@ -28,9 +28,9 @@ export function reinterpretHarmonyChords(chords: readonly (ProgressionChord | nu
     if (!chord) return null;
     const rootPitch = mod(chord.root - tonic), rootSlot = slot(rootPitch);
     const root = mod(tonic + pitchAt(rootSlot));
-    const original = chordPitches({ ...chord, inversion: 0 }, 0).map(pitch => pitch - chord.root);
+    const original = chordIntervals(chord);
     const intervals = [...new Set(original.map(interval => Math.max(0,
-      pitchAt(slot(rootPitch + interval)) - pitchAt(rootSlot))))].sort((a,b) => a-b);
+      pitchAt(slot(rootPitch + interval)) - pitchAt(rootSlot))))];
     const spice = CHORD_SPICES.find(spice => {
       const pitches = chordPitches({ root: 0, spice, inversion: 0 }, 0);
       return pitches.length === intervals.length && pitches.every((pitch,i) => pitch === intervals[i]);

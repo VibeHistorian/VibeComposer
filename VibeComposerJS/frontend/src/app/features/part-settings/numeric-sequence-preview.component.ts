@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { sequenceY, type NumericSequenceRange } from './numeric-sequence-dialog.component';
+import { sequenceY, type NumericSequenceRange } from '../../shared/numeric-sequence-dialog.component';
 
 @Component({
   selector: 'vc-numeric-sequence-preview',

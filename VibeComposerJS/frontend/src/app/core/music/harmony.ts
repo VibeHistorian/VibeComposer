@@ -16,6 +16,8 @@ export const CHORD_SPICE_GROUPS = [
   { label: 'dom', spices: ['7', '9', '11', '13', '7b5', '7#5', '7b9', '7#9', '7#11', '7b13', 'sus7', '9sus4'] },
 ] as const satisfies readonly { label: string; spices: readonly ChordSpice[] }[];
 export const SCALE_INTERVALS = [2, 3, 4, 5, 6, 7] as const;
+export const MAX_CHORD_TONES = 7;
+export const MAX_CHORD_INTERVAL = 36;
 
 /** Resolve a manual dyad in the current scale. Chromatic roots borrow the nearest
  * scale degree's interval shape. Repeated experimental degrees stay below an octave. */
@@ -36,7 +38,7 @@ export function scaleIntervalChord(chord: ProgressionChord, degree: typeof SCALE
 export interface ProgressionChord { readonly root: number; readonly spice: ChordSpice; readonly inversion: number;
   /** Distinguish a protected root-position '.0' from automatic voicing. */
   readonly explicitZeroInversion?: true;
-  /** Exact voicing for manual intervals and mode-derived chords without a named spice. */
+  /** Root-relative semitones in authored order, including 0 for the root. */
   readonly intervals?: readonly number[];
 }
 // Root-position formulas in semitones. Thirteenths omit the optional eleventh;
@@ -64,8 +66,9 @@ export function validProgressionChords(value: unknown, count: number): value is 
       && Number.isInteger(chord.root) && chord.root >= 0 && chord.root < 12
       && CHORD_SPICES.includes(chord.spice) && Number.isInteger(chord.inversion) && Math.abs(chord.inversion) <= 5
       && (chord.explicitZeroInversion === undefined || chord.explicitZeroInversion === true && chord.inversion === 0)
-      && (chord.intervals === undefined || Array.isArray(chord.intervals) && chord.intervals.length >= 1 && chord.intervals.length <= 7
-        && chord.intervals[0] === 0 && chord.intervals.every((n: unknown) => Number.isInteger(n) && (n as number) >= 0 && (n as number) <= 36)));
+      && (chord.intervals === undefined || Array.isArray(chord.intervals) && chord.intervals.length <= MAX_CHORD_TONES
+        && chord.intervals.includes(0) && [...chord.intervals].every((n: unknown) =>
+          Number.isInteger(n) && (n as number) >= 0 && (n as number) <= MAX_CHORD_INTERVAL)));
 }
 
 export function inversionSuffix(chord: ProgressionChord): string {
@@ -95,9 +98,13 @@ export function progressionChords(key: string, scale: ScaleMode, degrees: readon
   })());
 }
 
+export function chordIntervals(chord: ProgressionChord): readonly number[] {
+  return chord.intervals ?? SPICE_FORMULAS[chord.spice];
+}
+
 export function chordPitches(chord: ProgressionChord, octaveBase: number, open = false): number[] {
-  const intervals = chord.intervals ?? SPICE_FORMULAS[chord.spice];
-  const notes = intervals.map(interval => octaveBase + chord.root + interval);
+  // Inversions and open voicing operate on pitch rank. Keep the saved order for editing.
+  const notes = chordIntervals(chord).map(interval => octaveBase + chord.root + interval).sort((a,b) => a-b);
   if (open && notes.length === 3) { notes[1] += 12; notes.sort((a,b) => a-b); }
   const change = (chord.inversion + notes.length * 100) % notes.length;
   const minimum = 12 * Math.floor(Math.abs(chord.inversion) / notes.length);
@@ -119,7 +126,7 @@ export function chordRootHue(root: number, key: string): number {
 export function chordRomanNumeral(chord: ProgressionChord, key: string): string {
   const offset = ((chord.root - (getPitchClass(key) ?? 0)) % 12 + 12) % 12;
   const numeral = ['I', '♭II', 'II', '♭III', 'III', 'IV', '♯IV', 'V', '♭VI', 'VI', '♭VII', 'VII'][offset];
-  const intervals = (chord.intervals ?? SPICE_FORMULAS[chord.spice]).map(note => note % 12);
+  const intervals = chordIntervals(chord).map(note => note % 12);
   const minor = intervals.includes(3) && !intervals.includes(4);
   const diminished = minor && intervals.includes(6) && !intervals.includes(7);
   const augmented = intervals.includes(4) && intervals.includes(8) && !intervals.includes(7);
