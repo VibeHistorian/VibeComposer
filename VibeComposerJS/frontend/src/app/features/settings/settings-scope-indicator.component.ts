@@ -1,9 +1,11 @@
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 export type SettingScope = 'ui' | 'compose' | 'sound';
 
 @Component({
   selector: 'vc-settings-scope-indicator',
+  imports: [TooltipDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.data-scope]': 'scope()' },
   templateUrl: './settings-scope-indicator.component.html',

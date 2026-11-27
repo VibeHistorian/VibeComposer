@@ -8,6 +8,7 @@ Keep reusable presentation controls and UI helpers here when multiple features h
 | `compact-toggle.component.*` | Part settings, harmony, track policies and workspace |
 | `control-heading.component.*` | Knobs, toggles and the part editor; shared labels, reset and inheritance presentation |
 | `select.component.*`, `menu-select.component.*` | Flat and categorized value selectors; shared option rendering, surface/popup styles, wheel stepping and right-click reset |
+| `tooltip.directive.ts`, `tooltips.css` | Shared hover and keyboard-focus tooltips for the workspace, editors, transport, menus and dialogs |
 | `context-menu.component.*` | Track-name actions and variation additions (so far); reusable menus with dynamic nested choices |
 | `keyboard-shortcuts.ts` | Shared text-input/event helpers for global and phrase keyboard routing |
 
@@ -27,10 +28,14 @@ Use `<vc-select [options]="choices" [value]="value" (valueChange)="choose($event
 
 The custom element host uses Angular ARIA's `Combobox` directive and an explicit-selection `Listbox` in a CDK overlay. Arrow keys and typeahead browse; Enter, Space and option clicks commit; Escape cancels. Selection is remembered in a linked signal that follows bound input changes, with a separate popup draft so browsing never publishes project edits. Labels, IDs, ARIA attributes and disabled state stay on the host. Export the component as `#choice="vcSelect"` and call `choice.restoreValue()` when a choice opens an uncommitted draft or runs a one-shot action.
 
-Popup geometry accounts for the space above and below the trigger, caps the list height to the available viewport, and repositions after ARIA's deferred listbox renders. Long lists scroll inside the panel. The DOM popup does not depend on native select or tooltip popup lifetimes; ordinary `title` tooltips remain available.
+Popup geometry accounts for the space above and below the trigger, caps the list height to the available viewport, and repositions after ARIA's deferred listbox renders. Long lists scroll inside the panel. A trigger's tooltip closes when the listbox or menu opens.
 
 Features own option data, change commands, dimensions and contextual variants; shared trigger and menu surfaces live in `choice-surfaces.css`, while combobox popup geometry and option states stay in `select.component.css`. Use computed option lists for dynamic labels such as drum mapping, fonts and instrument pools. Feature action-button CSS targets `button`; select styling targets `vc-select`. Disabled select styles use `[aria-disabled="true"]`.
 
 Use `<vc-menu-select [options]="choices" [groups]="families" [value]="value" (valueChange)="choose($event)" />` for categorized value choices. Feature-owned groups contain stable IDs, labels and string value IDs; empty families disappear, and ungrouped values remain available at the root. The trigger is a menu button with checked radio leaves; CDK owns keyboard navigation, typeahead, focus return and dismissal. Browsing never changes the value. The control shares select surface styling and preserves Mixed, disabled options, string outputs, right-click defaults and wheel order from the flat options array. Track instrument/percussion and strum selectors are the initial consumers.
 
 Menu selectors also accept `[actions]="commands"` and emit command IDs through `(action)`. Commands render as menu items, never as checked values, and are excluded from wheel stepping and reset. Features own any file picker or dialog invoked by a command. Scale families live with Harmony UI; fill and rhythm families live with part settings.
+
+Use `vcTooltip` for explanations, familiar action buttons, and controls with a visible value. It opens after 650 ms on hover or keyboard focus. Add `vcTooltipInstant` for readouts that reveal information hidden by the control, such as the audio engine behind its icon or the values of letter-only tone knobs. Keep labels and accessible names on their existing controls. Use line breaks for short groups of related values.
+
+Canvas feedback and pattern previews own their hit testing and use `vc-tooltip` for the same surface. Settings rows show delayed explanations when Settings explainers as tooltips is enabled and display their inline paragraphs otherwise.

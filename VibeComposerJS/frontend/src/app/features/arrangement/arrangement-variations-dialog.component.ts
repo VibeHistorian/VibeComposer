@@ -1,3 +1,4 @@
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { variationStrength, validVariationParameters } from '../../core/music/arrangement-variation-catalogue';
 import { CdkMenuModule } from '@angular/cdk/menu';
 import { ContextMenuComponent, type ContextMenuItem } from '../../shared/context-menu.component';
@@ -16,7 +17,7 @@ import { resolveVariationContext, variationAmountForContext, VARIATION_GESTURE_L
 import type { VariationPolicy } from '../../core/music/arrangement-variation.model';
 
 @Component({
-  selector: 'vc-arrangement-variations-dialog', imports: [SelectComponent, ContextMenuComponent, CdkMenuModule], changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'vc-arrangement-variations-dialog', imports: [TooltipDirective, SelectComponent, ContextMenuComponent, CdkMenuModule], changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './arrangement-variations-dialog.component.html', styleUrl: './arrangement-variations-dialog.component.css',
 })
 export class ArrangementVariationsDialogComponent {

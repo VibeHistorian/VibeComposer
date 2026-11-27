@@ -1,3 +1,4 @@
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { LiveRecordingComponent } from '../recording/live-recording.component';
 import { recordedSegments, recordingCell, type RecordedSpan } from '../../core/audio/live-recording';
 import { SelectComponent } from '../../shared/select.component';
@@ -32,7 +33,7 @@ type GridGesture = GridStroke & (
 );
 
 @Component({
-  imports: [LiveRecordingComponent, SelectComponent],
+  imports: [TooltipDirective, LiveRecordingComponent, SelectComponent],
   selector: 'vc-pattern-sequencer',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pattern-sequencer.component.html',

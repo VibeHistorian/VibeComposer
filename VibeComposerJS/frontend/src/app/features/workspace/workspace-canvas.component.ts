@@ -1,3 +1,4 @@
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { LiveRecordingService } from '../../core/audio/live-recording.service';
 import { ProjectTabsComponent } from '../project-tabs/project-tabs.component';
 import { drumSelectionSlot, projectDrumPitches, resolvedDrumSlots } from '../../core/project/project-drum-kit';
@@ -87,7 +88,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [ProjectTabsComponent, MenuSelectComponent, ContextMenuComponent, NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, ScoreChordLabelsDirective, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, SelectComponent, TrackGenerationPolicyComponent],
+  imports: [TooltipDirective, ProjectTabsComponent, MenuSelectComponent, ContextMenuComponent, NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, ScoreChordLabelsDirective, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, SelectComponent, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:resize)': 'updatePartSettingsLayout()' },
   templateUrl: './workspace-canvas.component.html',

@@ -30,7 +30,9 @@ function fixture(reactivity) {
     '../../core/music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
     '../../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
+    '@angular/cdk/overlay': {},
     '../../shared/context-menu.component': { ContextMenuComponent: class ContextMenuComponent {} },
+    '../../shared/tooltip.directive': {},
     '../../core/music/part-role': { ARRANGED_PARTS: ['melody', 'chords', 'arpeggio', 'bass', 'drums'] },
     '../../core/project/arrangement.model': { SECTION_TYPES: [] },
     '../../core/music/arrangement-generator': { shouldGenerateTrackInSection: (section, track) => section.presentTracks.includes(track.id) },
@@ -162,7 +164,7 @@ test('hover highlights only the hit target and clears on exit or follows a scrol
   c.onPointerLeave();
   assert.equal(c.hoveredKey, null);
   assert.equal(refs.get('scoreCanvas').style.cursor, 'default');
-  assert.equal(refs.get('scoreCanvas').title, '');
+  assert.equal(c.hoverTooltip(), null);
   c.horizontalScale = 2; c.drawOverview();
   moveTo('heading:intro');
   refs.get('scrollHost').scrollLeft = 500;
@@ -224,7 +226,7 @@ test('P5f variable chord slots align section hit areas, previews and loop marker
 });
 
 test('section swing reserves header space and falls back to a symbol in narrow sections', () => {
-  const { component, base, refs } = fixture();
+  const { component, base } = fixture();
   const project = component.project();
   component.project.set({ ...project, arrangement: project.arrangement.map((section, index) => index === 0
     ? { ...section, context: { swingPercent: 54 } } : section) });
@@ -240,7 +242,7 @@ test('section swing reserves header space and falls back to a symbol in narrow s
   assert.match(heading.label, /section swing 54% overrides part swing \(except bass\)/);
   assert.doesNotMatch(component.hits.find(hit => hit.key === 'heading:verse').label, /swing/);
   component.onPointerMove({ clientX: heading.x + heading.width / 2, clientY: 10 });
-  assert.match(refs.get('scoreCanvas').title, /section swing 54%/);
+  assert.match(component.hoverTooltip().text, /Section swing 54%/);
   component.project.set({ ...component.project(), arrangement: component.project().arrangement.map((section, index) => index === 0
     ? { ...section, measures: 1, customDurations: [0.25] } : section) });
   base.texts.length = 0;

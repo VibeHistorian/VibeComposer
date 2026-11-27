@@ -45,10 +45,10 @@
     <label class="field-label" for="phrase-grid">Time grid (beats)</label>
     <vc-select [options]="gridSelectOptions()" id="phrase-grid" [value]="snapBeats()" (valueChange)="setGrid($event)"></vc-select>
     <div class="phrase-actions">
-      <button type="button" class="vc-button" title="Shortcuts: Settings > Shortcuts" (click)="selectAll()">Select all</button>
-      <button type="button" class="vc-button" title="Shortcuts: Settings > Shortcuts" (click)="copyNotes()" [disabled]="!selectedNoteIds().length">Copy notes</button>
-      <button type="button" class="vc-button" title="Paste notes at the playhead" (click)="pasteNotes()" [disabled]="!canPasteNotes()">Paste notes</button>
-      <button type="button" class="vc-button" title="Shortcuts: Settings > Shortcuts" (click)="openTranspose()" [disabled]="!selectedNoteIds().length">Transpose…</button>
+      <button type="button" class="vc-button" vcTooltip="Shortcuts: Settings > Shortcuts" (click)="selectAll()">Select all</button>
+      <button type="button" class="vc-button" vcTooltip="Shortcuts: Settings > Shortcuts" (click)="copyNotes()" [disabled]="!selectedNoteIds().length">Copy notes</button>
+      <button type="button" class="vc-button" vcTooltip="Paste notes at the playhead" (click)="pasteNotes()" [disabled]="!canPasteNotes()">Paste notes</button>
+      <button type="button" class="vc-button" vcTooltip="Shortcuts: Settings > Shortcuts" (click)="openTranspose()" [disabled]="!selectedNoteIds().length">Transpose…</button>
     </div>
     @if (transposeOpen()) {
       <label class="field-label" for="phrase-transpose">Transpose selected notes (semitones)</label>

@@ -1,3 +1,4 @@
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { MenuSelectComponent } from '../../shared/menu-select.component';
 import { SCALE_MENU_GROUPS } from '../harmony/scale-menu-groups';
 import { elapsedTime } from '../../core/ui/musical-time';
@@ -16,7 +17,7 @@ import { ChordletEditorComponent } from '../harmony/chordlet-editor.component';
 
 @Component({
   selector: 'vc-transport-dock',
-  imports: [MenuSelectComponent, CompactKnobComponent, ChordletEditorComponent],
+  imports: [TooltipDirective, MenuSelectComponent, CompactKnobComponent, ChordletEditorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './transport-dock.component.html',
   styleUrl: './transport-dock.component.css',

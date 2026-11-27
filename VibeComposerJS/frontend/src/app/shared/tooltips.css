@@ -1,0 +1,25 @@
+/* Tooltip surfaces */
+.vc-tooltip {
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(var(--tooltip-max-width, 340px), calc(100vw - 16px));
+  padding: 4px 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-tight);
+  background: var(--surface-base);
+  color: var(--text-primary);
+  box-shadow: 0 3px 10px var(--shadow-ink);
+  font: 11px/1.35 var(--font-mono);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+.vc-tooltip-detail {
+  --tooltip-max-width: 400px;
+  max-height: min(50vh, 320px);
+  overflow: auto;
+  padding: 6px 8px;
+  font: 12px/1.45 var(--font-ui);
+  pointer-events: auto;
+}
+.cdk-overlay-pane.vc-tooltip-passive-pane { pointer-events: none !important; }

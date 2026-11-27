@@ -5,7 +5,7 @@
       <span>vibe<span class="brand-light">composer</span></span>
       <span class="brand-version">[v{{ appVersion }} | p{{ projects.project().schemaVersion }}]</span>
     </h1>
-    <button type="button" class="appearance-toggle" [attr.aria-pressed]="preview()" title="Show the surrounding workspace without dimming" (click)="preview.set(!preview())">Preview</button>
+    <button type="button" class="appearance-toggle" [attr.aria-pressed]="preview()" vcTooltip="Show the surrounding workspace without dimming" (click)="preview.set(!preview())">Preview</button>
     <button type="button" class="close-button" (click)="dialog.close()" aria-label="Close settings">×</button>
   </header>
   <div class="settings-body">

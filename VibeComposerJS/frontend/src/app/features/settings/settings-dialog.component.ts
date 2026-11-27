@@ -1,3 +1,4 @@
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { NgTemplateOutlet } from '@angular/common';
 import { SettingsRowComponent } from './settings-row.component';
 import { MidiInputService } from '../../core/audio/midi-input.service';
@@ -42,7 +43,7 @@ interface SettingsCheckboxRow {
 @Component({
   selector: 'vc-settings-dialog',
   host: { '[class.explainers-as-tooltips]': 'preferences.preferences().settingsExplainersAsTooltips' },
-  imports: [NgTemplateOutlet, SettingsRowComponent, CdkDrag, CdkDragHandle, SettingsScopeIndicatorComponent, SelectComponent, SectionTypeSettingsComponent, CompactKnobComponent, MelodyGlobalSettingsComponent],
+  imports: [TooltipDirective, NgTemplateOutlet, SettingsRowComponent, CdkDrag, CdkDragHandle, SettingsScopeIndicatorComponent, SelectComponent, SectionTypeSettingsComponent, CompactKnobComponent, MelodyGlobalSettingsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings-dialog.component.html',
   styleUrl: './settings-dialog.component.css',

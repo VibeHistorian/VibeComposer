@@ -3,7 +3,7 @@
 .score-canvas-host { position: relative; grid-column: 2; grid-row: 1; min-width: 0; min-height: 0; overflow: hidden; }
 
 /* Immediate note details */
-.note-tooltip { position: absolute; z-index: 3; pointer-events: none; box-sizing: border-box; width: 320px; max-width: calc(100% - 16px); padding: 8px 10px; display: grid; gap: 4px; border: 1px solid var(--border-strong); border-radius: var(--radius-small); background: var(--surface-base); color: var(--text-primary); box-shadow: 0 3px 10px var(--shadow-ink); font: 11px var(--font-mono); }
+.note-tooltip { position: absolute; z-index: 3; width: 320px; max-width: calc(100% - 16px); padding: 8px 10px; display: grid; gap: 4px; }
 .note-tooltip strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .note-tooltip-values { display: flex; justify-content: space-between; gap: 12px; }
 .note-tooltip-source { color: var(--text-secondary); font-size: 9px; white-space: nowrap; }
@@ -40,7 +40,7 @@
 .octave-boundary { position: absolute; z-index: 2; left: 0; right: 0; background: var(--score-octave-line); pointer-events: none; }
 
 /* Musical cursor position */
-.time-tooltip { position: absolute; z-index: 3; pointer-events: none; opacity: .5; padding: 6px 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-small); background: var(--surface-base); color: var(--text-primary); font: 11px var(--font-mono); white-space: nowrap; }
+.time-tooltip { position: absolute; z-index: 3; opacity: .5; padding: 6px 8px; white-space: nowrap; }
 .note-tooltip-time { color: var(--text-secondary); }
 
 /* Live recording keyboard positions */

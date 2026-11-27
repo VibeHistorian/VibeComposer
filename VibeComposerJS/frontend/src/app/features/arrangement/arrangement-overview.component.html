@@ -6,26 +6,26 @@
     <ng-content select="[arrangementProjectTabs]" />
     <div class="canvas-actions">
       <button type="button" class="add-section-button" [disabled]="!canAddSection()"
-        [attr.aria-expanded]="!!sectionPicker()" aria-haspopup="menu" aria-label="Add arrangement section" title="Add section"
+        [attr.aria-expanded]="!!sectionPicker()" aria-haspopup="menu" aria-label="Add arrangement section" vcTooltip="Add section"
         (click)="toggleSectionPicker($event)">＋</button>
       @if (selectedSectionIds().length) {
-        <button type="button" class="reroll-button" (click)="selectionCleared.emit()" title="Clear section selection. Shortcuts: Settings > Shortcuts.">CLEAR</button>
+        <button type="button" class="reroll-button" (click)="selectionCleared.emit()" vcTooltip="Clear section selection. Shortcuts: Settings > Shortcuts.">CLEAR</button>
       }
       <button type="button" class="reroll-button icon-button" (click)="$event.stopPropagation(); randomizeRequested.emit()"
-        aria-label="Reroll arrangement" title="Reroll the whole arrangement: section structure and track presence">↻</button>
+        aria-label="Reroll arrangement" vcTooltip="Reroll the whole arrangement: section structure and track presence">↻</button>
       <button type="button" class="reroll-button icon-button variations-button" (click)="$event.stopPropagation(); variationsRequested.emit()"
-        aria-label="Inspect whole arrangement variations" title="Review or reroll variations, keeping section order and presence">◇</button>
+        aria-label="Inspect whole arrangement variations" vcTooltip="Review or reroll variations, keeping section order and presence">◇</button>
       <button type="button" class="arrangement-toggle" [class.active]="!!project().randomizeArrangementOnCompose"
         [attr.aria-pressed]="!!project().randomizeArrangementOnCompose" aria-label="Arrangement On Compose"
-        title="On Compose: reroll arrangement when global Compose runs"
+        vcTooltip="On Compose: reroll arrangement when global Compose runs"
         (click)="arrangementOnComposeChanged.emit(!project().randomizeArrangementOnCompose)">✦</button>
       <button type="button" class="arrangement-toggle" [class.active]="!!project().arrangementPreview"
         [attr.aria-pressed]="!!project().arrangementPreview" aria-label="Arrangement Preview"
-        title="Preview: jump to the section with the most tracks after Reroll or Compose"
+        vcTooltip="Preview: jump to the section with the most tracks after Reroll or Compose"
         (click)="arrangementPreviewChanged.emit(!project().arrangementPreview)">👁</button>
       <button type="button" class="arrangement-toggle manual-toggle" [class.active]="!!project().arrangementManual"
         [attr.aria-pressed]="!!project().arrangementManual" aria-label="Arrangement Manual"
-        title="Manual: preserve sections and reroll only track presence when On Compose is enabled"
+        vcTooltip="Manual: preserve sections and reroll only track presence when On Compose is enabled"
         (click)="arrangementManualChanged.emit(!project().arrangementManual)">Manual</button>
     </div>
   </header>
@@ -48,6 +48,13 @@
     </div>
   </div>
 </section>
+@if (hoverTooltip(); as tooltip) {
+  <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="tooltip.origin" [cdkConnectedOverlayOpen]="true"
+    [cdkConnectedOverlayPositions]="tooltipPositions" [cdkConnectedOverlayViewportMargin]="8"
+    [cdkConnectedOverlayPush]="true" [cdkConnectedOverlayDisableClose]="true" cdkConnectedOverlayPanelClass="vc-tooltip-passive-pane">
+    <div class="vc-tooltip" role="tooltip">{{ tooltip.text }}</div>
+  </ng-template>
+}
 @if (sectionPicker(); as popup) {
   <div class="section-picker" role="menu" aria-label="Section choices" [style.left.px]="popup.x" [style.top.px]="popup.y"
     (keydown)="sectionPickerKey($event)">

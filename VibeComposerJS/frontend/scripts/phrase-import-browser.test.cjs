@@ -88,7 +88,7 @@ test('phrase MIDI drop, clipboard, transpose and separate draft and project hist
       unchanged:savedBeforeExport===sessionStorage.getItem('vibecomposer.project.v12'),
       stillEditing:!!document.querySelector('#phrase-grid'),draggable:exportButton.draggable,
       firstAction:document.querySelector('.score-display-header').firstElementChild===exportButton,
-      hint:exportButton.title};
+      hint:exportButton.getAttribute('aria-description')};
     button('Undo phrase').click();await wait(()=>knob().value==='0'&&document.querySelector('#note-pitch').value==='61');
     button('Redo phrase').click();await wait(()=>knob().value==='5'&&document.querySelector('#note-pitch').value==='66');
     button('Undo phrase').click();await wait(()=>knob().value==='0');

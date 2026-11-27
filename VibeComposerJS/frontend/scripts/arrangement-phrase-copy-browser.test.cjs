@@ -41,9 +41,9 @@ for (const width of [1440, 780]) test('real Ctrl mouse copy drag at '+width+'px'
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       const point = ${arrangementPoint};
       return {
-        source: point(canvas, 'Select Melody settings in INTRO,'),
-        track: point(canvas, 'Select M1 in INTRO. Present.'),
-        target: point(canvas, 'Select M1 in VERSE1. Absent.'),
+        source: point(canvas, 'cell:copy-section-0:melody'),
+        track: point(canvas, 'toggle:copy-section-0:track-melody-1'),
+        target: point(canvas, 'toggle:copy-section-1:track-melody-1'),
       };
     })()`);
     // Keep the pressed button on movement events so Chromium retains pointer capture.
@@ -58,6 +58,8 @@ for (const width of [1440, 780]) test('real Ctrl mouse copy drag at '+width+'px'
       await evaluate(`new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))`);
       assert.equal(await evaluate(`document.querySelector('vc-arrangement-overview canvas[tabindex]').getAttribute('data-copy-target')`),
         'toggle:copy-section-1:track-melody-1', 'real mouse movement highlights the destination track');
+      assert.equal(await evaluate(`[...document.querySelectorAll('vc-arrangement-overview [role="tooltip"], .cdk-overlay-pane.vc-tooltip-passive-pane [role="tooltip"]')]
+        .some(tip => tip.textContent === 'Copy notes here')`), true);
       await mouse('mouseReleased',points.target);
       await wait(`Object.keys(JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).arrangement[1].trackPhrases??{}).length===1`);
       const saved=await evaluate(`(()=>{const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));return Object.values(p.arrangement[1].trackPhrases)[0]})()`);

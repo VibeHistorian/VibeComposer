@@ -69,7 +69,7 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
         return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
       `);
       await command('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point });
-      return evaluate(`return (await wait(() => [...document.querySelectorAll('.vc-instant-tooltip')]
+      return evaluate(`return (await wait(() => [...document.querySelectorAll('.vc-tooltip')]
         .find(tip => tip.textContent.includes('MIDI channel')))).textContent.trim();`);
     };
     assert.equal(await hoverChannel('M1'), 'MIDI channel 4');
@@ -89,12 +89,12 @@ test('phrase lanes draw and save one undoable controller stroke through the scor
       return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, value: input.getAttribute('aria-valuetext') };
     `);
     await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: knob.x, y: knob.y });
-    const tooltip = await evaluate(`return (await wait(() => document.querySelector('.knob-tooltip'))).textContent;`);
+    const tooltip = await evaluate(`return (await wait(() => [...document.querySelectorAll('.vc-tooltip')].find(tip => tip.textContent.startsWith('Decay B1')))).textContent;`);
     assert.ok(tooltip.includes(knob.value) && tooltip.includes('Default'), 'hover shows the instrument default immediately');
     await command('Input.dispatchMouseEvent', { type: 'mousePressed', x: knob.x, y: knob.y, button: 'left', buttons: 1, clickCount: 1 });
     await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: knob.x, y: knob.y - 18, button: 'left', buttons: 1 });
     const preview = await evaluate(`
-      return (await wait(() => [...document.querySelectorAll('.knob-tooltip')].find(tip => !tip.textContent.includes('Default')))).textContent;
+      return (await wait(() => [...document.querySelectorAll('.vc-tooltip')].find(tip => tip.textContent.startsWith('Decay B1') && !tip.textContent.includes('Default')))).textContent;
     `);
     assert.equal(await evaluate(`return project()?.tracks.find(track => track.id === 'track-bass-1').instrumentTone ?? null;`), null);
     await command('Input.dispatchMouseEvent', { type: 'mouseReleased', x: knob.x, y: knob.y - 18, button: 'left', clickCount: 1 });

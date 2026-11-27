@@ -5,7 +5,7 @@
         <vc-select [options]="poolSelectOptions()" [selectDefault]="defaultInstrumentPolicies[role()].pool" aria-label="Instrument pool" [value]="instrumentPolicy().pool" [disabled]="disabled()" (valueChange)="changeInstrument('pool', $event)"></vc-select>
       </label>
     @if (kitControls().length) {
-      <label class="reroll-style" title="Favor this style’s grooves and sounds on future Kit rerolls">
+      <label class="reroll-style" vcTooltip="Favor this style’s grooves and sounds on future Kit rerolls">
         <span>Reroll style</span>
         <vc-select aria-label="Reroll style" [options]="drumStyleOptions" selectDefault="any"
           [value]="values()['rerollStyle'] ?? 'any'" [disabled]="disabled()" (valueChange)="changeDrumStyle($event)" />
@@ -22,9 +22,9 @@
         [active]="instrumentPolicy().sameInstrument === true" [disabled]="disabled()" (toggled)="toggleInstrument('sameInstrument')" />
     }
     <div class="seed-controls" role="group" [attr.aria-label]="role() + ' reseeding'">
-      <input type="checkbox" aria-label="Enable reseeding" title="Enable seed rerolling for this role" [checked]="values()['rerollSeeds'] === true" [disabled]="disabled()" (change)="toggleSeedPolicy('rerollSeeds')" />
+      <input type="checkbox" aria-label="Enable reseeding" vcTooltip="Enable seed rerolling for this role" [checked]="values()['rerollSeeds'] === true" [disabled]="disabled()" (change)="toggleSeedPolicy('rerollSeeds')" />
       <button class="vc-button" type="button" [disabled]="disabled() || !values()['rerollSeeds']" (click)="reseedRequested.emit()">Reseed</button>
-      <button type="button" class="same-seed vc-button vc-toggle" aria-label="Same seed" title="Use the same seed for all eligible tracks in this role" [attr.aria-pressed]="values()['sameSeed'] === true" [disabled]="disabled() || !values()['rerollSeeds']" (click)="toggleSeedPolicy('sameSeed')">==</button>
+      <button type="button" class="same-seed vc-button vc-toggle" aria-label="Same seed" vcTooltip="Use the same seed for all eligible tracks in this role" [attr.aria-pressed]="values()['sameSeed'] === true" [disabled]="disabled() || !values()['rerollSeeds']" (click)="toggleSeedPolicy('sameSeed')">==</button>
     </div>
   </div>
 }
@@ -50,7 +50,7 @@
           [minimum]="control.minimum" [maximum]="control.maximum!" [value]="numericValue(control)" [disabled]="inactive(control)"
           (valueCommit)="changeNumber(control, $event)" />
       } @else {
-      <label [attr.title]="control.label + (control.description ? ': ' + control.description : '')">
+      <label [vcTooltip]="control.label + (control.description ? ': ' + control.description : '')">
         <span>{{ control.label }}</span>
         @if (control.options) {
           <vc-select [options]="control.options" [selectDefault]="defaultValue(control)" [attr.aria-label]="'Reroll ' + control.label" [value]="values()[control.key]" [disabled]="inactive(control)" (valueChange)="change(control, $event)"></vc-select>

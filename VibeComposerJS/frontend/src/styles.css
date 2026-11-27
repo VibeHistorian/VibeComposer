@@ -2,13 +2,11 @@
 @import './fonts.css';
 @import './app/shared/buttons.css';
 @import './app/shared/choice-surfaces.css';
+@import './app/shared/tooltips.css';
 @import './app/features/settings/settings-rows.css';
 
 /* Appearance preview backdrop */
 .cdk-overlay-backdrop.appearance-preview { background: transparent; }
-.cdk-overlay-pane.instant-tooltip-pane { pointer-events: none; }
-.vc-instant-tooltip { display: block; padding: 3px 5px; border: 1px solid var(--border-strong); border-radius: var(--radius-tight);
-  background: var(--surface-base); color: var(--text-primary); font: 10px var(--font-mono); white-space: nowrap; pointer-events: none; }
 
 /* Theme tokens */
 :root {

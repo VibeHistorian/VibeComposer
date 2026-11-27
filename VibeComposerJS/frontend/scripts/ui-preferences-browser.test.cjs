@@ -129,7 +129,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         const summary = document.querySelector('.transport-project > span');
         const generatedProject = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
         ensure(summary.textContent.trim()==='SEED '+generatedProject.seed,'Seed hint shows actual generation seed');
-        ensure(summary.title.endsWith(generatedProject.tempoBpm+' BPM | SEED '+generatedProject.seed),'seed hint retains full song tooltip');
+        ensure(summary.getAttribute('aria-description').endsWith(generatedProject.tempoBpm+' BPM | SEED '+generatedProject.seed),'seed hint retains full song tooltip');
         for (const label of ['History', 'Settings']) {
           ensure(button(label).scrollWidth<=button(label).clientWidth, label+' text fits');
         }
@@ -648,7 +648,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         const mix = drumHeader.querySelector('.track-mix-controls');
         const pan = mix.querySelector('button[aria-label^="Auto pan "]');
         const volume = mix.querySelector('output.knob-value');
-        ensure(pan?.title.includes('Kit rerolls') && pan.textContent.trim() && !pan.textContent.includes('Auto'),'pan readout is the Auto toggle');
+        ensure(pan?.getAttribute('aria-description')?.includes('Kit rerolls') && pan.textContent.trim() && !pan.textContent.includes('Auto'),'pan readout is the Auto toggle');
         ensure(Math.abs(pan.getBoundingClientRect().top-volume.getBoundingClientRect().top)<1 &&
           Math.abs(pan.getBoundingClientRect().height-volume.getBoundingClientRect().height)<1,'pan and volume share the same readout line');
         const panText = pan.textContent.trim(), pressed = pan.getAttribute('aria-pressed');
@@ -839,7 +839,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
       await clickControl('.stop-button');
     }
     await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 0, y: 0 });
-    const restoredTitle = await command('Runtime.evaluate', { expression: `new Promise(resolve => requestAnimationFrame(() => resolve(document.querySelector('vc-menu-select.track-instrument:not([aria-disabled="true"])').title)))`, awaitPromise: true, returnByValue: true });
+    const restoredTitle = await command('Runtime.evaluate', { expression: `new Promise(resolve => requestAnimationFrame(() => resolve(document.querySelector('vc-menu-select.track-instrument:not([aria-disabled="true"])').getAttribute('aria-description'))))`, awaitPromise: true, returnByValue: true });
     assert.ok(restoredTitle.result.value.startsWith('Instrument:'), 'instrument tooltip remains available');
     const exported = JSON.parse(await readBrowserDownload(child, 'vibecomposer-ui-preferences.json'));
     assert.equal(exported.kind, 'vibecomposer-ui-preferences');

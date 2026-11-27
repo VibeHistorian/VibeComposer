@@ -46,26 +46,26 @@ test('recording backing advances transport and arrangement while x/X release and
   check(!document.querySelector('button[aria-label="Play other tracks"]').checked,'backing playback defaults off');
   for(const shifted of [false,true])for(let repeat=0;repeat<2;repeat++){
     press('keydown','KeyX',shifted?'X':'x',shifted);
-    await wait(()=>document.querySelector('.pitch-key.sounding[title="MIDI '+(shifted?89:88)+'"]'),'x/X starts again');
+    await wait(()=>document.querySelector('.pitch-key.sounding:not(.drum-label)[data-midi="'+(shifted?89:88)+'"]'),'x/X starts again');
     press('keyup','',shifted?'X':'x',shifted);
     await wait(()=>!document.querySelector('.pitch-key.sounding'),'x/X release clears highlight');
   }
   press('keydown','KeyY','y');
-  await wait(()=>document.querySelector('.pitch-key.sounding[title="MIDI 62"]'),'y melodic highlight');
+  await wait(()=>document.querySelector('.pitch-key.sounding:not(.drum-label)[data-midi="62"]'),'y melodic highlight');
   check([...document.querySelectorAll('.drum-label')].some(label=>label.textContent.includes('CONGA')),'matching GM drum row is visible: '+[...document.querySelectorAll('.drum-label')].map(label=>label.textContent).join(','));
   check(!document.querySelector('.drum-label.sounding'),'y does not highlight the drum sharing its MIDI number');
   press('keyup','KeyY','y');
   press('keydown','KeyQ','q');
-  await wait(()=>document.querySelector('.pitch-key.sounding[title="MIDI 53"]'),'idle keyboard key highlight');
+  await wait(()=>document.querySelector('.pitch-key.sounding:not(.drum-label)[data-midi="53"]'),'idle keyboard key highlight');
   port.onmidimessage({data:[0x90,60,100]});
-  await wait(()=>document.querySelector('.pitch-key.sounding[title="MIDI 60"]'),'idle MIDI key highlight');
+  await wait(()=>document.querySelector('.pitch-key.sounding:not(.drum-label)[data-midi="60"]'),'idle MIDI key highlight');
   press('keyup','KeyQ','q');
-  await wait(()=>!document.querySelector('.pitch-key.sounding[title="MIDI 53"]') && document.querySelector('.pitch-key.sounding[title="MIDI 60"]'),'independent key release');
+  await wait(()=>!document.querySelector('.pitch-key.sounding:not(.drum-label)[data-midi="53"]') && document.querySelector('.pitch-key.sounding:not(.drum-label)[data-midi="60"]'),'independent key release');
   port.onmidimessage({data:[0x80,60,0]});
   await wait(()=>!document.querySelector('.pitch-key.sounding'),'all idle keys released');
   check(button('Apply').disabled,'idle audition does not change the phrase');
   port.onmidimessage({data:[0x90,108,100]});
-  await wait(()=>document.querySelector('.pitch-key.sounding[title="MIDI 108"]'),'idle MIDI expands pitch view');
+  await wait(()=>document.querySelector('.pitch-key.sounding:not(.drum-label)[data-midi="108"]'),'idle MIDI expands pitch view');
   await wait(()=>document.querySelector('.keyboard-label.column-two'),'dense labels use two columns');
   for(const second of [false,true]){
     const boxes=[...document.querySelectorAll('.keyboard-label')].filter(label=>label.classList.contains('column-two')===second).map(label=>label.getBoundingClientRect()).sort((a,b)=>a.top-b.top);
@@ -80,15 +80,15 @@ test('recording backing advances transport and arrangement while x/X release and
   check(!document.querySelector('#note-pitch'),'count-in ignores early input');
   await wait(()=>document.querySelector('[aria-label="Recording beat"]'),'capture after count-in',1000);
   press('keydown','Digit1','!',true);
-  await wait(()=>document.querySelector('.pitch-key[title="MIDI 37"]'),'live pitch fits before release');
+  await wait(()=>document.querySelector('.pitch-key:not(.drum-label)[data-midi="37"]'),'live pitch fits before release');
   check(!!document.querySelector('[data-keyboard-midi="37"]'),'keyboard mapping appears on piano keys');
   const labels=[...document.querySelectorAll('.keyboard-label')];
   check(labels.length>1 && labels.every(label=>label.parentElement.classList.contains('score-gutter')),'labels belong to the common gutter');
   const right=labels.find(label=>!label.classList.contains('column-two')).getBoundingClientRect().right;
   check(labels.filter(label=>!label.classList.contains('column-two')).every(label=>Math.abs(label.getBoundingClientRect().right-right)<.1),'keyboard labels align in their column');
-  await wait(()=>document.querySelector('.pitch-key.sounding[title="MIDI 37"]'),'recorded input highlights piano key');
+  await wait(()=>document.querySelector('.pitch-key.sounding:not(.drum-label)[data-midi="37"]'),'recorded input highlights piano key');
   await pause(220);press('keyup','Digit1','!',true);
-  await wait(()=>!document.querySelector('.pitch-key.sounding[title="MIDI 37"]'),'recorded key clears on release');
+  await wait(()=>!document.querySelector('.pitch-key.sounding:not(.drum-label)[data-midi="37"]'),'recorded key clears on release');
   await wait(()=>document.querySelector('#note-pitch')?.value==='37','C sharp keyboard');
   check(document.querySelector('#note-length').value>0,'held keyboard duration');
   check(!!document.querySelector('vc-live-recording output'),'visible moving beat');

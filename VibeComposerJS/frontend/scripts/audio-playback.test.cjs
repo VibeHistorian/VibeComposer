@@ -830,6 +830,7 @@ function transportFixture() {
     '../../core/music/scales': require('./music-loader.cjs').loadMusic('scales.ts'),
     '../../core/ui/workspace-ui.service': { WorkspaceUiService: 'ui' },
     '../../shared/select.component': { SelectComponent: class {} },
+    '../../shared/tooltip.directive': {},
     '../../shared/menu-select.component': { MenuSelectComponent: class {} },
     '../harmony/scale-menu-groups': { SCALE_MENU_GROUPS: [] },
     '../../core/music/project-timeline': timelineModule,

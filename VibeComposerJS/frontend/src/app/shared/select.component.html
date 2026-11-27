@@ -19,10 +19,3 @@
     </div>
   </ng-template>
 </ng-template>
-@if (instantTooltip() && !combobox.expanded() && (tooltipHovered() || tooltipFocused())) {
-  <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="element.nativeElement"
-    [cdkConnectedOverlayOpen]="true" [cdkConnectedOverlayPositions]="tooltipPositions" [cdkConnectedOverlayPush]="true"
-    [cdkConnectedOverlayViewportMargin]="4" [cdkConnectedOverlayDisableClose]="true" cdkConnectedOverlayPanelClass="instant-tooltip-pane">
-    <span class="vc-instant-tooltip" role="tooltip">{{ instantTooltip() }}</span>
-  </ng-template>
-}

@@ -1,7 +1,9 @@
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
 @Component({
   selector: 'vc-part-scope-actions',
+  imports: [TooltipDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './part-scope-actions.component.html',
   styleUrl: './part-scope-actions.component.css',

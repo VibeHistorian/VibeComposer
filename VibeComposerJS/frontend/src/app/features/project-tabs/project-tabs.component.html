@@ -10,14 +10,14 @@
         <vc-context-menu [items]="items" (action)="action(tab.id, $event)">
           <button type="button" class="project-pill" [class.active]="projects.activeProjectTabId() === tab.id"
             [attr.aria-current]="projects.activeProjectTabId() === tab.id ? 'page' : null"
-            [disabled]="disabled()" [title]="tab.name + ' · Right-click for project actions'"
+            [disabled]="disabled()" [vcTooltip]="tab.name + '\nRight-click for project actions'"
             (click)="activate(tab.id)">{{ tab.name }}</button>
         </vc-context-menu>
       }
     }
   </div>
   <vc-context-menu [items]="newProjectItems()" (action)="newProject($event)">
-    <button type="button" class="branch-project" aria-label="Branch project" title="Create a checkpoint copy including undo and redo history · Right-click for a new empty or demo project"
+    <button type="button" class="branch-project" aria-label="Branch project" vcTooltip="Create a checkpoint copy including undo and redo history · Right-click for a new empty or demo project"
       [disabled]="disabled()" (click)="projects.checkpointProjectTab()">⎇</button>
   </vc-context-menu>
 </nav>

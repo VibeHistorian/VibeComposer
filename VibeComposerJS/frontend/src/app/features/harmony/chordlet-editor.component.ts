@@ -1,3 +1,4 @@
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, signal } from '@angular/core';
 import { ProjectService } from '../../core/project/project.service';
 import { BASE_KEY, CHORD_SPICES, inversionSuffix, stepChordInversion, SCALE_INTERVALS, scaleIntervalChord, KEYS, chordKeyOverlap, chordRootHue, chordRomanNumeral, effectiveKey, progressionChords, type ProgressionChord } from '../../core/music/harmony';
@@ -9,6 +10,7 @@ import { CHORD_SPICE_GROUPS } from '../../core/music/harmony';
 
 @Component({
   selector: 'vc-chordlet-editor', changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TooltipDirective],
   templateUrl: './chordlet-editor.component.html', styleUrl: './chordlet-editor.component.css',
   host: { '[attr.data-section-id]': "section()?.id ?? 'primary'", '(document:click)': 'outside($event)', '(document:keydown.escape)': 'escape()' },
 })
@@ -53,7 +55,7 @@ export class ChordletEditorComponent {
       return { spice, hue: chordRootHue(candidate.root, context.key), overlap,
         highlight: `${Math.round(6 + 56 * overlap.ratio ** 3)}%`,
         border: `${Math.round(20 + 60 * overlap.ratio ** 2)}%`,
-        title: `${KEYS[candidate.root]}${spice}: ${overlap.matching} of ${overlap.total} notes in ${context.key} ${SCALE_DEFINITIONS[context.scale].label}` };
+        tooltip: `${KEYS[candidate.root]}${spice}: ${overlap.matching} of ${overlap.total} notes in ${context.key} ${SCALE_DEFINITIONS[context.scale].label}` };
     });
   });
   readonly spiceGroups = computed(() => CHORD_SPICE_GROUPS.map(group => ({
@@ -70,7 +72,7 @@ export class ChordletEditorComponent {
       return { degree, intervals: candidate.intervals!, overlap, hue: chordRootHue(candidate.root, context.key),
         highlight: `${Math.round(6 + 56 * overlap.ratio ** 3)}%`, border: `${Math.round(20 + 60 * overlap.ratio ** 2)}%`,
         label: degree === 2 ? '2nd' : degree === 3 ? '3rd' : `${degree}th`,
-        title: `Root + scale-relative ${degree}: ${candidate.intervals![1]} semitones (${context.key} ${SCALE_DEFINITIONS[context.scale].label}). Saved as two fixed pitches; chromatic roots borrow the nearest scale degree.` };
+        tooltip: `Root + scale-relative ${degree}: ${candidate.intervals![1]} semitones (${context.key} ${SCALE_DEFINITIONS[context.scale].label}). Saved as two fixed pitches; chromatic roots borrow the nearest scale degree.` };
     });
   });
   intervalSelected(intervals: readonly number[]): boolean {

@@ -117,7 +117,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   }
   const tooltip = await evaluate(`(async()=>{${waitCode}
     const canvas=document.querySelector('vc-score-canvas canvas'),c=canvas.getBoundingClientRect();
-    const row=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();
+    const row=document.querySelector('.pitch-key:not(.drum-label)[data-midi="48"]').getBoundingClientRect();
     canvas.dispatchEvent(new PointerEvent('pointermove',{clientX:c.left+5,clientY:row.top+row.height/2}));
     const tip=await wait(()=>document.querySelector('.note-tooltip'));
     const result={text:tip.textContent,color:getComputedStyle(tip.querySelector('strong')).color,native:canvas.title,
@@ -199,7 +199,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     const shrink=()=>document.querySelector('[aria-label="Shrink piano roll to visible notes"]');
     const closeSettings=()=>document.querySelector('[aria-label="Close settings"]').click();
     const pitchRows=()=>JSON.stringify([...document.querySelectorAll('.pitch-key:not(.drum-label)')]
-      .map(row=>[row.title,row.style.top,row.style.height]));
+      .map(row=>[row.getAttribute('aria-description'),row.style.top,row.style.height]));
     const settle=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     const rowsAfter=async button=>{button.click();await settle();return pitchRows();};
     role.click();await wait(()=>!document.querySelector('.drum-label'));
@@ -234,14 +234,14 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     return document.querySelector('vc-score-canvas canvas')===before;
   })()`);assert.equal(filters,true);
   const overviewViewport=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');const c=canvas.getBoundingClientRect();canvas.dispatchEvent(new WheelEvent('wheel',{deltaY:-346.57,ctrlKey:true,clientX:c.left,clientY:c.top+10,bubbles:true,cancelable:true}));const content=document.querySelector('vc-score-canvas .horizontal-scroll > div');return content.style.width;})()`);
-  const point=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});const c=canvas.getBoundingClientRect(),key=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();return {x:c.left+c.width/32,y:key.top+key.height/2};})()`);
+  const point=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});const c=canvas.getBoundingClientRect(),key=document.querySelector('.pitch-key:not(.drum-label)[data-midi="48"]').getBoundingClientRect();return {x:c.left+c.width/32,y:key.top+key.height/2};})()`);
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});await command('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
   const edit=await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('#note-velocity'));return {arrangement:!!document.querySelector('vc-arrangement-overview canvas'),settings:!!document.querySelector('.part-settings-panel'),local:[...document.querySelectorAll('.score-display-header button')].some(b=>b.textContent==='Local Apply'),noStepGrid:!document.querySelector('.drum-grid')};})()`);for(const v of Object.values(edit))assert.equal(v,true);
   await capture('unified-score-edit');
   assert.equal(await evaluate(`(() => {
     const canvas = document.querySelector('vc-score-canvas canvas').getBoundingClientRect();
     return [22, 48, 98].every(midi => {
-      const row = document.querySelector('.pitch-key[title="MIDI ' + midi + '"]')?.getBoundingClientRect();
+      const row = document.querySelector('.pitch-key:not(.drum-label)[data-midi="' + midi + '"]')?.getBoundingClientRect();
       return row && row.top >= canvas.top - 1 && row.bottom <= canvas.bottom + 1;
     });
   })()`), true, 'clicking a note fits the full phrase pitch range after the editor layout settles');
@@ -254,7 +254,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   })()`), true, 'phrase inspector colors follow the edited bass track rather than the remembered arpeggio');
   assert.equal(await evaluate(`(async()=>{${waitCode}
     const canvas=document.querySelector('vc-score-canvas canvas'), bounds=canvas.getBoundingClientRect();
-    const row=document.querySelector('.pitch-key[title="MIDI 60"]').getBoundingClientRect();
+    const row=document.querySelector('.pitch-key:not(.drum-label)[data-midi="60"]').getBoundingClientRect();
     const position=document.querySelector('[aria-label="Song position"]');
     const before=Number(position.getAttribute('aria-valuenow'));
     const saved=sessionStorage.getItem('vibecomposer.project.v12');
@@ -283,7 +283,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   })()`),true,'arrows move by measure after focusing the phrase grid with the pointer');
   const placementStarts=await evaluate(`(async()=>{${waitCode}
     const canvas=document.querySelector('vc-score-canvas canvas'),bounds=canvas.getBoundingClientRect();
-    const row=document.querySelector('.pitch-key[title="MIDI 60"]').getBoundingClientRect();
+    const row=document.querySelector('.pitch-key:not(.drum-label)[data-midi="60"]').getBoundingClientRect();
     const starts=[];
     const apply=()=>[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent==='Apply');
     const point={bubbles:true,cancelable:true,button:0,pointerId:1,clientX:bounds.left+bounds.width*.637,clientY:row.top+row.height/2};
@@ -372,7 +372,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     const apply=()=>[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent==='Apply');
     const key=key=>document.querySelector('vc-score-canvas canvas').dispatchEvent(new KeyboardEvent('keydown',{key,ctrlKey:true,bubbles:true,cancelable:true}));
     await change(transpose,'7');await wait(()=>pitch().value==='55');
-    if(!apply().disabled || !document.querySelector('.pitch-key[title="MIDI 55"].in-scale')) throw Error('Transpose must update the roll and scale without dirtying the draft');
+    if(!apply().disabled || !document.querySelector('.pitch-key:not(.drum-label)[data-midi="55"].in-scale')) throw Error('Transpose must update the roll and scale without dirtying the draft');
     await change(pitch(),'57');await wait(()=>!apply().disabled);
     await change(transpose,'-5');await wait(()=>pitch().value==='45');
     key('z');await wait(()=>pitch().value==='43' && apply().disabled);
@@ -381,7 +381,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     key('z');await wait(()=>pitch().value==='48' && apply().disabled);
     return true;
   })()`),true,'open phrase follows global transpose while preserving draft edits and history');
-  const middleStart=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');const c=canvas.getBoundingClientRect();const row=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();const section=document.querySelector(".score-ruler-section").getBoundingClientRect();return {x:section.left+section.width/32,y:row.top+row.height/2};})()`);
+  const middleStart=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');const c=canvas.getBoundingClientRect();const row=document.querySelector('.pitch-key:not(.drum-label)[data-midi="48"]').getBoundingClientRect();const section=document.querySelector(".score-ruler-section").getBoundingClientRect();return {x:section.left+section.width/32,y:row.top+row.height/2};})()`);
   await command('Input.dispatchMouseEvent',{type:'mouseMoved',...middleStart,modifiers:1});
   await capture('velocity-hover');
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...middleStart,button:'left',modifiers:1,clickCount:1});
@@ -410,7 +410,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   const smart=await evaluate(`(async()=>{${waitCode}
     const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
     // Let the gutter labels catch up with the restored overview before measuring the click target.
-    const open=async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const canvas=document.querySelector('vc-score-canvas canvas'),c=canvas.getBoundingClientRect(),row=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();const point={bubbles:true,button:0,clientX:c.left+5,clientY:row.top+row.height/2};canvas.dispatchEvent(new PointerEvent('pointerdown',point));canvas.dispatchEvent(new MouseEvent('click',point));await wait(()=>document.querySelector('#note-velocity'));};
+    const open=async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const canvas=document.querySelector('vc-score-canvas canvas'),c=canvas.getBoundingClientRect(),row=document.querySelector('.pitch-key:not(.drum-label)[data-midi="48"]').getBoundingClientRect();const point={bubbles:true,button:0,clientX:c.left+5,clientY:row.top+row.height/2};canvas.dispatchEvent(new PointerEvent('pointerdown',point));canvas.dispatchEvent(new MouseEvent('click',point));await wait(()=>document.querySelector('#note-velocity'));};
     const exit=()=>{const canvas=document.querySelector('vc-score-canvas canvas'),c=canvas.getBoundingClientRect(),p={bubbles:true,cancelable:true,button:1,pointerId:7,clientX:c.left+c.width*.7,clientY:c.top+20};canvas.dispatchEvent(new PointerEvent('pointerdown',p));canvas.dispatchEvent(new PointerEvent('pointerup',p));canvas.dispatchEvent(new MouseEvent('auxclick',p));};
     await open();const input=document.querySelector('#note-velocity');await changeControl(input, '119');exit();
     await wait(()=>!document.querySelector('#note-velocity'));
@@ -641,9 +641,9 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     await command('Page.reload');
     const removal=await evaluate(`(async()=>{${waitCode}
       const canvas=await wait(()=>document.querySelector('vc-score-canvas canvas'));
-      await wait(()=>document.querySelector('.pitch-key[title="MIDI 48"]'));
+      await wait(()=>document.querySelector('.pitch-key:not(.drum-label)[data-midi="48"]'));
       await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-      const c=canvas.getBoundingClientRect(),row=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();
+      const c=canvas.getBoundingClientRect(),row=document.querySelector('.pitch-key:not(.drum-label)[data-midi="48"]').getBoundingClientRect();
       const point={bubbles:true,cancelable:true,clientX:c.left+c.width/16,clientY:row.top+row.height/2};
       canvas.dispatchEvent(new PointerEvent('pointerdown',{...point,button:1}));
       await new Promise(r=>requestAnimationFrame(r));
@@ -724,7 +724,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
       const bounds = section.getBoundingClientRect();
       const lastSlot = [...section.querySelectorAll('.score-chord-slot')].at(-1);
       const pixelsPerBeat = bounds.width / Number(lastSlot.dataset.endBeat);
-      const row = document.querySelector(${JSON.stringify(pitch === 'drum' ? '.drum-label' : '.pitch-key:not(.drum-label)[title="MIDI ' + pitch + '"]')}).getBoundingClientRect();
+      const row = document.querySelector(${JSON.stringify(pitch === 'drum' ? '.drum-label' : '.pitch-key:not(.drum-label)[data-midi="' + pitch + '"]')}).getBoundingClientRect();
       const y = row.top + row.height / 2;
       return { from: { x: bounds.left + 2 * pixelsPerBeat, y }, to: { x: bounds.left + ${beat} * pixelsPerBeat, y } };
     })()`);
@@ -763,7 +763,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     const lastSlot = [...section.querySelectorAll('.score-chord-slot')].at(-1);
     const pixelsPerBeat = bounds.width / Number(lastSlot.dataset.endBeat);
     const pitchCenter = midi => {
-      const row = document.querySelector('.pitch-key[title="MIDI ' + midi + '"]').getBoundingClientRect();
+      const row = document.querySelector('.pitch-key:not(.drum-label)[data-midi="' + midi + '"]').getBoundingClientRect();
       return row.top + row.height / 2;
     };
     const x = bounds.left + 2;

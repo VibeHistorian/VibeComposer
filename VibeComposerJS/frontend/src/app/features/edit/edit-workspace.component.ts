@@ -1,3 +1,4 @@
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { withoutManualAdjustments } from '../../core/music/manual-phrase-processing';
 import { convertManualPhrase } from '../../core/music/manual-phrase-mode';
 import { MAX_DRUM_SOUNDS } from '../../core/music/drum-instruments';
@@ -41,7 +42,7 @@ export interface PhraseDraftNote extends PhraseNote { readonly trackId: string; 
 
 @Component({
   selector: 'vc-edit-workspace',
-  imports: [LiveRecordingComponent, SelectComponent, TitleCasePipe],
+  imports: [TooltipDirective, LiveRecordingComponent, SelectComponent, TitleCasePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-workspace.component.html',
   styleUrl: './edit-workspace.component.css',

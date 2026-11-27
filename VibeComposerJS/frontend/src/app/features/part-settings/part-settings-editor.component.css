@@ -65,7 +65,7 @@
 .part-control:has(.arp-preview) .control-content { gap: 3px; }
 .part-control:has(.arp-preview) :is(vc-select, vc-menu-select) { height: 22px; }
 .arp-preview { height: 18px; }
-.sequence-tooltip { box-sizing: border-box; width: max-content; max-width: min(480px, calc(100vw - 16px)); padding: 6px 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-base); color: var(--text-primary); box-shadow: 0 4px 16px var(--shadow-ink); font: 11px/1.5 var(--font-mono); pointer-events: none; }
+.sequence-tooltip { --tooltip-max-width: 480px; white-space: normal; }
 .sequence-tooltip .highlighted { color: hsl(from var(--accent-primary) calc(h + 180) s l); font-weight: 700; }
 /* Duration preview */
 .duration-preview { display: block; position: relative; }

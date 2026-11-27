@@ -1,38 +1,39 @@
 <div class="scope-actions" [class.header-actions]="layout() === 'header'">
   @if (layout() === 'header') {
+    @let overridesMatch = hasOverrides() && !resetChangesValues();
     <button type="button" class="reset-icon vc-button" [class.values-match]="!resetChangesValues()"
       [disabled]="!hasOverrides()" (click)="inheritRequested.emit()"
-      [title]="hasOverrides() && !resetChangesValues() ? 'Values already match inherited settings. Remove stored overrides to follow future inherited changes.' : 'Reset to inherited'"
+      [vcTooltip]="overridesMatch ? 'Values already match inherited settings. Remove stored overrides to follow future inherited changes.' : 'Reset to inherited'"
       aria-label="Reset to inherited"><span aria-hidden="true">↺</span></button>
   }
   <button class="vc-button" type="button" [class.freeze-icon]="layout() === 'header'" (click)="freezeRequested.emit()"
     [attr.aria-label]="group() ? 'Freeze current tracks' : 'Freeze effective settings'"
-    title="Store all supported effective musical settings as individual track overrides in this section.">
+    vcTooltip="Store all supported effective musical settings as individual track overrides in this section.">
     @if (layout() === 'header') { <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9" /></svg> }
     @else { {{ group() ? 'Freeze current tracks' : 'Freeze effective settings' }} }
   </button>
   @if (group() && (hasOverrides() || hasExceptions())) {
     <button class="vc-button" type="button" (click)="resetCellRequested.emit()"
-      title="Remove both this cell’s overrides and all its individual track overrides. Global settings and manual notes are preserved.">
+      vcTooltip="Remove both this cell’s overrides and all its individual track overrides. Global settings and manual notes are preserved.">
       Reset cell + track overrides
     </button>
   }
   <span class="action-separator" aria-hidden="true">|</span>
   <button class="vc-button" type="button" [disabled]="!destinationCount() || !canCopyOverrides()" (click)="applyRequested.emit('overrides')"
-    title="Copy this cell or track’s explicit overrides to the other header-selected sections. Preserve their other settings and track exceptions; exclude the source section.">
+    vcTooltip="Copy this cell or track’s explicit overrides to the other header-selected sections. Preserve their other settings and track exceptions; exclude the source section.">
     Copy to {{ destinationCount() > 1 ? 'Sections' : 'Section' }} ({{ destinationCount() }})
   </button>
   <button class="vc-button" type="button" [disabled]="!destinationCount() || !canCopyEffective()" (click)="applyRequested.emit('effective')"
-    title="Copy all effective musical settings for the current tracks to the other header-selected sections, replacing those tracks’ overrides. Preserve mixed values, presence, instruments and manual notes; exclude the source section.">
+    vcTooltip="Copy all effective musical settings for the current tracks to the other header-selected sections, replacing those tracks’ overrides. Preserve mixed values, presence, instruments and manual notes; exclude the source section.">
     Copy All to {{ destinationCount() > 1 ? 'Sections' : 'Section' }} ({{ destinationCount() }})
   </button>
   <button class="vc-button" type="button" [disabled]="!canCopyGlobals()" (click)="globalsRequested.emit()"
-    title="Copy all effective musical settings to each current track’s global settings, including individual track exceptions. Preserve mixed values per track and retain all section overrides, instruments, presence and manual notes.">
+    vcTooltip="Copy all effective musical settings to each current track’s global settings, including individual track exceptions. Preserve mixed values per track and retain all section overrides, instruments, presence and manual notes.">
     Copy to Globals
   </button>
   @if (message(); as feedback) {
     <span role="status">
-    <button type="button" class="workflow-message vc-button" [title]="feedback + ' Click to dismiss.'"
+    <button type="button" class="workflow-message vc-button" [vcTooltip]="feedback + ' Click to dismiss.'"
       [attr.aria-label]="feedback + ' Dismiss status.'" (click)="feedbackDismissed.emit()">
       <span aria-hidden="true">{{ feedback.startsWith('No settings changed') ? '!' : '✓' }}</span>
       <span class="feedback-text">{{ feedback }}</span>

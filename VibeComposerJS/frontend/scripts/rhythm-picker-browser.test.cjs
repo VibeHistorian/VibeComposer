@@ -368,15 +368,26 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => sequenceCompact.checked, 'compact sequence history on');
         document.querySelector('[aria-label="Close settings"]').click();
         await waitFor(() => !document.querySelector('vc-settings-dialog'), 'sequence history settings closed');
+        const targetsTrigger = document.querySelector('[aria-label="Edit melody targets"]');
+        const targetPreview = targetsTrigger.querySelector('vc-numeric-sequence-preview').getBoundingClientRect();
+        const sequenceFrames = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        targetsTrigger.dispatchEvent(new PointerEvent('pointerenter', { clientX: targetPreview.left + targetPreview.width / 2 }));
+        await sequenceFrames();
+        const targetTooltip = document.querySelector('.sequence-tooltip');
+        if (targetTooltip?.textContent.trim().replaceAll(' ', '') !== '0,4,-2'
+          || targetTooltip.querySelector('.highlighted')?.textContent !== '4') throw new Error('targets show their numeric steps immediately');
+        targetsTrigger.dispatchEvent(new PointerEvent('pointerleave'));
+        await waitFor(() => !targetTooltip.isConnected, 'target hover clears');
         const wordsTrigger = () => document.querySelector('[aria-label="Edit melody words"]');
         const wordColumnX = column => {
           const bounds = wordsTrigger().querySelector('vc-numeric-sequence-preview').getBoundingClientRect();
           return bounds.left + (column + .5) * bounds.width / 3;
         };
         wordsTrigger().dispatchEvent(new PointerEvent('pointerenter', { clientX: wordColumnX(1) }));
-        const wordTooltip = await waitFor(() => document.querySelector('.sequence-tooltip'), 'immediate word tooltip');
+        await sequenceFrames();
+        const wordTooltip = document.querySelector('.sequence-tooltip');
         const wordHighlight = await waitFor(() => wordsTrigger().querySelector('.step-highlight'), 'hovered word highlight');
-        if (wordTooltip.querySelector('.highlighted')?.textContent !== '-1'
+        if (wordTooltip?.querySelector('.highlighted')?.textContent !== '-1'
           || Math.abs(parseFloat(wordHighlight.style.left) - 50) >= 1) throw new Error('word tooltip and dot should indicate the middle step');
         const nudgeWord = (column, deltaY) => {
           wordsTrigger().dispatchEvent(new WheelEvent('wheel', {
@@ -666,7 +677,7 @@ test('production Angular controls initialize selects from settings and support r
         const drumLabels = [...document.querySelectorAll('.track-group.drums .track-instrument')]
           .map(select => select.textContent.trim());
         result.allDrumsEditor = await waitFor(() => document.querySelector('#inspector-title')?.textContent.trim().endsWith('Drums notes')
-          && drumLabels.every(label => [...document.querySelectorAll('vc-score-canvas .drum-label')].some(row => row.title.toUpperCase() === label.toUpperCase())), 'all drum pitches in the score editor');
+          && drumLabels.every(label => [...document.querySelectorAll('vc-score-canvas .drum-label')].some(row => row.getAttribute('aria-description').toUpperCase() === label.toUpperCase())), 'all drum pitches in the score editor');
         [...document.querySelectorAll('.score-display-header button')].find(button => button.textContent.trim() === 'Cancel').click();
         await waitFor(() => !document.querySelector('.score-display-header')
           && !document.querySelector('.track-group.drums .group-select').disabled, 'close drum editor');

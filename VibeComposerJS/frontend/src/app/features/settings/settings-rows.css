@@ -32,10 +32,3 @@
 /* Explainer tooltips */
 :where(vc-settings-dialog.explainers-as-tooltips, .explainers-as-tooltips vc-settings-dialog) .setting-row { position: relative; }
 :where(vc-settings-dialog.explainers-as-tooltips, .explainers-as-tooltips vc-settings-dialog) .setting-copy p { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-:where(vc-settings-dialog.explainers-as-tooltips, .explainers-as-tooltips vc-settings-dialog) .setting-row:hover .setting-copy p,
-:where(vc-settings-dialog.explainers-as-tooltips, .explainers-as-tooltips vc-settings-dialog) .setting-row:focus-within .setting-copy p {
-  top: 100%; left: 0; z-index: 10; width: min(460px, 100%); height: auto; padding: 10px;
-  overflow: visible; clip-path: none; white-space: normal;
-  border: 1px solid var(--border-strong); border-radius: var(--radius-control);
-  background: var(--surface-base); color: var(--text-primary); box-shadow: 0 4px 16px var(--shadow-ink);
-}

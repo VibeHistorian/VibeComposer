@@ -18,32 +18,32 @@
         <section class="track-group" [class]="'track-group ' + group.role" [class.group-selected]="selectedRole() === group.role">
           <header class="group-heading">
             <button type="button" class="group-select" [disabled]="editing()" [attr.aria-pressed]="selectedRole() === group.role" [attr.aria-expanded]="!isGroupCollapsed(group.role)" (click)="selectRoleHeading(group.role)"
-              [attr.aria-label]="group.name" [title]="group.name + ' — Select role; middle-click to solo only this role'" (mousedown)="preventSelectionScroll($event)" (auxclick)="soloSelection($event, roleTrackIds(group.role))">
+              [attr.aria-label]="group.name" [vcTooltip]="group.name + ' — Select role; middle-click to solo only this role'" (mousedown)="preventSelectionScroll($event)" (auxclick)="soloSelection($event, roleTrackIds(group.role))">
               <svg class="group-role-icon" viewBox="0 0 36 36" width="24" height="24" aria-hidden="true" focusable="false"><use [attr.href]="'role-icons.svg#' + group.role" /></svg>
             </button>
             <vc-mix-buttons class="group-mix-controls" [trackIds]="roleTrackIds(group.role)" [label]="group.name + ' tracks'" />
             <div class="group-policy-toggles">
               <button type="button" class="group-policy-toggle vc-button vc-toggle vc-toggle-steady" aria-label="On Compose"
-                title="On Compose: reroll this role's track settings when composing"
+                vcTooltip="On Compose: reroll this role's track settings when composing"
                 [class.active]="policyFor(group.role).onCompose === true" [attr.aria-pressed]="policyFor(group.role).onCompose === true"
                 [disabled]="editing()" (click)="updateRolePolicy(group.role, { onCompose: !policyFor(group.role).onCompose })">✦</button>
               <button type="button" class="group-policy-toggle vc-button vc-toggle vc-toggle-steady" aria-label="Randomize instruments"
-                title="Randomize instruments: choose instruments on settings rerolls and when increasing the track total"
+                vcTooltip="Randomize instruments: choose instruments on settings rerolls and when increasing the track total"
                 [class.active]="instrumentPolicyFor(group.role).randomize" [attr.aria-pressed]="instrumentPolicyFor(group.role).randomize"
                 [disabled]="editing()" (click)="updateInstrumentPolicy(group.role, { randomize: !instrumentPolicyFor(group.role).randomize })">♪</button>
             </div>
             <input class="group-count" type="number" [min]="minimumRoleCount()[group.role]" [max]="64 - project().tracks.length + tracksFor(group.role).length" step="1"
-              [attr.aria-label]="group.name + ' track count'" title="Change total tracks; locked tracks are kept"
+              [attr.aria-label]="group.name + ' track count'" vcTooltip="Change total tracks; locked tracks are kept"
               [value]="tracksFor(group.role).length" [disabled]="editing()" (focus)="$any($event.target).select()"
               (keydown.enter)="$any($event.target).blur()" (change)="changeRoleCount(group.role, $event)" />
             <button type="button" class="add-track-button vc-button" [disabled]="editing()" (click)="addTrack(group.role)"
-              [attr.aria-label]="'Add ' + group.name + ' track'" [title]="'Add ' + group.name + ' track'">＋</button>
-              <button type="button" class="add-track-button vc-button" [attr.aria-label]="'Reroll ' + group.name + ' tracks'" [title]="'Reroll unlocked ' + group.name + ' track settings'"
+              [attr.aria-label]="'Add ' + group.name + ' track'" [vcTooltip]="'Add ' + group.name + ' track'">＋</button>
+              <button type="button" class="add-track-button vc-button" [attr.aria-label]="'Reroll ' + group.name + ' tracks'" [vcTooltip]="'Reroll unlocked ' + group.name + ' track settings'"
                 [disabled]="editing() || !canRerollRole(group.role)" (click)="rerollRole(group.role)">↻</button>
-            <vc-context-menu [items]="presetContextItems(group.role)" (action)="loadQuickPreset(group.role, $event)"><button type="button" class="add-track-button vc-button" [disabled]="editing()" [attr.aria-label]="group.name + ' preset manager'" (contextmenu)="refreshQuickPresets($event)" title="Manage track presets · Right-click for quick presets · Shift+right-click to invert Replace" aria-haspopup="dialog" (click)="openTrackPresets(group.role)">☰</button></vc-context-menu>
+            <vc-context-menu [items]="presetContextItems(group.role)" (action)="loadQuickPreset(group.role, $event)"><button type="button" class="add-track-button vc-button" [disabled]="editing()" [attr.aria-label]="group.name + ' preset manager'" (contextmenu)="refreshQuickPresets($event)" vcTooltip="Manage track presets · Right-click for quick presets · Shift+right-click to invert Replace" aria-haspopup="dialog" (click)="openTrackPresets(group.role)">☰</button></vc-context-menu>
             <button type="button" class="collapse-group-button vc-button" [disabled]="editing()" [attr.aria-expanded]="!isGroupCollapsed(group.role)"
               [attr.aria-label]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' randomization settings'"
-              [title]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' randomization settings'"
+              [vcTooltip]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' randomization settings'"
               (click)="toggleGroupCollapsed(group.role)">{{ isGroupCollapsed(group.role) ? '›' : '▵' }}</button>
           </header>
           <div class="track-policy-header">
@@ -61,7 +61,7 @@
               <span class="track-row-gradient" aria-hidden="true"></span>
               <div class="track-line" (click)="selectTrack(track.id)">
                 <vc-context-menu [items]="trackContextItems(track)" (action)="trackContextAction(track.id, $event)"><button type="button" class="track-select" [disabled]="editing()"
-                  title="Select track; middle-click to solo only this track" (mousedown)="preventSelectionScroll($event)" (auxclick)="soloSelection($event, [track.id])"
+                  [vcTooltip]="track.name + '\nMiddle-click to solo only this track'" (mousedown)="preventSelectionScroll($event)" (auxclick)="soloSelection($event, [track.id])"
                   [attr.aria-pressed]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
                   <span>{{ track.name }}</span>
                 </button></vc-context-menu>
@@ -70,21 +70,21 @@
                   <button type="button" [disabled]="editing()" [attr.aria-pressed]="track.rerollLocked ?? false"
                     [class.parameter-locks-active]="!track.rerollLocked && !!track.parameterLocks?.length"
                     [class.global-phrase-edited]="hasGlobalEdit"
-                    [attr.title]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name + (hasGlobalEdit ? ' · Globally edited phrase' : '')"
+                    [vcTooltip]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name + (hasGlobalEdit ? ' · Globally edited phrase' : '')"
                     [attr.aria-label]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
                     [attr.aria-description]="hasGlobalEdit ? 'Globally edited phrase' : null"
                     (click)="projects.setTrackRerollLock(track.id, !track.rerollLocked)">🔒︎</button>
-                  <button type="button" [disabled]="editing() || track.rerollLocked" [attr.aria-label]="'Reroll ' + track.name" [title]="'Reroll ' + track.name"
+                  <button type="button" [disabled]="editing() || track.rerollLocked" [attr.aria-label]="'Reroll ' + track.name" [vcTooltip]="'Reroll ' + track.name"
                     (click)="rerollRole(track.role, track.id)">↻</button>
                 </div>
                 <div class="track-routing">
                   @if (track.role === 'drums') {
                     <vc-menu-select [groups]="drumMenuGroups" [options]="drumSelectOptions()[track.id]" class="track-inline-select track-instrument" [attr.aria-label]="'Percussion instrument ' + track.name"
-                      [selectDefault]="36" [value]="drumPitch(track)" [title]="'Percussion instrument: ' + instrumentName(track)"
+                      [selectDefault]="36" [value]="drumPitch(track)" [vcTooltip]="'Percussion instrument: ' + instrumentName(track)"
                       (click)="$event.stopPropagation()" (valueChange)="updateDrumPitch(track, $event)"></vc-menu-select>
                   } @else {
                     <vc-menu-select [groups]="instrumentMenuGroups" [options]="instrumentSelectOptions()[track.id]" class="track-inline-select track-instrument" [attr.aria-label]="'Instrument ' + track.name"
-                      [selectDefault]="defaultMix[track.role].program" [value]="track.mix.program" [title]="'Instrument: ' + instrumentName(track)"
+                      [selectDefault]="defaultMix[track.role].program" [value]="track.mix.program" [vcTooltip]="'Instrument: ' + instrumentName(track)"
                       (click)="$event.stopPropagation()" (valueChange)="updateInstrument(track, $event)"></vc-menu-select>
                   }
                   @let glides = channelGlides().get(track.midiChannel);
@@ -93,7 +93,7 @@
                   <vc-select [options]="channelSelectOptions()" class="track-inline-select track-channel" [attr.aria-label]="'MIDI channel ' + track.name"
                     [selectDefault]="defaultChannel(track)" [value]="track.midiChannel" [disabled]="editing() || track.role === 'drums'"
                     [class.has-pitch-glide]="pitchGlide" [class.has-volume-glide]="volumeGlide"
-                    [instantTooltip]="channelTooltip(track, pitchGlide, volumeGlide)"
+                    [vcTooltip]="channelTooltip(track, pitchGlide, volumeGlide)"
                     (click)="$event.stopPropagation()" (valueChange)="updateChannel(track, $event)"></vc-select>
                   <div class="track-routing-details">
                     @if (track.role !== 'drums') {
@@ -115,7 +115,7 @@
                     <div class="track-voice-routing">
                       <vc-select [options]="voiceModeOptions" class="track-inline-select track-voice-mode" [attr.aria-label]="'Voice mode ' + track.name"
                         [value]="track.voiceMode ?? 'poly'" selectDefault="poly" [disabled]="editing()"
-                        title="Poly plays chords. Mono plays one note at a time. Legato keeps one voice through overlapping notes."
+                        vcTooltip="Poly plays chords. Mono plays one note at a time. Legato keeps one voice through overlapping notes."
                         (click)="$event.stopPropagation()" (valueChange)="updateVoiceMode(track, $event)" />
                       <div class="track-glide-slot">
                         @if (track.voiceMode && track.voiceMode !== 'poly') {
@@ -151,7 +151,7 @@
     </div>
     <section class="track-group all-role-group" aria-label="All roles">
       <header class="group-heading">
-        <button type="button" class="group-select all-role-label" aria-label="All roles" title="Expand all-role settings"
+        <button type="button" class="group-select all-role-label" aria-label="All roles" [vcTooltip]="(allRoleExpanded() ? 'Collapse' : 'Expand') + ' all-role settings'"
           [attr.aria-expanded]="allRoleExpanded()" (click)="allRoleExpanded.update(toggleBoolean)"><span class="group-role-icon all-role-icon" aria-hidden="true">🛠︎</span></button>
         <vc-mix-buttons class="group-mix-controls" [trackIds]="allTrackIds()" label="all tracks" [allowExclusive]="false" />
         <div class="all-role-level">
@@ -160,14 +160,14 @@
             (valuePreview)="previewMasterVolume($event)" (valueCommit)="updateMasterVolume($event)" />
         </div>
         <button type="button" class="add-track-button vc-button" aria-label="Reroll all tracks"
-          title="Reroll unlocked tracks in roles with On Compose enabled · Shift+click: all roles, overriding role toggles"
+          vcTooltip="Reroll unlocked tracks in roles with On Compose enabled · Shift+click: all roles, overriding role toggles"
           [disabled]="editing() || !canRerollAll()" (click)="rerollAll(false, $event.shiftKey)">↻</button>
         <button type="button" class="add-track-button vc-button" aria-label="Reroll all instruments"
-          title="Reroll unlocked instruments in roles with Randomize instruments enabled · Shift+click: all roles"
+          vcTooltip="Reroll unlocked instruments in roles with Randomize instruments enabled · Shift+click: all roles"
           [disabled]="editing() || !canRerollAll()" (click)="rerollAll(true, $event.shiftKey)">♪</button>
         <vc-context-menu [items]="presetContextItems('all')" (action)="loadQuickPreset('all', $event)">
           <button type="button" class="add-track-button vc-button" [disabled]="editing()" aria-label="All roles preset manager"
-            (contextmenu)="refreshQuickPresets($event)" title="Manage multi-role presets · Right-click for quick presets · Shift+right-click to invert Replace"
+            (contextmenu)="refreshQuickPresets($event)" vcTooltip="Manage multi-role presets · Right-click for quick presets · Shift+right-click to invert Replace"
             aria-haspopup="dialog" (click)="openTrackPresets('all')">☰</button>
         </vc-context-menu>
         <button type="button" class="collapse-group-button vc-button" [attr.aria-expanded]="allRoleExpanded()"
@@ -248,7 +248,7 @@
             }
             <button type="button" class="part-panel-toggle vc-button" [disabled]="preferences.editingQuickSettings()" [attr.aria-expanded]="partPanelExpanded()"
               [attr.aria-label]="(partPanelExpanded() ? 'Collapse ' : 'Expand ') + partPanelLabel()"
-              [title]="(partPanelExpanded() ? 'Collapse ' : 'Expand ') + partPanelLabel()"
+              [vcTooltip]="(partPanelExpanded() ? 'Collapse ' : 'Expand ') + partPanelLabel()"
               aria-controls="part-settings-content" (click)="partPanelExpanded.set(!partPanelExpanded())">
               <span aria-hidden="true">{{ partPanelExpanded() ? '▵' : '›' }}</span>
             </button>
@@ -299,7 +299,7 @@
                 @for (group of roles; track group.role) {
                   <button type="button" [class.active]="displayedRoles().has(group.role)"
                     [attr.aria-pressed]="displayedRoles().has(group.role)" [attr.aria-label]="group.name"
-                    [title]="group.name + ' — Middle-click to solo/reset'" (click)="toggleScoreRole(group.role)"
+                    [vcTooltip]="group.name + ' — Middle-click to solo/reset'" (click)="toggleScoreRole(group.role)"
                     (mousedown)="$event.button === 1 && $event.preventDefault()"
                     (auxclick)="soloScoreRole($event, group.role)"><i class="role-dot" [class]="group.role" aria-hidden="true"></i></button>
                 }
@@ -323,11 +323,11 @@
                         <span class="score-chord-slot" [style.left.px]="slot.left" [style.width.px]="slot.width" [style.--chord-hue]="slot.chord.hue"
                           [attr.data-start-beat]="slot.startBeat" [attr.data-end-beat]="slot.endBeat">
                           @if (slot.measureRange) {
-                            <span class="score-section-measure" [title]="slot.measureRange">
+                            <span class="score-section-measure" [vcTooltip]="slot.measureRange" vcTooltipInstant>
                               <span class="measure-range">{{ slot.measureRange }}</span><span class="measure-end">{{ slot.endMeasure }}</span>
                             </span>
                           }
-                          <span class="score-chord-label" [title]="slot.chord.label" [attr.data-short]="slot.chord.label.slice(0, 1) + '...'"><span class="score-chord-name">{{ slot.chord.label }}</span></span>
+                          <span class="score-chord-label" [vcTooltip]="slot.chord.label" vcTooltipInstant [attr.data-short]="slot.chord.label.slice(0, 1) + '...'"><span class="score-chord-name">{{ slot.chord.label }}</span></span>
                         </span>
                         <i class="score-header-separator" [class.section-end]="slot.sectionEnd" [style.left.px]="slot.endX"
                           [style.--chord-hue]="slot.chord.hue" [attr.data-beat]="slot.endBeat" aria-hidden="true"></i>
@@ -373,9 +373,9 @@
               [value]="edit.lane()" (valueChange)="edit.setLane($event)" />
             @if (edit.glideLane(); as lane) {
               <button type="button" class="vc-button" [disabled]="!edit.canDrawGlides()" (click)="edit.addGlideRamp(true)"
-                title="Add a rising glide across selected notes or the phrase">{{ lane === 'pitch' ? 'Bend up' : 'Fade in' }}</button>
+                vcTooltip="Add a rising glide across selected notes or the phrase">{{ lane === 'pitch' ? 'Bend up' : 'Fade in' }}</button>
               <button type="button" class="vc-button" [disabled]="!edit.canDrawGlides()" (click)="edit.addGlideRamp(false)"
-                title="Add a falling glide across selected notes or the phrase">{{ lane === 'pitch' ? 'Bend down' : 'Fade out' }}</button>
+                vcTooltip="Add a falling glide across selected notes or the phrase">{{ lane === 'pitch' ? 'Bend down' : 'Fade out' }}</button>
               <button type="button" class="vc-button" [disabled]="!edit.canDrawGlides() || !edit.laneSegments().length"
                 (click)="edit.clearGlideLane()">Clear lane</button>
               <span class="score-lane-hint">MIDI ch. {{ edit.glideTrack()?.midiChannel }} · Drag to draw</span>
@@ -389,13 +389,13 @@
         }
         <footer class="score-display-header" aria-label="Score edit actions">
             <button type="button" class="export-phrase vc-button" [disabled]="!editor()?.draftReady()"
-              title="Download the current phrase as a MIDI file, including unapplied edits."
+              vcTooltip="Download the current phrase as a MIDI file, including unapplied edits."
               (click)="editor()?.exportPhrase()">Export Phrase</button>
             <vc-compact-knob label="Transpose phrase" description="Transpose the whole phrase freely in semitones" unit=" st"
               [mini]="true" [hoverLabelOnly]="true" [minimum]="-36" [maximum]="36" [defaultValue]="0"
               [value]="editor()?.freeTranspose() ?? 0" (valueCommit)="editor()?.transposePhrase($event)" />
-            <button class="vc-button" type="button" title="Undo. Shortcuts: Settings > Shortcuts." [disabled]="!editor()?.canUndo()" (click)="editor()?.undo()">Undo phrase</button>
-            <button class="vc-button" type="button" title="Redo. Shortcuts: Settings > Shortcuts." [disabled]="!editor()?.canRedo()" (click)="editor()?.redo()">Redo phrase</button>
+            <button class="vc-button" type="button" vcTooltip="Undo. Shortcuts: Settings > Shortcuts." [disabled]="!editor()?.canUndo()" (click)="editor()?.undo()">Undo phrase</button>
+            <button class="vc-button" type="button" vcTooltip="Redo. Shortcuts: Settings > Shortcuts." [disabled]="!editor()?.canRedo()" (click)="editor()?.redo()">Redo phrase</button>
             <button class="vc-button" type="button" (click)="editor()?.cancelChanges()">Cancel</button>
             @if (editor(); as edit) {
               <vc-select aria-label="Harmony snapping" [disabled]="selectedPart() === 'drums'" [options]="edit.harmonySnappingOptions"
@@ -508,7 +508,7 @@
             <div class="section-presence-columns">
               @for (group of roles; track group.role) {
                 <div class="section-presence-role" [attr.data-control-role]="group.role" [attr.aria-label]="group.name + ' presence'">
-                  <span class="presence-role-heading" [title]="group.name">{{ group.name }}</span>
+                  <span class="presence-role-heading" [vcTooltip]="group.name">{{ group.name }}</span>
                   @for (track of tracksFor(group.role); track track.id) {
                     <vc-compact-toggle [label]="track.name" [description]="'Include ' + track.name + ' in this section.'"
                       [active]="trackPresent(section, track)" (toggled)="toggleArrangementTrack(section.id, track.id, !trackPresent(section, track))" />
@@ -528,7 +528,7 @@
             <div class="track-actions" aria-label="Track actions">
               <button class="vc-button" type="button" (click)="openTrackEditor(selectedTrack().id)">Edit notes</button>
               @if (hasManualPhrase(selectedTrack()) && partGenerationAvailable()) {
-                <button class="vc-button" type="button" title="Restore generated notes for this track" (click)="restoreTrackPhrase()">Restore</button>
+                <button class="vc-button" type="button" vcTooltip="Restore generated notes for this track" (click)="restoreTrackPhrase()">Restore</button>
               }
               <button class="vc-button" type="button" [disabled]="!canMoveTrack(selectedTrack().id, -1)" (click)="reorderTrack(selectedTrack().id, -1)" aria-label="Move track up">↑</button>
               <button class="vc-button" type="button" [disabled]="!canMoveTrack(selectedTrack().id, 1)" (click)="reorderTrack(selectedTrack().id, 1)" aria-label="Move track down">↓</button>
@@ -553,6 +553,6 @@
 
 <ng-template #groupTrackToggle>
   <button type="button" class="group-track-toggle vc-button" [attr.aria-pressed]="showGroupTrackSettings()"
-    aria-label="Show individual track quick settings" title="Toggle individual track quick settings"
+    aria-label="Show individual track quick settings" vcTooltip="Toggle individual track quick settings"
     aria-controls="part-settings-content" (click)="toggleGroupTrackSettings()">?</button>
 </ng-template>

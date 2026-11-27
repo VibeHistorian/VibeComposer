@@ -15,12 +15,12 @@ export interface ScoreGlideReference {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[style.height.px]': 'laneHeight', '[class.disabled]': 'disabled()' },
   template: `
-    <canvas #surface role="img" [attr.aria-label]="label()" [title]="label()"
+    <canvas #surface role="img" [attr.aria-label]="label()"
       (pointerdown)="begin($event)" (pointermove)="move($event)" (pointerup)="finish($event)"
       (pointercancel)="cancel()" (lostpointercapture)="cancel()" (pointerleave)="leave()"
       (contextmenu)="$event.preventDefault(); $event.stopPropagation()"></canvas>
     @if (cursor(); as point) {
-      <span class="glide-cursor" aria-hidden="true" [style.left.px]="point.x">
+      <span class="glide-cursor vc-tooltip" aria-hidden="true" [style.left.px]="point.x">
         {{ point.text }}
         @if (point.sources) { <small>{{ point.sources }}</small> }
       </span>
@@ -30,10 +30,7 @@ export interface ScoreGlideReference {
     :host { position: absolute; inset: auto 0 0; z-index: 2; }
     canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
     :host(.disabled) canvas { cursor: default; }
-    .glide-cursor { position: absolute; bottom: calc(100% + 4px); transform: translateX(-50%);
-      white-space: nowrap; pointer-events: none; background: var(--surface-base);
-      border: 1px solid var(--border-default); color: var(--text-primary); border-radius: var(--radius-small);
-      padding: 3px 6px; font: 10px var(--font-mono); }
+    .glide-cursor { position: absolute; bottom: calc(100% + 4px); transform: translateX(-50%); white-space: nowrap; }
     .glide-cursor small { display: block; max-width: 210px; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); }
   `,
 })

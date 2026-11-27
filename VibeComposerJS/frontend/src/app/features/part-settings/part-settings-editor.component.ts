@@ -1,3 +1,4 @@
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { trackPhraseSource } from '../../core/music/phrase';
 import { MenuSelectComponent, type SelectMenuGroup } from '../../shared/menu-select.component';
 import { ParameterShortcutDirective } from './parameter-shortcut.directive';
@@ -34,7 +35,7 @@ import { sectionGenerationHarmony } from '../../core/music/project-harmony';
 
 @Component({
   selector: 'vc-part-settings-editor',
-  imports: [MenuSelectComponent, ParameterShortcutDirective, NgTemplateOutlet, DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, SelectComponent, NumericSequencePreviewComponent, CdkConnectedOverlay],
+  imports: [TooltipDirective, MenuSelectComponent, ParameterShortcutDirective, NgTemplateOutlet, DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, SelectComponent, NumericSequencePreviewComponent, CdkConnectedOverlay],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.data-control-role]': 'role()', '[style.--variation-role-color]': '"var(--role-" + role() + ")"', '[class.quick-layout]': '!showGroupTitles()', '[class.placement-editing]': 'preferences.editingQuickSettings()' },
   templateUrl: './part-settings-editor.component.html',

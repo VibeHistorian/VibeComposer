@@ -1,3 +1,4 @@
+import { TooltipDirective } from './shared/tooltip.directive';
 import { DOCUMENT } from '@angular/common';
 import { installPointerActionFocus } from './shared/pointer-action-focus';
 import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, effect, untracked, inject, signal, viewChild } from '@angular/core';
@@ -22,7 +23,7 @@ import { isEditingText, usesArrowKeys, usesSpaceKey } from './shared/keyboard-sh
 
 @Component({
   selector: 'vc-root',
-  imports: [DialogModule, CdkMenuModule, TransportDockComponent, WorkspaceCanvasComponent],
+  imports: [TooltipDirective, DialogModule, CdkMenuModule, TransportDockComponent, WorkspaceCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',

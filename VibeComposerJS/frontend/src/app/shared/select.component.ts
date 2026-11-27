@@ -21,12 +21,6 @@ export interface SelectOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[attr.value]': 'selectedValue()',
-    '[attr.aria-description]': 'instantTooltip() ?? null',
-    '(pointerenter)': 'instantTooltip() && tooltipHovered.set(true)',
-    '(pointerleave)': 'tooltipHovered.set(false)',
-    '(focus)': 'instantTooltip() && tooltipFocused.set(element.nativeElement.matches(":focus-visible"))',
-    '(blur)': 'tooltipFocused.set(false)',
-    '(keydown.escape)': 'tooltipHovered.set(false); tooltipFocused.set(false)',
     '(window:resize)': 'measurePopup()',
     '(wheel)': 'onWheel($event)', '(contextmenu)': '$event.preventDefault(); resetDefault($event)', '(pointerdown)': 'resetPointer($event)',
   },
@@ -38,13 +32,6 @@ export class SelectComponent {
   readonly value = input<unknown>();
   readonly mixed = input(false);
   readonly displayLabel = input<string>();
-  readonly instantTooltip = input<string>();
-  readonly tooltipHovered = signal(false);
-  readonly tooltipFocused = signal(false);
-  readonly tooltipPositions: ConnectedPosition[] = [
-    { originX: 'center', originY: 'top', overlayX: 'center', overlayY: 'bottom', offsetY: -4 },
-    { originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top', offsetY: 4 },
-  ];
   readonly choices = computed(() => (this.options() ?? []).map(option => typeof option === 'object'
     ? { ...option, value: String(option.value) } : { value: String(option), label: String(option), disabled: false }));
   readonly valueChange = output<string>();

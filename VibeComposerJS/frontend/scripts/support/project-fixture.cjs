@@ -54,6 +54,7 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
   const root = path.join(__dirname, '../../src/app');
   function load(file) {
     const absolute = path.resolve(root, file);
+    if (absolute.endsWith('tooltip.directive.ts')) return {};
     // Workspace state is real; child rendering components are covered by the Angular build and overview tests.
     if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'transport-dock.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-buttons.component.ts', 'part-settings-editor.component.ts', 'pattern-sequencer.component.ts', 'durations-dialog.component.ts', 'compact-knob.component.ts', 'select.component.ts', 'melody-global-settings.component.ts', 'section-context-editor.component.ts', 'arrangement-variations-dialog.component.ts', 'chordlet-editor.component.ts']
       .some((name) => absolute.endsWith(name)) && !absolute.endsWith('numeric-sequence-dialog.component.ts')) return {};

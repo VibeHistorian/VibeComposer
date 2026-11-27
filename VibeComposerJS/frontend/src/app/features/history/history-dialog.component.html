@@ -17,7 +17,7 @@
           [class.future]="entry.index > projects.historyPosition()"
           [attr.aria-current]="entry.index === projects.historyPosition() ? 'step' : null"
           [disabled]="projects.phraseHistoryActive()"
-          [title]="entry.changes.join('\n')"
+          [vcTooltip]="entry.changes.join('\n')"
           (click)="projects.goToHistory(entry.index)">
           <span class="entry-heading">
             <strong>{{ entry.index === 0 ? 'Starting point' : 'Change ' + entry.index }}</strong>

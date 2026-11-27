@@ -99,7 +99,8 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
     const angular = { Component: () => type => type, ChangeDetectionStrategy: { OnPush: 0 },
       computed: read => read, effect: () => {}, input, signal, inject: () => ({ subscribe: () => () => {}, appearance: () => ({}) }), output: () => ({ emit() {} }),
       viewChild: { required: name => () => ({ nativeElement: refs.get(name) }) } };
-    const dependencies = { '@angular/core': angular,
+    const dependencies = { '@angular/core': angular, '@angular/cdk/overlay': {},
+      '../../shared/tooltip.directive': {},
       '../../shared/context-menu.component': { ContextMenuComponent: class ContextMenuComponent {} },
       '../../core/music/phrase-range-edit': (() => { const module={exports:{}}; const exports=module.exports; ${rangeCode}; return module.exports; })(),
       '../../core/music/phrase-glides': (() => { const module={exports:{}}; const exports=module.exports; ${glideCode}; return module.exports; })(),

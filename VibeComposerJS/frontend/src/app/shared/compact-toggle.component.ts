@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { ControlHeadingComponent, type ControlInheritance } from './control-heading.component';
+import { TooltipDirective } from './tooltip.directive';
 
 @Component({
   selector: 'vc-compact-toggle',
-  imports: [ControlHeadingComponent],
+  imports: [ControlHeadingComponent, TooltipDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './compact-toggle.component.html',
   styleUrl: './compact-toggle.component.css',

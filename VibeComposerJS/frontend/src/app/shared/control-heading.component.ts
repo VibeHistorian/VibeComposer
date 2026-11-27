@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { TooltipDirective } from './tooltip.directive';
 
 export type ControlInheritance = 'global' | 'inherited' | 'custom';
 let nextControlId = 0;
 
 @Component({
   selector: 'vc-control-heading',
+  imports: [TooltipDirective],
   host: { '[class.status-only]': 'statusOnly()' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './control-heading.component.html',
@@ -16,7 +18,6 @@ export class ControlHeadingComponent {
   readonly shortLabel = input<string | null>(null);
   readonly statusOnly = input(false);
   readonly inheritance = input<ControlInheritance>('global');
-  readonly tooltipEnabled = input(true);
   readonly showStatus = input(true);
   readonly inheritRequested = output<void>();
   readonly statusLabel = computed(() => this.inheritance() === 'custom'

@@ -1,6 +1,6 @@
 <div class="part-controls" [section]="local()" [vcParameterShortcut]="!preferences.editingQuickSettings()" (parameterShortcut)="parameterShortcut($event)">
   @if (seedControl(); as control) {
-    <div class="part-control seed-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.partially-frozen]="categoryFreezeState([control]) === 'partial'" [class.parameter-locked]="!local() && lockState(control) !== false" [class.variation-only]="variationOnly(control)" data-control-key="patternSeed" data-parameter-key="patternSeed" [title]="control.description ?? ''">
+    <div class="part-control seed-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.partially-frozen]="categoryFreezeState([control]) === 'partial'" [class.parameter-locked]="!local() && lockState(control) !== false" [class.variation-only]="variationOnly(control)" data-control-key="patternSeed" data-parameter-key="patternSeed" [vcTooltip]="control.description ?? ''">
       <span class="quick-title-sizing" aria-hidden="true">{{ control.label }}</span>
       <fieldset class="quick-control-border quick-inheritance-border" aria-hidden="true">
         <legend>{{ control.label }}</legend>
@@ -15,7 +15,7 @@
       <input [id]="seedHeading.controlId" class="part-list" type="text" [value]="textValue(control)"
         [attr.aria-label]="control.label" [placeholder]="values()[control.key] === null ? 'Mixed' : ''"
         (mousedown)="seedMouseDown($event)" (contextmenu)="seedMouseAction($event)" (auxclick)="seedMouseAction($event)"
-        title="Right-click to reset to 0; middle-click to randomize"
+        vcTooltip="Right-click to reset to 0; middle-click to randomize"
         (focus)="startTextEdit()" (change)="commitText(control, $event)"
         (keydown.enter)="$any($event.target).blur()" (keydown.escape)="cancelTextEdit(control, $event)" />
       <button type="button" class="common-grid-button vc-button"
@@ -29,7 +29,7 @@
       @if (showGroupTitles()) { <legend>{{ group.label }}</legend> }
       <div class="part-area-controls">
         @for (control of group.controls; track control.key) {
-          <div class="part-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.partially-frozen]="categoryFreezeState([control]) === 'partial'" [class.parameter-locked]="!local() && lockState(control) !== false" [class.variation-only]="variationOnly(control)" [attr.data-control-key]="control.key" [attr.data-parameter-key]="control.key" data-parameter-combined="true" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.knob-control]="control.kind === 'number'" [class.rhythm-control]="control.key === 'rhythm'" [class.joined-control]="members(control).length > 0" [class.melody-choices]="control.key === 'ending'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
+          <div class="part-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.partially-frozen]="categoryFreezeState([control]) === 'partial'" [class.parameter-locked]="!local() && lockState(control) !== false" [class.variation-only]="variationOnly(control)" [attr.data-control-key]="control.key" [attr.data-parameter-key]="control.key" data-parameter-combined="true" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.knob-control]="control.kind === 'number'" [class.rhythm-control]="control.key === 'rhythm'" [class.joined-control]="members(control).length > 0" [class.melody-choices]="control.key === 'ending'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [vcTooltip]="control.label + (control.description ? ': ' + control.description : '')">
             @if (control.kind !== 'boolean') {
               <span class="quick-title-sizing" aria-hidden="true">{{ title(control) }}</span>
             }
@@ -41,13 +41,13 @@
             @if (preferences.editingQuickSettings()) {
               <button type="button" class="placement-target" (click)="preferences.moveControl(role(), control.key)"
                 [attr.aria-label]="'Move ' + control.label + (inspectorOnly() ? ' to quick settings' : ' to inspector')"
-                [title]="'Move ' + control.label + (inspectorOnly() ? ' to quick settings' : ' to inspector')"></button>
+                [vcTooltip]="'Move ' + control.label + (inspectorOnly() ? ' to quick settings' : ' to inspector')"></button>
             }
             <div class="control-content" [inert]="preferences.editingQuickSettings()">
             @if (control.key === 'ending') {
               <vc-control-heading label="SENTENCE" [inheritance]="'global'" (inheritRequested)="resetControl(control)" />
               @for (member of members(control); track member.key) {
-                <vc-select #choice="vcSelect" [class.custom-member]="parameterFrozen(member.key)" [options]="member.options" [attr.data-control-key]="member.key" [attr.data-parameter-key]="member.key" [attr.aria-label]="'Melody ' + member.label" [title]="member.label" [selectDefault]="choiceDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="choose(member, $event, choice)" [mixed]="values()[member.key] === null"></vc-select>
+                <vc-select #choice="vcSelect" [class.custom-member]="parameterFrozen(member.key)" [options]="member.options" [attr.data-control-key]="member.key" [attr.data-parameter-key]="member.key" [attr.aria-label]="'Melody ' + member.label" [vcTooltip]="member.label" [selectDefault]="choiceDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="choose(member, $event, choice)" [mixed]="values()[member.key] === null"></vc-select>
               }
             } @else if (control.key === 'feedbackCount' || control.key === 'velocityMin' || control.key === 'rangeMin' || control.key === 'rhythmicReuse') {
               <vc-control-heading [label]="title(control)" [inheritance]="'global'" (inheritRequested)="resetControl(control)" />
@@ -96,7 +96,7 @@
                   <button type="button" class="flip-button vc-button vc-toggle vc-toggle-steady" [class.custom-member]="parameterFrozen(flip.key)" [attr.data-control-key]="flip.key" [attr.data-parameter-key]="flip.key"
                     [class.active]="values()[flip.key] === true" [class.mixed]="values()[flip.key] === null"
                     [attr.aria-label]="flip.label" [attr.aria-pressed]="values()[flip.key] === null ? 'mixed' : values()[flip.key] === true"
-                    [title]="flip.label + ': ' + flip.description"
+                    [vcTooltip]="flip.label + ': ' + flip.description"
                     (click)="toggleFlip(flip)"><span aria-hidden="true">↔</span></button>
                 }
                 </div>
@@ -105,7 +105,7 @@
                 }
                 @if (control.key === 'rhythm' && usesDurations()) {
                   <button type="button" class="mini-preview duration-preview" [class.custom-member]="parameterFrozen('customDurations') || parameterFrozen('customDurationChances') || parameterFrozen('customDurationRandomWeighting')" [attr.aria-label]="'Edit custom ' + role() + ' durations'" aria-haspopup="dialog"
-                    title="First active lane. Edit note lengths and pauses." (click)="openSequencer()">
+                    vcTooltip="First active lane. Edit note lengths and pauses." (click)="openSequencer()">
                     @if (durationPreview(); as slots) {
                       @for (slot of slots; track $index) {
                         <span [class.active]="!slot.rest" [style.left.%]="slot.start / 4 * 100" [style.width.%]="slot.duration / 4 * 100" aria-hidden="true"></span>
@@ -114,7 +114,7 @@
                   </button>
                 }
                 @if (control.key === 'rhythm' && (rhythmPreview() !== undefined || role() === 'drums')) {
-                  <button type="button" class="mini-preview rhythm-preview-grid" [class.custom-member]="parameterFrozen('customPattern')" [style.--preview-steps]="rhythmPreview()?.length ?? 8" aria-label="Edit rhythm pattern" aria-haspopup="dialog" [title]="rhythmPreviewLabel()" (click)="openSequencer()">
+                  <button type="button" class="mini-preview rhythm-preview-grid" [class.custom-member]="parameterFrozen('customPattern')" [style.--preview-steps]="rhythmPreview()?.length ?? 8" aria-label="Edit rhythm pattern" aria-haspopup="dialog" [vcTooltip]="rhythmPreviewLabel()" (click)="openSequencer()">
                     @if (rhythmPreview(); as pattern) {
                       @for (slot of pattern; track $index) { <span class="rhythm-preview-slot" [style.--step-index]="$index" [class.active]="slot > 0" aria-hidden="true"></span> }
                     } @else { <span class="mixed">Mixed</span> }
@@ -151,7 +151,7 @@
   @let hovered = hover?.key === key;
   <button #trigger type="button" class="mini-preview sequence-preview" [class.arp-preview]="key === 'pattern'"
     [attr.data-parameter-key]="key === 'pattern' ? null : key" [attr.id]="id ?? null" [attr.aria-label]="label" aria-haspopup="dialog"
-    title="" [attr.aria-description]="values ? values.join(', ') || 'Off' : 'Mixed'"
+    [vcTooltip]="null" [attr.aria-description]="values ? values.join(', ') || 'Off' : 'Mixed'"
     (pointerenter)="hoverSequence(key, $event)" (pointermove)="hoverSequence(key, $event)" (pointerleave)="sequenceHover.set(null)"
     (click)="sequenceHover.set(null); openSequence(key)" (wheel)="scrollSequence(key, $event)">
     @if (values?.length) {
@@ -163,8 +163,9 @@
   </button>
   <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="trigger" [cdkConnectedOverlayOpen]="hovered"
     [cdkConnectedOverlayPositions]="sequenceTooltipPositions" [cdkConnectedOverlayViewportMargin]="8" [cdkConnectedOverlayPush]="true"
+    cdkConnectedOverlayPanelClass="vc-tooltip-passive-pane"
     (detach)="sequenceHover()?.key === key && sequenceHover.set(null)">
-    <div class="sequence-tooltip" role="tooltip">
+    <div class="sequence-tooltip vc-tooltip" role="tooltip">
       @for (value of values; track $index) {
         <span [class.highlighted]="$index === hover?.index">{{ value }}</span>@if (!$last) {<span>, </span>}
       } @empty {
@@ -179,7 +180,7 @@
     <button type="button" class="parameter-lock" [class.locked]="lockState(control) === true"
       [attr.aria-pressed]="lockState(control)"
       [attr.aria-label]="'Lock ' + control.label + ' during reroll and Compose'"
-      title="Preserve this parameter during reroll and Compose. Manual edits still apply."
+      vcTooltip="Preserve this parameter during reroll and Compose. Manual edits still apply."
       [disabled]="preferences.editingQuickSettings()" (click)="toggleLock(control)">🔒︎</button>
   }
   @if (inheritanceFor(control) !== 'global') {
@@ -192,9 +193,9 @@
 <ng-template #compactMember let-member>
   @let inactive = reuseMemberInactive(member.key);
   <div class="joined-member" [class.custom-member]="parameterFrozen(member.key)" [class.inactive-member]="inactive"
-    [attr.title]="inactive ? memberDescription(member) : null" [attr.data-control-key]="member.key" [attr.data-parameter-key]="member.key">
+    [vcTooltip]="inactive ? memberDescription(member) : null" [attr.data-control-key]="member.key" [attr.data-parameter-key]="member.key">
     @if (member.key === 'feedbackCount' || member.key === 'patternShift') {
-      <vc-select #choice="vcSelect" [options]="member.key === 'feedbackCount' ? delayOptions : shiftOptions" [attr.aria-label]="member.label" [title]="member.label" [selectDefault]="numericDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="chooseNumber(member, $event, choice)" [mixed]="values()[member.key] === null"></vc-select>
+      <vc-select #choice="vcSelect" [options]="member.key === 'feedbackCount' ? delayOptions : shiftOptions" [attr.aria-label]="member.label" [vcTooltip]="member.label" [selectDefault]="numericDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="chooseNumber(member, $event, choice)" [mixed]="values()[member.key] === null"></vc-select>
     } @else {
       <vc-compact-knob [defaultValue]="numericDefault(member)" [value]="numericValue(member)" [mixed]="values()[member.key] === null"
         [minimum]="minimum(member)" [maximum]="maximum(member)" [step]="member.step ?? 1" [label]="member.label"

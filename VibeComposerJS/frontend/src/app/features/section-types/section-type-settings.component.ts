@@ -1,7 +1,9 @@
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { type ArrangedPart, ARRANGED_PARTS } from '../../core/music/part-role';
 import { type SectionType, SECTION_TYPES } from '../../core/project/arrangement.model';
 import { SectionTypeSettingsService } from '../../core/project/section-type-settings.service';
+import { SettingsRowComponent } from '../settings/settings-row.component';
 
 const PART_NAMES: Readonly<Record<ArrangedPart, string>> = {
   melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arps', drums: 'Drums',
@@ -9,6 +11,7 @@ const PART_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-section-type-settings',
+  imports: [TooltipDirective, SettingsRowComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './section-type-settings.component.html',
   styleUrl: './section-type-settings.component.css',

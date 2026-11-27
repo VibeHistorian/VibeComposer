@@ -186,7 +186,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const overview = document.querySelector('vc-arrangement-overview canvas[tabindex]');
       overview.scrollIntoView({ block: 'nearest' });
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      const cell = (${arrangementPoint})(overview, 'Select Bass settings in ' + read().arrangement[0].type.replaceAll('_', ' ') + ',');
+      const cell = (${arrangementPoint})(overview, 'cell:' + read().arrangement[0].id + ':bass');
       const roleCellClick = (type, shiftKey = false) => overview.dispatchEvent(new MouseEvent(type, {
         bubbles: true, cancelable: true, button: 2, shiftKey, clientX: cell.x, clientY: cell.y,
       }));
@@ -255,7 +255,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       result.noKeySelector = !document.querySelector(':is(vc-select, vc-menu-select)[aria-label="Key"]');
       const transpose = document.querySelector('.transport-dock [aria-label="Transpose in semitones"]');
       await change(transpose, '7');
-      await wait(() => read().transposeSemitones === 7 && document.querySelector('.transport-project span').title.includes('G MAJOR'), 'project key label');
+      await wait(() => read().transposeSemitones === 7 && document.querySelector('.transport-project span').getAttribute('aria-description')?.includes('G MAJOR'), 'project key label');
       result.transposeKey = transpose.type === 'range' && !transpose.closest('vc-compact-knob').querySelector('.knob-caption'); await change(transpose, '0');
       if (innerWidth > 1050) {
         const dock = document.querySelector('.transport-dock').getBoundingClientRect();
@@ -292,7 +292,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         && modeBounds.left >= groupBounds.left - 1 && modeBounds.right <= groupBounds.right + 1;
       await change(mode, 'natural-minor'); await wait(() => read().scale === 'natural-minor', 'mode change');
       if((await selectOptions(mode)).length!==17) throw new Error('missing Java modes');
-      await change(mode,'mixolydian'); await wait(()=>read().scale==='mixolydian'&&document.querySelector('.transport-project span').title.includes('MIXOLYDIAN'),'Mixolydian mode');
+      await change(mode,'mixolydian'); await wait(()=>read().scale==='mixolydian'&&document.querySelector('.transport-project span').getAttribute('aria-description')?.includes('MIXOLYDIAN'),'Mixolydian mode');
       await change(mode,'hungarian-minor'); await wait(()=>read().scale==='hungarian-minor','Hungarian minor mode');
       await change(mode, 'major'); await wait(() => read().scale === 'major' && read().transposeSemitones === 0, 'mode restore');
       const chordlet = () => document.querySelector('.chordlet-label');
@@ -964,13 +964,13 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const sectionSpices=await wait(()=>editor.querySelector('[aria-label="Chord spice"]'),'section spice colors');
       const spiceChoice=name=>[...sectionSpices.querySelectorAll('button')].find(button=>button.textContent===name);
       const sectionSpiceColors=Number(spiceChoice('m').dataset.keyOverlap)===2/3
-        && Number(spiceChoice('maj7').dataset.keyOverlap)===.25 && spiceChoice('m').title.includes('D Natural minor');
+        && Number(spiceChoice('maj7').dataset.keyOverlap)===.25 && spiceChoice('m').getAttribute('aria-description')?.includes('D Natural minor');
       sectionSpices.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
       await change(document.querySelector('.transport-dock [aria-label="Transpose in semitones"]'),'7');
       await wait(()=>read().transposeSemitones===7,'global and section transpose');
       await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('B'),'section transpose render');
       editor.querySelector('.chordlet-label').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,button:1}));
-      const transposed=await wait(()=>editor.querySelector('[aria-label="Chord spice"] button[title*="A Natural minor"]'),'transposed section palette');
+      const transposed=await wait(()=>editor.querySelector('[aria-label="Chord spice"] button[aria-description*="A Natural minor"]'),'transposed section palette');
       const transposeColors=editor.querySelector('.chordlet').style.getPropertyValue('--chord-hue')==='60'
         && Number([...editor.querySelectorAll('.spice-choice')].find(button=>button.textContent==='m').dataset.keyOverlap)===2/3;
       transposed.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));

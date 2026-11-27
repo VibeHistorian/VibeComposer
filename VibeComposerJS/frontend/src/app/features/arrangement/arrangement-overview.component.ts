@@ -1,3 +1,5 @@
+import { CdkConnectedOverlay } from '@angular/cdk/overlay';
+import { TOOLTIP_POSITIONS, TooltipDirective } from '../../shared/tooltip.directive';
 import { trackColor } from '../../core/ui/track-color';
 import { ModifierKeysService } from '../../core/ui/modifier-keys.service';
 import type { ArrangementPhraseSource, ArrangementPhraseTarget, ArrangementPhraseCopy } from '../../core/project/arrangement-phrase-copy';
@@ -57,6 +59,7 @@ interface OverviewHitArea {
   readonly width: number;
   readonly height: number;
   readonly label: string;
+  readonly summary?: string;
   readonly activate: (event?: MouseEvent | KeyboardEvent) => void;
   readonly togglePresence?: () => void;
   readonly reroll?: () => void;
@@ -82,11 +85,11 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-arrangement-overview',
-  imports: [ContextMenuComponent],
+  imports: [ContextMenuComponent, CdkConnectedOverlay, TooltipDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './arrangement-overview.component.html',
   styleUrl: './arrangement-overview.component.css',
-  host: { '(document:click)': 'closePickerOutside($event)', '(document:keydown.escape)': 'closeSectionPicker()' },
+  host: { '(document:click)': 'closePickerOutside($event)', '(document:keydown.escape)': 'closeSectionPicker(); closeHoverTooltip()' },
 })
 export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   readonly project = input.required<CompositionProject>();
@@ -547,6 +550,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         const roleCell = { sectionId: item.section.id, role: group.role };
         hit({ roleCell, copySource: roleCell, key: `cell:${item.section.id}:${group.role}`, x, y, width, height: this.rowHeight,
           label: `Select ${group.name} settings in ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}. ${customized ? 'Customized' : 'Inherited'}. Right-click for presets. Presence controls: Settings > Shortcuts.`,
+          summary: `${group.name} · ${this.sectionLabel(item.section.type)} · Bars ${this.measureLabel(item)}\n${customized ? 'Customized' : 'Inherited'} settings · ${activeTracks}/${group.tracks.length} present`,
           activate: () => this.cellSelected.emit(roleCell),
           togglePresence: () => this.groupPresenceToggled.emit({ sectionId: item.section.id, role: group.role }),
           reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reroll' }),
@@ -614,10 +618,14 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           }
           const hitRadius = buttonPitch / 2;
           const buttonLeft = Math.max(x, centerX - hitRadius), buttonRight = Math.min(x + width, centerX + hitRadius);
+          const trackName = track.name ?? group.name + ' track ' + trackNumber;
+          const trackStatus = [present ? 'Present' : 'Absent', manualNotes ? 'Manual notes' : trackCustomized ? 'Customized settings' : '',
+            variation ? `Variation ${variation.enabled ? 'enabled' : 'disabled'}` : ''].filter(Boolean).join(' · ');
           hit({ copySource: present ? { sectionId: item.section.id, trackId: track.id } : undefined,
             copyTarget: { sectionId: item.section.id, trackId: track.id }, key: `toggle:${item.section.id}:${track.id}`, x: buttonLeft, y: Math.max(y, centerY - hitRadius),
             width: buttonRight - buttonLeft, height: Math.min(y + this.rowHeight, centerY + hitRadius) - Math.max(y, centerY - hitRadius),
-            label: `Select ${track.name ?? group.name + ' track ' + trackNumber} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${manualNotes ? 'Manual notes override part settings.' : trackCustomized ? 'Customized track part.' : ''} ${variation ? `Saved variation ${variation.enabled ? 'enabled' : 'disabled'}; inspect Variations in the selection inspector.` : ''} Presence controls: Settings > Shortcuts.`,
+            label: `Select ${trackName} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${manualNotes ? 'Manual notes override part settings.' : trackCustomized ? 'Customized track part.' : ''} ${variation ? `Saved variation ${variation.enabled ? 'enabled' : 'disabled'}; inspect Variations in the selection inspector.` : ''} Presence controls: Settings > Shortcuts.`,
+            summary: `${trackName} · ${this.sectionLabel(item.section.type)}\n${trackStatus}`,
             activate: () => this.trackSelected.emit({ sectionId: item.section.id, trackId: track.id }),
             reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, trackId: track.id, action: 'reroll' }),
             reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, trackId: track.id, action: 'reset' }),
@@ -706,8 +714,16 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       text(range, x + width - 7, RULER_METADATA_BASELINE, '--text-muted');
       context.textAlign = 'start';
       context.restore();
+      const chords = compact?.chords.map(chord => chord.label) ?? [];
       hit({ key: `heading:${item.section.id}`, x, y: 0, width, height: RULER_HEIGHT,
-        label: `${heading}, bars ${this.measureLabel(item)}${variationCount ? `, ${variationCount} saved variations; inspect Variations in the selection inspector` : ''}${compact ? ', chords ' + compact.chords.map(chord => chord.label).join(' ') + (compact.durationsDiffer ? ' *, section beat durations' : '') : ''}${swing === undefined ? '' : `, section swing ${swing}% overrides part swing (except bass)`}`,
+        label: `${heading}, bars ${this.measureLabel(item)}${variationCount ? `, ${variationCount} saved variations; inspect Variations in the selection inspector` : ''}${compact ? ', chords ' + chords.join(' ') + (compact.durationsDiffer ? ' *, section beat durations' : '') : ''}${swing === undefined ? '' : `, section swing ${swing}% overrides part swing (except bass)`}`,
+        summary: [
+          `${this.sectionLabel(item.section.type)} · Bars ${this.measureLabel(item)}`,
+          chords.length ? `Chords: ${chords.slice(0, 6).join(' ')}${chords.length > 6 ? ' …' : ''}` : '',
+          compact?.durationsDiffer ? 'Section beat durations' : '',
+          swing === undefined ? '' : `Section swing ${swing}% · Except bass`,
+          variationCount ? `${variationCount} saved variation${variationCount === 1 ? '' : 's'}` : '',
+        ].filter(Boolean).join('\n'),
         activate: (event) => this.selectSection(item.section.id, event),
         reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, action: 'reroll' }),
         reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, action: 'reset' }),
@@ -795,6 +811,27 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
 
   private hoveredKey: string | null = null;
   private hoverPointer: PointerEvent | null = null;
+  readonly tooltipPositions = TOOLTIP_POSITIONS;
+  readonly hoverTooltip = signal<{ text: string; origin: { x: number; y: number; width?: number; height: number } } | null>(null, {
+    equal: (a, b) => a?.text === b?.text && a?.origin.x === b?.origin.x && a?.origin.y === b?.origin.y
+      && a?.origin.width === b?.origin.width && a?.origin.height === b?.origin.height,
+  });
+
+  private showHoverTooltip(text: string, event: PointerEvent, area?: OverviewHitArea): void {
+    if (!area) {
+      this.hoverTooltip.set({ text, origin: { x: event.clientX, y: event.clientY - 6, height: 22 } });
+      return;
+    }
+    const bounds = this.scoreCanvas().nativeElement.getBoundingClientRect();
+    const scaleX = bounds.width / this.width, scaleY = bounds.height / this.height;
+    this.hoverTooltip.set({ text, origin: { x: bounds.left + area.x * scaleX, y: bounds.top + area.y * scaleY,
+      width: area.width * scaleX, height: area.height * scaleY } });
+  }
+
+  closeHoverTooltip(): void {
+    this.hoverPointer = null;
+    this.hoverTooltip.set(null);
+  }
 
   private hitAt(event: MouseEvent): OverviewHitArea | undefined {
     const bounds = this.scoreCanvas().nativeElement.getBoundingClientRect();
@@ -822,6 +859,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
 
   onCanvasPointerdown(event: PointerEvent): void {
+    this.closeHoverTooltip();
     this.suppressCopyClick = false;
     if (event.button === 1) event.preventDefault();
     const source = this.hitAt(event)?.copySource;
@@ -832,7 +870,6 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     event.preventDefault();
     // A redraw replays this pointer for hit testing. Discard the pre-drag hover,
     // whose released buttons would otherwise cancel the captured drag.
-    this.hoverPointer = null;
     this.copyDrag = { source, project: this.project(), pointerId: event.pointerId, x: event.clientX, y: event.clientY, moved: false };
     this.scoreCanvas().nativeElement.setPointerCapture(event.pointerId);
   }
@@ -861,6 +898,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
 
   onCanvasContextmenu(event: MouseEvent): void {
+    this.closeHoverTooltip();
     const area = this.hitAt(event);
     if (area?.roleCell && this.rolePresetItems()[area.roleCell.role]?.length
       && event.button === 2 && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey
@@ -876,6 +914,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
 
   onPointerMove(event: PointerEvent): void {
+    if (event.pointerType === 'touch') return;
     this.hoverPointer = event;
     const drag = this.copyDrag;
     if (drag && drag.pointerId === event.pointerId) {
@@ -887,18 +926,20 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       if (drag.key !== key) { drag.key = key; this.scheduleDraw(); }
       const canvas = this.scoreCanvas().nativeElement;
       canvas.style.cursor = valid ? 'copy' : 'no-drop';
-      canvas.title = valid ? 'Copy notes here' : 'Drop onto a section track button';
+      this.showHoverTooltip(valid ? 'Copy notes here' : 'Drop onto a section track button', event, valid ? area : undefined);
       return;
     }
     const area = this.hitAt(event);
     const key = area?.key ?? null;
     if (this.hoveredKey !== key) {
       this.hoveredKey = key;
+      this.scoreCanvas().nativeElement.setAttribute('data-hover-target', key ?? '');
       this.scheduleDraw();
     }
     const canvas = this.scoreCanvas().nativeElement;
     canvas.style.cursor = area ? 'pointer' : 'default';
-    canvas.title = area ? area.label + ' Interactions: Settings > Shortcuts.' : '';
+    if (area) this.showHoverTooltip(area.summary ?? area.label, event, area);
+    else this.hoverTooltip.set(null);
   }
 
   onCanvasPointerup(event: PointerEvent): void {
@@ -913,22 +954,21 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const drag = this.copyDrag;
     if (!drag) return;
     this.copyDrag = null;
-    this.hoverPointer = null;
+    this.closeHoverTooltip();
     this.suppressCopyClick = true;
     const canvas = this.scoreCanvas().nativeElement;
     if (canvas.hasPointerCapture(drag.pointerId)) canvas.releasePointerCapture(drag.pointerId);
     canvas.style.cursor = 'default';
-    canvas.title = '';
     canvas.setAttribute('data-copy-target', '');
     this.scheduleDraw();
   }
 
   onPointerLeave(): void {
-    this.hoverPointer = null;
+    this.closeHoverTooltip();
     this.hoveredKey = null;
     const canvas = this.scoreCanvas().nativeElement;
     canvas.style.cursor = 'default';
-    canvas.title = '';
+    canvas.setAttribute('data-hover-target', '');
     this.scheduleDraw();
   }
 

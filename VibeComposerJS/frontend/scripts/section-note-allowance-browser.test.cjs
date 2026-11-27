@@ -43,7 +43,7 @@ test('production score edits pickups and late notes with 00/END space and retain
       const canvas=await wait(()=>document.querySelector('vc-score-canvas canvas'));
       canvas.scrollIntoView({block:'center'});
       await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-      const c=canvas.getBoundingClientRect(),key=document.querySelector('.pitch-key[title="MIDI 52"]').getBoundingClientRect();
+      const c=canvas.getBoundingClientRect(),key=document.querySelector('.pitch-key:not(.drum-label)[data-midi="52"]').getBoundingClientRect();
       return {x:c.left+c.width*11.5/12,y:key.top+key.height/2};
     })()`);
     await command('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', clickCount: 1 });

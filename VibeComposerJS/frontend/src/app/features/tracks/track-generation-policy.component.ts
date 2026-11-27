@@ -1,3 +1,4 @@
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import type { ArrangedPart } from '../../core/music/part-role';
 import type { InstrumentGenerationPolicy, TrackGenerationPolicy, TrackGenerationPolicyPatch } from '../../core/music/generation-policy.model';
@@ -11,7 +12,7 @@ import { CompactKnobComponent } from '../../shared/compact-knob.component';
 
 @Component({
   selector: 'vc-track-generation-policy',
-  imports: [CompactToggleComponent, CompactKnobComponent, SelectComponent],
+  imports: [TooltipDirective, CompactToggleComponent, CompactKnobComponent, SelectComponent],
   host: { '[attr.data-control-role]': 'role()' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './track-generation-policy.component.html',

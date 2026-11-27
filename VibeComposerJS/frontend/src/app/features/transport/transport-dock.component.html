@@ -2,7 +2,7 @@
   <div class="transport-left">
     <div class="transport-generation">
       <button type="button" class="transport-button generation-button compose-button" [disabled]="projects.phraseHistoryActive()"
-        (click)="generate()" aria-label="Compose" title="Compose using the current seed and enabled role rules">✦</button>
+        (click)="generate()" aria-label="Compose" vcTooltip="Compose using the current seed and enabled role rules">✦</button>
       <div class="transport-tempo">
         <vc-compact-knob [dense]="true" label="Tempo in beats per minute" [defaultValue]="120" shortLabel="♩=" unit=""
             [value]="project().tempoBpm" [minimum]="30" [maximum]="240" (valueCommit)="updateTempo($event)"
@@ -23,7 +23,7 @@
           <label class="mode-control"><vc-menu-select [groups]="scaleMenuGroups" [options]="scaleOptions()" selectDefault="major" aria-label="Mode" [value]="project().scale" (valueChange)="updateScale($event)"></vc-menu-select></label>
           <vc-chordlet-editor>
             <button type="button" chordletAction class="harmony-compose-star" aria-label="Harmony On Compose"
-              title="On Compose: reroll global harmony when global Compose runs"
+              vcTooltip="On Compose: reroll global harmony when global Compose runs"
               [class.active]="project().randomizeHarmonyOnCompose !== false"
               [attr.aria-pressed]="project().randomizeHarmonyOnCompose !== false"
               [disabled]="projects.phraseHistoryActive()"
@@ -37,16 +37,16 @@
   <div class="transport-playback">
     <div class="transport-timeline">
     <div class="transport-actions">
-      <button type="button" class="transport-button stop-button" (click)="stop()" aria-label="Stop" title="Stop">■</button>
+      <button type="button" class="transport-button stop-button" (click)="stop()" aria-label="Stop" vcTooltip="Stop">■</button>
       <button type="button" class="transport-button play-button" (click)="togglePlayback()"
         [attr.aria-label]="playback.state() === 'playing' ? 'Pause' : playback.state() === 'paused' ? 'Resume' : 'Play'"
-        [attr.title]="playback.state() === 'playing' ? 'Pause' : playback.state() === 'paused' ? 'Resume' : 'Play'">
+        [vcTooltip]="playback.state() === 'playing' ? 'Pause' : playback.state() === 'paused' ? 'Resume' : 'Play'">
         @if (playback.state() === 'playing') { <span aria-hidden="true">Ⅱ</span> }
         @else { <span aria-hidden="true">▶</span> }
       </button>
       <button type="button" class="transport-button loop-button" [class.active]="playback.loopEnabled()"
         [attr.aria-pressed]="playback.loopEnabled()" (click)="toggleLoop()" aria-label="Toggle loop"
-        [title]="workspaceUi.selectedSectionIds().length ? 'Loop selected sections' : 'Loop full arrangement'">⟳</button>
+        [vcTooltip]="workspaceUi.selectedSectionIds().length ? 'Loop selected sections' : 'Loop full arrangement'">⟳</button>
     </div>
 
     <div class="transport-progress">
@@ -73,20 +73,20 @@
     <div class="transport-project">
 
     <label class="seed-control"><input aria-label="Generation seed" inputmode="numeric" [value]="seedInput()"
-      title="Generation seed (0 chooses a random seed on Compose). Right-click: reset to 0. Middle-click: randomize."
+      vcTooltip="Generation seed (0 chooses a random seed on Compose). Right-click: reset to 0. Middle-click: randomize."
       (contextmenu)="resetSeed($event)" (mousedown)="seedMouseDown($event)" (auxclick)="randomizeSeed($event)"
       (change)="updateSeed($event)" (keydown.enter)="$any($event.target).blur()" /></label>
 
-      <span [title]="key() + ' ' + scaleDefinitions[project().scale].label.toUpperCase() + ' | ' + project().tempoBpm + ' BPM | SEED ' + project().seed">SEED {{ project().seed }}</span>
+      <span [vcTooltip]="key() + ' ' + scaleDefinitions[project().scale].label.toUpperCase() + ' | ' + project().tempoBpm + ' BPM | SEED ' + project().seed" vcTooltipInstant>SEED {{ project().seed }}</span>
     </div>
     <ng-content select="[transportHistory]" />
     <div class="project-tool-group transport-audio-tools" role="group" aria-label="Audio playback settings">
       <input #soundfontInput type="file" accept=".sf2" aria-label="Load soundfont" hidden [disabled]="instruments.busy()" (change)="loadSoundfont($event)" />
-      <vc-menu-select [groups]="instrumentMenuGroups()" [actions]="instrumentActions()" (action)="instrumentAction($event, soundfontInput)" class="instrument-selector" [class.active]="instruments.kind() !== 'synth'" displayLabel="🔊 ▾" [title]="instrumentLabel()" aria-label="Audio instrument engine" [options]="instrumentOptions()" [value]="instruments.kind()" [allowReselect]="usingSynthFallback()"
+      <vc-menu-select [groups]="instrumentMenuGroups()" [actions]="instrumentActions()" (action)="instrumentAction($event, soundfontInput)" class="instrument-selector" [class.active]="instruments.kind() !== 'synth'" displayLabel="🔊 ▾" [vcTooltip]="instrumentLabel()" vcTooltipInstant aria-label="Audio instrument engine" [options]="instrumentOptions()" [value]="instruments.kind()" [allowReselect]="usingSynthFallback()"
         (valueChange)="selectInstrument($event)" />
       <button type="button" class="transport-button live-button" [class.active]="playback.liveEnabled()"
         [attr.aria-pressed]="playback.liveEnabled()" (click)="toggleLive()" aria-label="Toggle live reload"
-        title="Live reload: hear MIDI edits while playing">LIVE</button>
+        vcTooltip="Live reload: hear MIDI edits while playing">LIVE</button>
     </div>
     <ng-content select="[transportDevices]" />
     <ng-content select="[transportFiles]" />

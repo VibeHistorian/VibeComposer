@@ -5,6 +5,7 @@ import { instrumentEnvelope } from '../../core/music/gm-instruments';
 import type { DrumSlots } from '../../core/music/drum-instruments';
 import { drumInstrumentName } from '../../core/music/drum-instruments';
 import { ContextMenuComponent, type ContextMenuItem } from '../../shared/context-menu.component';
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { ARRANGED_PARTS } from '../../core/music/part-role';
 import { musicalTime } from '../../core/ui/musical-time';
 import { trackColor } from '../../core/ui/track-color';
@@ -107,7 +108,7 @@ const COLORS: Readonly<Record<ArrangedPart, { note: string; velocity: string; gl
 
 @Component({
   selector: 'vc-score-canvas',
-  imports: [ContextMenuComponent, ScoreGlideLaneComponent],
+  imports: [ContextMenuComponent, ScoreGlideLaneComponent, TooltipDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './score-canvas.component.html',
   styleUrl: './score-canvas.component.css',

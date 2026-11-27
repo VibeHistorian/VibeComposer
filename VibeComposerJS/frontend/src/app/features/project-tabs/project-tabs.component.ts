@@ -1,3 +1,4 @@
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { afterRenderEffect, ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, signal, viewChild } from '@angular/core';
 import { HostedContentService } from '../../core/ui/hosted-content.service';
 import { ProjectService } from '../../core/project/project.service';
@@ -9,7 +10,7 @@ import { formatProjectJson } from '../../core/project/project-json';
 
 @Component({
   selector: 'vc-project-tabs',
-  imports: [ContextMenuComponent],
+  imports: [TooltipDirective, ContextMenuComponent],
   templateUrl: './project-tabs.component.html',
   styleUrl: './project-tabs.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,9 +1,11 @@
+import { TooltipDirective } from '../../shared/tooltip.directive';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { ProjectService } from '../../core/project/project.service';
 import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 
 @Component({
   selector: 'vc-mix-buttons',
+  imports: [TooltipDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './mix-buttons.component.html',
   styleUrl: './mix-buttons.component.css',

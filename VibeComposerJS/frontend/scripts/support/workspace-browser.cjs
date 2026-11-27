@@ -31,14 +31,14 @@ const readSessionProject = `() => {
 const readSetting = `key => (${storageRequest})('readonly', store => store.get(key), 'settings')`;
 const writeSetting = `(key, value) => (${storageRequest})('readwrite', store => store.put(value, key), 'settings')`;
 
-// Locate canvas targets through their rendered hover labels. Leave actual gestures to the caller.
-function arrangementPoint(canvas, label) {
+// Probe rendered hit regions, then leave the actual gesture to the caller.
+function arrangementPoint(canvas, key) {
   const bounds = canvas.getBoundingClientRect();
   const left = Math.max(0, bounds.left), top = Math.max(0, bounds.top);
   const right = Math.min(innerWidth, bounds.right), bottom = Math.min(innerHeight, bounds.bottom);
   const matches = (x, y) => {
     canvas.dispatchEvent(new PointerEvent('pointermove', { clientX: x, clientY: y, bubbles: true }));
-    return canvas.title.startsWith(label);
+    return canvas.dataset.hoverTarget === key;
   };
   try {
     for (let y = Math.ceil(top) + 3; y < bottom - 2; y += 6) {
@@ -47,7 +47,7 @@ function arrangementPoint(canvas, label) {
           && document.elementFromPoint(x, y) === canvas) return { x, y };
       }
     }
-    throw new Error('Arrangement target is outside the visible canvas or missing: ' + label);
+    throw new Error('Arrangement target is outside the visible canvas or missing: ' + key);
   } finally {
     canvas.dispatchEvent(new PointerEvent('pointerleave'));
   }

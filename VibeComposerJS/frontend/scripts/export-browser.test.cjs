@@ -147,7 +147,7 @@ for (const { width, missingMethod, sampler, chiptune, lateClock } of [
           vibrato.dispatchEvent(new Event('change', { bubbles: true }));
           await wait(() => vibrato.getAttribute('aria-valuetext') === '20 cents', 'vibrato depth');
         }
-        const trigger = await wait(()=>document.querySelector('[title="Export"]'), 'export trigger');
+        const trigger = await wait(()=>document.querySelector('button[aria-label="Export"]'), 'export trigger');
         trigger.focus(); key(trigger,'ArrowDown');
         await wait(()=>menu() && menu().contains(document.activeElement),'keyboard menu focus');
         ensure(menu().querySelectorAll('button').length===3,'three export actions');

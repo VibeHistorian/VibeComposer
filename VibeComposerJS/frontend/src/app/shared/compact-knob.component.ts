@@ -1,7 +1,7 @@
 import { UiPreferencesService } from '../core/ui/ui-preferences.service';
-import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, output, signal } from '@angular/core';
-import { CdkConnectedOverlay, type ConnectedPosition } from '@angular/cdk/overlay';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { ControlHeadingComponent, type ControlInheritance } from './control-heading.component';
+import { TooltipDirective } from './tooltip.directive';
 import { normalizeVolumePercent, panLabel, volumeDecibels } from '../core/audio/mix-values';
 
 const TIME_SLIDER_STEPS = 1000;
@@ -9,14 +9,13 @@ const TIME_SCALE_MS = 10;
 
 @Component({
   selector: 'vc-compact-knob',
-  imports: [ControlHeadingComponent, CdkConnectedOverlay],
+  imports: [ControlHeadingComponent, TooltipDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './compact-knob.component.html',
   styleUrl: './compact-knob.component.css',
 })
 export class CompactKnobComponent {
   private readonly preferences = inject(UiPreferencesService);
-  readonly element = inject(ElementRef<HTMLElement>);
   readonly value = input.required<number>();
   readonly minimum = input.required<number>();
   readonly maximum = input.required<number>();
@@ -63,14 +62,14 @@ export class CompactKnobComponent {
     : this.valueFormat() === 'decibels' ? volumeDecibels(this.shownValue())
     : (this.letter() ? Number(this.shownValue().toFixed(2)) : this.shownValue()) + this.unit());
   readonly letterValue = computed(() => this.atDefault() ? this.defaultDisplay()?.text ?? this.formattedValue() : this.formattedValue());
-  readonly tooltipHovered = signal(false);
-  readonly tooltipFocused = signal(false);
-  readonly instantTooltip = computed(() => this.tooltipEnabled() && (this.tooltipHovered() || this.tooltipFocused() || this.preview() !== null));
-  readonly tooltipPositions: ConnectedPosition[] = [
-    { originX: 'center', originY: 'top', overlayX: 'center', overlayY: 'bottom', offsetY: -4 },
-    { originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top', offsetY: 4 },
-  ];
   readonly accessibleValue = computed(() => this.formattedValue() + (this.valueFormat() === 'decibels' ? ' dB' : ''));
+  readonly tooltip = computed(() => {
+    if (!this.tooltipEnabled()) return null;
+    const label = this.label();
+    if (this.letter()) return `${label} · ${this.letterValue()}${this.atDefault() ? ' · Default' : ''}`;
+    const value = this.mixed() && this.preview() === null ? 'Mixed values' : this.accessibleValue();
+    return [`${label} · ${value}`, this.description()].filter(Boolean).join('\n');
+  });
   readonly mixAccent = computed(() => {
     if (!this.mini() || !['pan', 'decibels'].includes(this.valueFormat())) return null;
     const neutral = this.valueFormat() === 'pan' ? 0 : 100;
@@ -131,11 +130,6 @@ export class CompactKnobComponent {
     }
     const value = this.snap(this.defaultValue());
     if (this.mixed() || value !== this.value()) this.valueCommit.emit(value);
-  }
-
-  tooltip(): string {
-    if (this.mixed() && this.preview() === null) return `${this.label()}: mixed values. Adjust to choose a shared value.`;
-    return `${this.label()}: ${this.accessibleValue()}. ${this.description()} Interactions: Settings > Shortcuts.`;
   }
 
   private setPreview(value: number): void {
