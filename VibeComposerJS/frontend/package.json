@@ -34,6 +34,7 @@
     "test:parts:history": "node --test scripts/parts/history.cjs",
     "test:parts:scopes": "node --test scripts/parts/scoped-settings.cjs",
     "test:parts:generation": "node --test scripts/parts-generation.test.cjs",
+    "test:parts:drum-kit:full": "node --test scripts/parts/drum-kit-reroll-matrices.test.cjs",
     "test:parts:phrases": "node --test scripts/parts/manual-phrases.cjs",
     "test:parts:preferences": "node --test scripts/parts/preferences.cjs",
     "test:parts:support": "node --test scripts/parts/test-support.cjs",

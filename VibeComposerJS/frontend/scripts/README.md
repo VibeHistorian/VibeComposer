@@ -136,10 +136,13 @@ Historical Arpeggio contour pitches use C-major intervals and snapping even in o
 | Project imports, validation and atomic rejection | `pnpm run test:parts:imports` | `parts/imports-validation.cjs`, `project-codec.test.cjs` |
 | History, gestures, audition and arrangement commands | `pnpm run test:parts:history` | `parts/history.cjs` |
 | Scoped settings, inheritance, copy/freeze and editors | `pnpm run test:parts:scopes` | `parts/scoped-settings.cjs` |
-| Compose/reroll policies and Java generation parity | `pnpm run test:parts:generation` | `parts-generation.test.cjs` loads `parts/generation-policy.cjs` and `parts/generation-parity.cjs` |
+| Compose/reroll policies, representative drum styles and Java generation parity | `pnpm run test:parts:generation` | `parts-generation.test.cjs` loads `parts/generation-policy.cjs`, `parts/generation-parity.cjs` and `parts/drum-kit-rerolls.cjs` |
+| Exhaustive drum-kit reroll matrices | `pnpm run test:parts:drum-kit:full` | `parts/drum-kit-reroll-matrices.test.cjs` |
 | Manual phrase ownership, drafts and local Apply | `pnpm run test:parts:phrases` | `parts/manual-phrases.cjs` |
 | UI preferences, appearance and control placement | `pnpm run test:parts:preferences` | `parts/preferences.cjs` |
 | Fixture isolation, cache reuse and diagnostic handling | `pnpm run test:parts:support` | `parts/test-support.cjs` |
+
+The default functional aggregate and `test:parts:generation` check the Deep House, Reggae and Swing Jazz signatures alongside drum-kit project behavior. Run the focused full command after changing drum-kit generation or style signatures. It exercises all 24 styles at 24 rerolls per style, plus the neutral baseline and the 128-reroll comparison per mode for Kit and Legacy.
 
 For a narrower selection, use Node's test-name filter, for example `node --test --test-name-pattern='catalogue' scripts/parts-generation.test.cjs`. Cross-cutting tests stay together under their primary behavior so their history, persistence, MIDI and ownership assertions remain intact.
 
