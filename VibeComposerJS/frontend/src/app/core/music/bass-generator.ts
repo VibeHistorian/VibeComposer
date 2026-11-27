@@ -86,8 +86,9 @@ export function generateBassline(
   const stretchedByNote = joinMode === 'JOIN' ? 1 : 0;
 
   for (let chordIndex = 0; chordIndex < triads.length; chordIndex++) {
+    const chordDuration = rhythm === 'bass1' ? harmony?.durations?.[chordIndex] ?? BEATS_PER_CHORD : BEATS_PER_CHORD;
     // Java bass skips the entire chord before consuming its shared dynamics/variation streams.
-    if (!fill[chordIndex]) { skipNotes = 0; chordStart += BEATS_PER_CHORD; continue; }
+    if (!fill[chordIndex]) { skipNotes = 0; chordStart += chordDuration; continue; }
     const gridSettings = { ...settings, rhythm: rhythm === 'bass1' || rhythm === 'durations' ? 'full' as const : rhythm };
     const grid = rhythm === 'bass1' || rhythm === 'durations' ? undefined : spannedPattern(gridSettings, chordIndex);
     const velocities = rhythm === 'bass1' || rhythm === 'durations' ? undefined : spannedVelocities(gridSettings, chordIndex);
@@ -98,7 +99,7 @@ export function generateBassline(
     const durations = rhythm === 'durations' ? durationBlocks(settings, Number(partSeed), chordIndex).flat() : rhythm === 'bass1'
       ? makeAlternatingDurations(
         BigInt.asIntN(32, partSeed + BigInt(chordIndex % 2)),
-        BEATS_PER_CHORD,
+        chordDuration,
       )
       : Array(grid!.length).fill(BEATS_PER_CHORD / grid!.length) as number[];
     let noteStart = chordStart;
@@ -144,13 +145,13 @@ export function generateBassline(
       }
       noteStart += duration;
     }
-    chordStart += BEATS_PER_CHORD;
+    chordStart += chordDuration;
   }
 
   return events;
 }
 
-/** Port of Rhythm.regenerateDurations(4, sixteenthNote / 2) for a four beat chord. */
+/** Port of Rhythm.regenerateDurations for an alternating Bass phrase. */
 function makeAlternatingDurations(seed: bigint, limit: number): number[] {
   const random = new JavaRandom(seed);
   const durations: number[] = [];

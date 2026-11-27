@@ -23,7 +23,7 @@ function allowedPitch(minimum: number, maximum: number, position: number, random
 
 /** MelodyExpansion.expandSkeletonNotes: dynamics are drawn once per original skeleton note. */
 export function expandMelody(skeleton: readonly MelodyNote[][], settings: MelodySettings,
-  seed: number, notesSeedOffset: number, minimum: number, maximum: number): MelodyNote[][] {
+  seed: number, notesSeedOffset: number, minimum: number, maximum: number, chordDurations?: readonly number[]): MelodyNote[][] {
   const orderSeed = int(seed + 1);
   const splitRandom = new JavaRandom(int(orderSeed + 4));
   let pitchRandom = new JavaRandom(int(seed + 8));
@@ -37,7 +37,7 @@ export function expandMelody(skeleton: readonly MelodyNote[][], settings: Melody
     if (chord > 0) { pitchRandom = new JavaRandom(int(orderSeed + 8)); exceptionRandom = new JavaRandom(int(orderSeed + 9)); }
     let time = 0;
     for (const note of notes) {
-      const duration = note.rhythm, position = time / 4;
+      const duration = note.rhythm, position = time / (chordDurations?.[chord] ?? 4);
       let velocity = velocityRandom.nextInt(Math.max(1, maximum - minimum)) + minimum;
       if (position < EPS && accentRandom.nextInt(100) < accent) {
         velocity = Math.min(127, velocity + 15 + accentRandom.nextInt(11) - 5 + Math.trunc(accent / 20));

@@ -32,7 +32,7 @@ export function decodeHarmonySettings(value: unknown): HarmonySettings | undefin
 export interface GenerationHarmony {
   readonly roots: readonly (readonly number[])[];
   readonly voicings: readonly (readonly number[])[];
-  /** Chord slot lengths used by contextual melody. */
+  /** Chord slot lengths available to duration-aware generators. */
   readonly durations?: readonly number[];
   /** Preserve explicit sounding Chordlets where inverse scale conversion is ambiguous. */
   readonly soundingRoots?: readonly (readonly number[])[];

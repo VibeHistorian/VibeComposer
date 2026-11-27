@@ -348,8 +348,8 @@ test('P5f durations share chord boundaries across all roles, score ranges, tempo
   const { service, load, phrase, midi, ui, workspace, stored } = fixture({ contextualMelody: false });
   const timing = load('core/music/section-context.ts');
   const project = JSON.parse(service.exportProjectJson());
-  project.tracks = project.tracks.map(track => track.role === 'arpeggio' || track.role === 'drums'
-    ? { ...track,generatorSettings:{...track.generatorSettings,rhythm:'melody'} } : track);
+  project.tracks = project.tracks.map(track => ({ ...track, generatorSettings: { ...track.generatorSettings,
+    rhythm: track.role === 'arpeggio' || track.role === 'drums' ? 'melody' : 'full' } }));
   project.arrangement = project.arrangement.slice(0,2).map(section => ({ ...section, measures: 4,
     trackPresence: Object.fromEntries(project.tracks.map(track => [track.id, true])) }));
   assert.equal(service.importProjectJson(JSON.stringify(project)), true);
@@ -398,6 +398,41 @@ test('P5f durations share chord boundaries across all roles, score ranges, tempo
   const restored = new ProjectService(); assert.deepEqual(restored.project(),service.project());
   service.flushPersistence();
   assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).arrangement[0].context.tempoBpm, 90);
+});
+
+test('free Bass and Melody compose for the chord duration and followers use each pass', () => {
+  const { service, phrase } = fixture();
+  const base = service.project();
+  const tracks = ['melody', 'bass', 'arpeggio'].map(role => base.tracks.find(track => track.role === role));
+  const [melody, bass, arp] = tracks;
+  tracks[0] = { ...melody, generatorSettings: { ...melody.generatorSettings, rhythm: 'melody1', pauseChance: 0, swingPercent: 50 } };
+  tracks[1] = { ...bass, generatorSettings: { ...bass.generatorSettings, rhythm: 'bass1' } };
+  tracks[2] = { ...arp, generatorSettings: { ...arp.generatorSettings, rhythm: 'melody', swingPercent: 50,
+    pauseChance: 0, exceptionChance: 0, patternFlip: false, chordSpanFill: 'ALL' } };
+  const section = { ...base.arrangement[0], measures: 4, trackPresence: Object.fromEntries(tracks.map(track => [track.id, true])) };
+  for (const contextualMelody of [false, true]) {
+    const project = { ...base, tracks, melodyGlobal: { ...base.melodyGlobal, contextualMelody } };
+    const original = { ...project, arrangement: [section] };
+    const adapted = { ...project, arrangement: [{ ...section, customDurations: [1.875, 10.5, 4, 3.25] }] };
+    const onsets = (song, track, start, end) => phrase.layOutTrackPhrase(song, track)
+      .filter(note => note.startBeat >= start - 1e-9 && note.startBeat < end - 1e-9)
+      .map(note => Math.round((note.startBeat - start) * 1e6) / 1e6);
+    for (const track of tracks.slice(0, 2)) {
+      const originalRhythm = onsets(original, track, 4, 8);
+      const expectedLoop = [0, 4, 8].flatMap(offset => originalRhythm.map(onset => onset + offset)).filter(onset => onset < 10.5);
+      const expectedStretch = originalRhythm.map(onset => onset * 10.5 / 4);
+      const actual = onsets(adapted, track, 1.875, 12.375);
+      assert.ok(actual.some(onset => onset >= 8), track.role + ' composes through the long chord');
+      assert.notDeepEqual(actual, expectedLoop, track.role);
+      assert.notDeepEqual(actual, expectedStretch, track.role);
+      assert.deepEqual(onsets({ ...adapted }, track, 1.875, 12.375), actual, track.role + ' replay');
+    }
+    const grid = phrase.sectionMelodyContext(adapted, adapted.arrangement[0]);
+    assert.notDeepEqual(grid.repeats[0].pitches[1], grid.pitches[1]);
+    const expectedArp = [grid, ...grid.repeats].flatMap((pass, index) => pass.pitches[1].flatMap((pitch, hit) =>
+      pitch > 0 ? [index * 4 + hit / 4] : [])).filter(onset => onset < 10.5);
+    assert.deepEqual(onsets(adapted, tracks[2], 1.875, 12.375), expectedArp);
+  }
 });
 
 test('a fractional chord boundary excludes an onset that rounds onto the next chord', () => {
