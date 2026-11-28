@@ -461,6 +461,74 @@ test('P5f durations share chord boundaries across all roles, score ranges, tempo
   assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).arrangement[0].context.tempoBpm, 90);
 });
 
+test('HALF1 and HALF2 split the whole section at its beat midpoint for every role', () => {
+  const { service, phrase } = fixture({ contextualMelody: false });
+  const base = service.project();
+  const tracks = base.tracks.map(track => ({ ...track, generatorSettings: { ...track.generatorSettings,
+    rhythm: 'full', hitsPerPattern: 4, chordSpanFill: 'ALL', fillFlip: false } }));
+  const trackPresence = Object.fromEntries(tracks.map(track => [track.id, true]));
+  const section = { ...base.arrangement[0], trackPresence };
+  const intro = { ...section, id: 'intro', measures: 1 };
+  const notesInSection = (project, track) => phrase.layOutTrackPhrase(project, track, false, true)
+    .filter(note => note.sectionId === section.id);
+
+  for (const measures of [2, 3, 4, 5, 6, 8]) {
+    for (const multiplier of [0.5, 1, 2]) {
+      const current = { ...section, measures, context: { beatDurationMultiplier: multiplier } };
+      const project = { ...base, tracks, arrangement: [intro, current] };
+      const midpoint = 4 + measures * 2 * multiplier;
+      const sectionEnd = 4 + measures * 4 * multiplier;
+      for (const track of tracks) {
+        const baseline = notesInSection(project, track);
+        for (const [fill, flipped, start, end] of [
+          ['HALF1', false, 4, midpoint], ['HALF2', false, midpoint, sectionEnd],
+          ['HALF1', true, midpoint, sectionEnd], ['HALF2', true, 4, midpoint],
+        ]) {
+          const label = `${track.role}, ${measures} bars, ${multiplier}x, ${fill}${flipped ? ' flipped' : ''}`;
+          const scoped = { ...current, trackPartOverrides: { [track.id]: { chordSpanFill: fill, fillFlip: flipped } } };
+          const notes = notesInSection({ ...project, arrangement: [intro, scoped] }, track);
+          const expected = baseline.flatMap(note => {
+            const onset = Math.max(note.startBeat, start);
+            const release = Math.min(note.startBeat + note.durationBeats, end);
+            return release - onset > 1e-9 ? [{ ...note, startBeat: onset, durationBeats: release - onset }] : [];
+          });
+          const events = notes => notes.map(({ midi, startBeat, durationBeats, velocity }) =>
+            [midi, Math.round(startBeat * 1e9), Math.round(durationBeats * 1e9), velocity]);
+          assert.ok(expected.length, `${label} has audible material`);
+          assert.deepEqual(events(notes), events(expected), label);
+        }
+      }
+    }
+  }
+});
+
+test('melody rhythm follows a section half fill across progression repeats and uneven bar lengths', () => {
+  const { service, phrase } = fixture({ contextualMelody: false });
+  const base = service.project();
+  const tracks = base.tracks.filter(track => ['melody', 'arpeggio', 'drums'].includes(track.role))
+    .map(track => ({ ...track, generatorSettings: { ...track.generatorSettings, rhythm: track.role === 'melody' ? 'full' : 'melody',
+      swingPercent: 50, patternFlip: false, ...(track.role === 'drums' ? { ghosts: false } : {}) } }));
+  const melody = tracks.find(track => track.role === 'melody');
+  const section = { ...base.arrangement[0], measures: 6, customDurations: [3, 8, 2, 4],
+    trackPresence: Object.fromEntries(tracks.map(track => [track.id, true])),
+    trackPartOverrides: { [melody.id]: { chordSpanFill: 'HALF2' } } };
+  const project = { ...base, tracks, arrangement: [section] };
+  for (const track of tracks) {
+    const notes = phrase.layOutTrackPhrase(project, track);
+    assert.ok(notes.length, track.role);
+    assert.ok(notes.every(note => note.startBeat >= 14 && note.startBeat + note.durationBeats <= 28 + 1e-9), track.role);
+    assert.ok(notes.some(note => note.startBeat >= 20), `${track.role} plays in the repeated progression`);
+  }
+  const editedMelody = { ...melody, phraseEdits: [{ startBeat: 0, endBeat: 3,
+    notes: [{ id: 'manual-melody', midi: 64, startBeat: 1, durationBeats: 1, velocity: 90 }] }] };
+  const humanized = { ...project, tracks: tracks.map(track => track === melody ? editedMelody : track),
+    humanization: { timingBeats: .25, durationBeats: .25 } };
+  const editedNotes = phrase.layOutTrackPhrase(humanized, editedMelody);
+  assert.ok(editedNotes.some(note => note.id === 'manual-melody' && note.startBeat < 14));
+  assert.ok(editedNotes.filter(note => note.id !== 'manual-melody')
+    .every(note => note.startBeat >= 14 && note.startBeat + note.durationBeats <= 28 + 1e-9));
+});
+
 test('free Bass and Melody compose for the chord duration and followers use each pass', () => {
   const { service, phrase } = fixture();
   const base = service.project();
@@ -2197,7 +2265,7 @@ test('fill controls respect mixed scopes, track exceptions, flips and per-field 
   assert.equal(effective(second).chordSpanFill, 'EVEN');
 });
 
-test('section fills repeat over the effective progression and reach score/preview/editor and MIDI without changing presence', () => {
+test('ODD repeats over the progression while HALF2 covers the second half of the section', () => {
   const { service, ui, workspace, phrase, midi } = fixture({ contextualMelody: false });
   const trackId = 'track-chords-1';
   const sectionId = service.project().arrangement[1].id;
@@ -2232,7 +2300,7 @@ test('section fills repeat over the effective progression and reach score/previe
   service.setProgression([1, 5, 6]);
   service.updatePartSettings(source, { chordSpanFill: 'HALF2' });
   const local = phrase.layOutTrackPhrase(service.project(), track()).filter((note) => note.startBeat >= start && note.startBeat < end);
-  assert.deepEqual([...new Set(local.map((note) => Math.floor((note.startBeat - start) / 4)))], [1, 2, 4, 5, 7]);
+  assert.deepEqual([...new Set(local.map((note) => Math.floor((note.startBeat - start) / 4)))], [4, 5, 6, 7]);
 });
 
 test('fill values survive copy/freeze, one-entry history, duplication and session/JSON; manual notes keep masking them', () => {

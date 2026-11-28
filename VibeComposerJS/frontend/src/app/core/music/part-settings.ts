@@ -36,9 +36,9 @@ const number = (key: string, label: string, minimum: number, maximum: number, de
 const choice = (key: string, label: string, options: readonly (string | number)[]): PartControl => ({ key, label, kind: 'choice', options });
 const fill: readonly PartControl[] = [
   { ...choice('chordSpanFill', 'FILL', CHORD_SPAN_FILLS), defaultValue: 'ALL',
-    description: 'Choose active progression chords. Java ODD plays slots 2, 4, …; EVEN plays 1, 3, …. HALF1 uses the first floor(n/2) chords; HALF2 uses the rest.' },
+    description: 'ODD plays chord slots 2, 4, … and EVEN plays 1, 3, …. HALF1 plays the first half of each section in beats, and HALF2 plays the second half.' },
   { key: 'fillFlip', label: 'Fill flip', kind: 'boolean', defaultValue: false,
-    description: 'Invert which progression chords play. ALL + Fill flip produces silence.' },
+    description: 'Invert the fill, including swapping the active half of a section. ALL + Fill flip produces silence.' },
 ];
 const pitched: readonly PartControl[] = [{ ...number('transpose', 'Transpose', -36, 36, 0, ' st'), step: 12 },
   number('velocityMin', 'Min velocity', 1, 127, 69, ''), number('velocityMax', 'Max velocity', 1, 127, 89, '')];
