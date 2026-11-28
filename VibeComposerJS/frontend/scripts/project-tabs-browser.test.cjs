@@ -59,7 +59,7 @@ for (const width of [700, 1440]) test(`project pills, context actions, checkpoin
         HTMLAnchorElement.prototype.click=native;
         const open = async project => {
           const transfer=new DataTransfer();transfer.items.add(new File([JSON.stringify(project)],'opened.vibe.json',{type:'application/json'}));
-          const input=document.querySelector('input[type="file"][accept*=".xml-config"]');
+          const input=document.querySelector('input[type="file"][accept*=".json"]');
           input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
           await wait(()=>name().value===project.name,'file opened');
         };

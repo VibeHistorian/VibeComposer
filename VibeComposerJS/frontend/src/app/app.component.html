@@ -63,7 +63,7 @@
         </div>
       </ng-template>
       <button type="button" (click)="projectFile.click()" [disabled]="openingProject()" vcTooltip="Open project or MIDI">Open...</button>
-      <input #projectFile type="file" accept="application/json,application/xml,text/xml,audio/midi,audio/x-midi,.json,.xml,.xml-config,.mid,.midi" hidden (change)="importProject($event)" />
+      <input #projectFile type="file" accept=".json,.xml,.mid,.midi" hidden (change)="importProject($event)" />
     </div>
     @if (audioExport.status() || projectMessage() || hosted.message()) {
       <div transportNotice class="project-message" role="status"

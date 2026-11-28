@@ -1145,13 +1145,13 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     const javaXml = fs.readFileSync(path.resolve(__dirname, '../GENERATOR_REFACTOR_TEST_GUICONFIG.xml-config'), 'utf8');
     const xmlImport = await command('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => {
       const wait = async read => { for(let i=0;i<150;i++){const value=read();if(value)return value;await new Promise(resolve=>setTimeout(resolve,20));} throw new Error('XML import timed out'); };
-      const input=document.querySelector('input[type="file"][accept*=".xml-config"]');
-      const files=new DataTransfer(); files.items.add(new File([${JSON.stringify(javaXml)}],'Java import.xml-config',{type:'application/xml'}));
+      const input=document.querySelector('input[type="file"][accept*=".xml"]');
+      const files=new DataTransfer(); files.items.add(new File([${JSON.stringify(javaXml)}],'Java import.xml',{type:'application/xml'}));
       input.files=files.files; input.dispatchEvent(new Event('change',{bubbles:true}));
       const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
       const loaded=await wait(()=>read().name==='Java import'&&read());
       const before=JSON.stringify(loaded), bad=new DataTransfer();
-      bad.items.add(new File(['<GUIConfig>'],'broken.xml-config',{type:'application/xml'}));
+      bad.items.add(new File(['<GUIConfig>'],'broken.xml',{type:'application/xml'}));
       input.files=bad.files; input.dispatchEvent(new Event('change',{bubbles:true}));
       await wait(()=>document.querySelector('.project-message')?.textContent.includes('Could not import:'));
       return {tracks:loaded.tracks.length,sections:loaded.arrangement.length,bpm:loaded.tempoBpm,scale:loaded.scale,

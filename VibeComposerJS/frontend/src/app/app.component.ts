@@ -185,7 +185,7 @@ export class AppComponent {
       const contents = await file.text();
       if (controller.signal.aborted) return;
       const translation = contents.trimStart().startsWith('<')
-        ? translateJavaConfig(contents, { name: file.name.replace(/\.(xml-config|xml)$/i, '') }) : undefined;
+        ? translateJavaConfig(contents, { name: file.name.replace(/\.xml$/i, '') }) : undefined;
       const valid = this.projects.importProjectJson(translation ? JSON.stringify(translation.project) : contents);
       if (translation?.diagnostics.length) console.info('Java XML translation notes:', translation.diagnostics);
       this.projectMessage.set(valid ? `Loaded ${this.project().name}.${translation?.diagnostics.length

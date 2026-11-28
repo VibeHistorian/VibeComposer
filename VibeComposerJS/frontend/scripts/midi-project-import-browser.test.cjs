@@ -51,7 +51,8 @@ test('Open loads a MIDI arrangement, retains it on reload and follows the projec
       picker().dispatchEvent(new Event('change', { bubbles: true }));
     };
     try {
-      await wait(picker, 'MIDI file picker');
+      const input = await wait(picker, 'MIDI file picker');
+      ensure(input.accept === '.json,.xml,.mid,.midi', 'file picker lists only the four supported extensions');
       if (sessionStorage.getItem('midi-project-reload')) {
         await wait(() => activeName() === 'Imported arrangement', 'import restored as active tab');
         const { project, id } = await wait(() => saved('Imported arrangement'), 'saved MIDI project');
