@@ -44,6 +44,69 @@ test('Global Harmony Compose toggle persists and preserves custom harmony while 
   assert.deepEqual(harmony(), expected);
 });
 
+test('Mode On Compose defaults off and generates harmony in the seeded seven-note mode', () => {
+  const { service, load, stored } = fixture({ contextualMelody: false });
+  const { TransportDockComponent } = load('features/transport/transport-dock.component.ts');
+  const { generateHarmony } = load('core/music/contextual-harmony.ts');
+  const { scaleNotes } = load('core/music/scales.ts');
+  const transport = new TransportDockComponent();
+  // This seed would select a pentatonic scale from the unfiltered catalog.
+  service.updateSettings({ seed: '9007199254740993', scale: 'pentatonic-major' });
+  service.updateHarmonySettings({ generation: 'MODAL', spiciness: 100 });
+  assert.equal(service.generateComposition(), 'changed');
+  const modeOff = service.project();
+  assert.equal(modeOff.scale, 'pentatonic-major');
+
+  transport.toggleComposeRandomization('randomizeModeOnCompose');
+  assert.equal(service.project().randomizeModeOnCompose, true);
+  const before = service.exportProjectJson();
+  assert.equal(service.generateComposition(), 'changed');
+  const composed = service.project();
+  assert.equal(composed.scale, 'harmonic-minor');
+  assert.equal(new Set(scaleNotes(composed.scale)).size, 7);
+  assert.equal(composed.transposeSemitones, modeOff.transposeSemitones);
+  assert.equal(composed.tempoBpm, modeOff.tempoBpm);
+  const expected = generateHarmony(BigInt(composed.seed), modeOff.progression.length, 'C',
+    composed.scale, composed.harmonySettings, composed.melodyGlobal);
+  assert.deepEqual(composed.progression, expected.degrees);
+  assert.deepEqual(composed.progressionChords, expected.chords);
+  assert.notDeepEqual(composed.progressionChords, modeOff.progressionChords);
+
+  const after = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  service.flushPersistence();
+  assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).randomizeModeOnCompose, true);
+  assert.equal(service.importProjectJson(after), true);
+  assert.equal(service.project().randomizeModeOnCompose, true);
+  transport.toggleComposeRandomization('randomizeModeOnCompose');
+  assert.equal(service.project().randomizeModeOnCompose, false);
+});
+
+test('Mode On Compose follows the phrase and retained harmony preferences', () => {
+  const { service, uiPreferences } = fixture({ contextualMelody: false });
+  const bass = 'track-bass-1';
+  const note = { id: 'major-third', midi: 64, startBeat: 0, durationBeats: 1, velocity: 90 };
+  service.updateTrackPhrase(bass, [note]);
+  service.setProgressionChord(0, { root: 0, spice: '', inversion: 1 });
+  service.updateSettings({ seed: '9007199254740993', randomizeModeOnCompose: true, randomizeHarmonyOnCompose: false });
+  const before = service.project();
+  const editedPhrase = () => service.project().tracks.find(track => track.id === bass).editedPhrase;
+  assert.equal(service.generateComposition(), 'changed');
+  assert.equal(service.project().scale, 'harmonic-minor');
+  assert.deepEqual(service.project().progression, before.progression);
+  assert.deepEqual(service.project().progressionChords[0], { root: 0, spice: 'm', inversion: 1, intervals: undefined });
+  assert.deepEqual(editedPhrase(), [{ ...note, midi: 63 }]);
+
+  service.undo();
+  uiPreferences.setHarmonyFollowsMode('off');
+  uiPreferences.toggleManualPhrasesFollowMode();
+  assert.equal(service.generateComposition(), 'changed');
+  assert.equal(service.project().scale, 'harmonic-minor');
+  assert.deepEqual(service.project().progressionChords, before.progressionChords);
+  assert.deepEqual(editedPhrase(), [note]);
+});
+
 test('failed contextual Compose keeps the rendered project, storage, history and playback and reports its cause', () => {
   const { service, workspace, load, stored } = fixture({ contextualMelody: false });
   service.updateSettings({ seed: '42' });

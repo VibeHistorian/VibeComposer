@@ -27,6 +27,11 @@ export function isScaleMode(value: unknown): value is ScaleMode {
 }
 export function scaleNotes(scale: ScaleMode): readonly number[] { return SCALE_DEFINITIONS[scale].notes; }
 
+export const SEVEN_NOTE_MODES: readonly ScaleMode[] = SCALE_MODES.filter(mode => {
+  const notes = scaleNotes(mode);
+  return notes.length === 7 && new Set(notes).size === 7;
+});
+
 /** The progression planners use seven harmonic slots. Missing diatonic degrees in
  * smaller collections share a nearby scale tone; these are aliases, not extra scale
  * members. Blues' chromatic passing tone remains available to melody and ornaments.

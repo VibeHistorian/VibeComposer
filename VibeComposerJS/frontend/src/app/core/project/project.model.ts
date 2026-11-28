@@ -23,6 +23,7 @@ export interface CompositionProject {
   readonly soundbankName?: string;
   readonly tempoBpm: number;
   readonly randomizeTempoOnCompose?: boolean;
+  readonly randomizeModeOnCompose?: boolean;
   readonly randomizeHarmonyOnCompose?: boolean;
   readonly randomizeArrangementOnCompose?: boolean;
   readonly arrangementPreview?: boolean;

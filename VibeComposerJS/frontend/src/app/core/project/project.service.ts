@@ -28,7 +28,7 @@ import { WorkspaceStorage } from './workspace-storage';
 import { copyDefaultProject, DEFAULT_DRUM_SETTINGS, DEFAULT_PROJECT, DEFAULT_TRACKS } from './project-defaults';
 import { projectLoadIssues } from './project-load-diagnostics';
 import { UiPreferencesService } from '../ui/ui-preferences.service';
-import { isScaleMode } from '../music/scales';
+import { isScaleMode, SEVEN_NOTE_MODES } from '../music/scales';
 import { followManualPhraseMode } from '../music/manual-phrase-mode';
 import { normalizeVolumePercent, validVolumePercent } from '../audio/mix-values';
 import { validInstrumentToneValue, type InstrumentToneKey } from '../audio/instrument-tone';
@@ -749,18 +749,24 @@ export class ProjectService {
 
   private prepareComposition(): PartWorkflowResult {
     const current = this.state();
-    let next = current;
     const seed = this.automaticSeed() || BigInt(current.seed) === 0n
       ? this.randomCompositionSeed() : current.seed;
     const random = new JavaRandom(BigInt(seed));
-    // Separate stream from track rerolls; draw both values even when a star is disabled.
+    // Separate stream from track rerolls; always draw transpose and tempo in this order.
     const transpose = random.nextInt(12) - 6;
     const bounds = this.uiPreferences.preferences();
     const tempo = random.nextInt(bounds.composeBpmMax - bounds.composeBpmMin + 1) + bounds.composeBpmMin;
-    next = { ...current, seed,
+    let next: CompositionProject = { ...current, seed,
       transposeSemitones: current.randomizeTransposeOnCompose === false ? current.transposeSemitones : transpose,
       tempoBpm: current.randomizeTempoOnCompose === false ? current.tempoBpm : tempo };
-    if (current.randomizeHarmonyOnCompose !== false) {
+    const rerollHarmony = current.randomizeHarmonyOnCompose !== false;
+    if (current.randomizeModeOnCompose) {
+      const scale = SEVEN_NOTE_MODES[random.nextInt(SEVEN_NOTE_MODES.length)];
+      if (scale !== current.scale) next = this.followMode(current, {
+        ...next, scale, progressionChords: rerollHarmony ? undefined : next.progressionChords,
+      });
+    }
+    if (rerollHarmony) {
       // Harmony owns its seeded stream; toggling it never shifts other random draws.
       const generated = generateHarmony(BigInt(seed), current.progression.length, BASE_KEY, next.scale,
         next.harmonySettings, next.melodyGlobal);
@@ -1127,7 +1133,7 @@ export class ProjectService {
     return String(values[0] || 1);
   }
 
-  updateSettings(patch: Partial<Pick<CompositionProject, 'masterVolumePercent' | 'humanization' | 'midiPadding' | 'name' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeHarmonyOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual' | 'arrangementVariationPolicy'>>): void {
+  updateSettings(patch: Partial<Pick<CompositionProject, 'masterVolumePercent' | 'humanization' | 'midiPadding' | 'name' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeModeOnCompose' | 'randomizeHarmonyOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual' | 'arrangementVariationPolicy'>>): void {
     if (patch.scale !== undefined && !isScaleMode(patch.scale)) return;
     if (patch.masterVolumePercent !== undefined && !validVolumePercent(patch.masterVolumePercent)) return;
     if (patch.transposeSemitones !== undefined

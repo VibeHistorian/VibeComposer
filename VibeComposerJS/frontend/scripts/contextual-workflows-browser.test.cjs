@@ -282,13 +282,14 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       history.querySelector('[aria-label="Close history"]').click();
       await wait(() => !document.querySelector('vc-history-dialog') && document.activeElement === historyButton, 'history closes and restores focus');
       const mode = document.querySelector('.transport-dock [aria-label="Mode"]');
-      const modeRow = mode.closest('.mode-control'), modeGroup = mode.closest('.transport-globals');
+      const modeRow = mode.closest('.mode-controls'), modeGroup = mode.closest('.transport-globals');
       const modeBounds = mode.getBoundingClientRect(), rowBounds = modeRow.getBoundingClientRect();
+      const toggleBounds = modeRow.querySelector('[aria-label="Mode On Compose"]').getBoundingClientRect();
       const groupBounds = modeGroup.getBoundingClientRect();
-      // The Mode selector fills its own row in the global controls grid.
-      result.modeSizing = { width: modeBounds.width, available: rowBounds.width };
+      // The Mode selector fills the row to the right of the Compose toggle.
+      result.modeSizing = { width: modeBounds.width, available: rowBounds.right - toggleBounds.right };
       result.modeFitsRow = modeBounds.width > 0 && modeBounds.height > 0
-        && Math.abs(modeBounds.left - rowBounds.left) <= 1
+        && modeBounds.left >= toggleBounds.right - 1
         && Math.abs(modeBounds.right - rowBounds.right) <= 1
         && modeBounds.top >= rowBounds.top - 1 && modeBounds.bottom <= rowBounds.bottom + 1
         && modeBounds.left >= groupBounds.left - 1 && modeBounds.right <= groupBounds.right + 1;

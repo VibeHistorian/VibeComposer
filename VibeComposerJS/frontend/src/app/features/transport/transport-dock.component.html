@@ -20,11 +20,17 @@
             [value]="project().harmonySettings?.spiciness ?? 0" [minimum]="0" [maximum]="100" (valueCommit)="updateSpiciness($event)" />
         </div>
         <div class="global-harmony-controls">
-          <label class="mode-control"><vc-menu-select [groups]="scaleMenuGroups" [options]="scaleOptions()" selectDefault="major" aria-label="Mode" [value]="project().scale" (valueChange)="updateScale($event)"></vc-menu-select></label>
+          <div class="mode-controls">
+            <button type="button" class="global-compose-star mode-compose-star" aria-label="Mode On Compose"
+              vcTooltip="Choose a mode with seven distinct notes on Compose"
+              [attr.aria-pressed]="project().randomizeModeOnCompose ?? false"
+              [disabled]="projects.phraseHistoryActive()"
+              (click)="toggleComposeRandomization('randomizeModeOnCompose')">✦</button>
+            <vc-menu-select [groups]="scaleMenuGroups" [options]="scaleOptions()" selectDefault="major" aria-label="Mode" [value]="project().scale" (valueChange)="updateScale($event)"></vc-menu-select>
+          </div>
           <vc-chordlet-editor>
-            <button type="button" chordletAction class="harmony-compose-star" aria-label="Harmony On Compose"
+            <button type="button" chordletAction class="global-compose-star harmony-compose-star" aria-label="Harmony On Compose"
               vcTooltip="On Compose: reroll global harmony when global Compose runs"
-              [class.active]="project().randomizeHarmonyOnCompose !== false"
               [attr.aria-pressed]="project().randomizeHarmonyOnCompose !== false"
               [disabled]="projects.phraseHistoryActive()"
               (click)="toggleComposeRandomization('randomizeHarmonyOnCompose')">✦</button>

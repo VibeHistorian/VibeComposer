@@ -43,6 +43,24 @@ for (const [width, height] of [[700, 600], ...[700, 780, 1050, 1400, 1440, 1920,
           }
           throw new Error('Global harmony did not render');
         })()`);
+        const mode = await evaluate(`(async () => {
+          const toggle = document.querySelector('button[aria-label="Mode On Compose"]');
+          const button = toggle.getBoundingClientRect();
+          const harmony = document.querySelector('button[aria-label="Harmony On Compose"]').getBoundingClientRect();
+          const select = document.querySelector('vc-menu-select[aria-label="Mode"]').getBoundingClientRect();
+          const centerX = rect => rect.left + rect.width / 2;
+          const centerY = rect => rect.top + rect.height / 2;
+          const defaultOff = toggle.getAttribute('aria-pressed') === 'false';
+          const settle = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          toggle.click(); await settle();
+          const enabled = toggle.getAttribute('aria-pressed') === 'true';
+          toggle.click(); await settle();
+          return { defaultOff, enabled, disabled: toggle.getAttribute('aria-pressed') === 'false',
+            smaller: button.width < harmony.width && button.height < harmony.height,
+            aligned: Math.abs(centerX(button) - centerX(harmony)) < 1,
+            besideSelect: button.right <= select.left && Math.abs(centerY(button) - centerY(select)) < 1 };
+        })()`);
+        assert.ok(Object.values(mode).every(Boolean), JSON.stringify(mode));
         const spice = await evaluate(`(async () => {
           const input = document.querySelector('input[aria-label="Harmony spiciness"]');
           const transpose = document.querySelector('input[aria-label="Transpose in semitones"]');
