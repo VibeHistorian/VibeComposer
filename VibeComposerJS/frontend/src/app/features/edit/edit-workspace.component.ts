@@ -133,6 +133,10 @@ export class EditWorkspaceComponent {
   finishRecording(): void {
     if (this.recordingActive) {
       this.recordingActive = false;
+      if (this.lastRecordingIds.length) {
+        const draftIds = new Set(this.draftNotes().map(note => note.id));
+        this.selectNotes(this.lastRecordingIds.filter(id => draftIds.has(id)).reverse());
+      }
       this.record();
     }
     for (const release of this.liveVoices.values()) { try { release(); } catch { /* Continue releasing the other voices. */ } }

@@ -89,6 +89,13 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   check(document.querySelector('#note-pitch').value==='63','text field does not record');
   input.blur();press('keydown','Digit2','2');await pause(120);
   check(sessionStorage.getItem('vibecomposer.project.v12')===before,'recording remains a draft');
+  const selectedBatch=()=>[...document.querySelectorAll('.inspector-copy')].some(p=>p.textContent.trim()==='4 notes selected');
+  button('Stop recording').click();press('keyup','Digit2','2');
+  await wait(selectedBatch,'stop selects the whole batch including the held note');
+  button('Undo phrase').click();
+  await wait(()=>button('Apply').disabled && !document.querySelector('#note-pitch'),'undo removes the batch in one step');
+  button('Redo phrase').click();
+  await wait(selectedBatch,'redo restores the whole batch selection');
   button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'),'applied');
   await wait(()=>sessionStorage.getItem('vibecomposer.project.v12')!==before,'saved');
   const track=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(t=>t.role==='bass');
