@@ -46,7 +46,7 @@ export function generatePhraseMidi(name: string, tempoBpm: number,
       const end = start + note.durationBeats;
       if (end <= start) continue;
       track.addNote({
-        midi: source.role === 'drums' ? mapDrumPitch(note.midi, drumMapping, drumSlots) : note.midi,
+        midi: source.role === 'drums' ? mapDrumPitch(note.midi, drumMapping, drumSlots, source.drumSlotPitch) : note.midi,
         ticks: Math.round(start * midi.header.ppq),
         durationTicks: Math.max(1, Math.round(end * midi.header.ppq) - Math.round(start * midi.header.ppq)),
         velocity: note.velocity / 127,
@@ -91,7 +91,7 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
       if (compositionTrack.voiceMode !== undefined) voicing.set(compositionTrack.midiChannel, compositionTrack);
       for (const note of phrases[compositionTrack.id]) {
         track.addNote({
-          midi: compositionTrack.role === 'drums' ? mapDrumPitch(note.midi, drumMapping, drumSlots) : note.midi,
+          midi: compositionTrack.role === 'drums' ? mapDrumPitch(note.midi, drumMapping, drumSlots, compositionTrack.drumSlotPitch) : note.midi,
           ticks: Math.round((note.startBeat + offset) * midi.header.ppq),
           durationTicks: Math.max(1, Math.round(note.durationBeats * midi.header.ppq)),
           velocity: note.velocity / 127,

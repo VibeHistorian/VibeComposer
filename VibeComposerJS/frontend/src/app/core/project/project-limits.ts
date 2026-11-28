@@ -1,0 +1,6 @@
+export const MAX_PROJECT_TRACKS = 64;
+export const MAX_ARRANGEMENT_SECTIONS = 32;
+export const MAX_ARRANGEMENT_MEASURES = 128;
+export const MAX_SECTION_MEASURES = 32;
+export const MAX_PHRASE_NOTES = 2048;
+export const MAX_LOCAL_PHRASE_END_BEAT = 2112;

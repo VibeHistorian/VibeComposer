@@ -9,9 +9,10 @@ import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } f
 import { decodePhraseGlideEdits } from './project-glide-decoder';
 import { validTrackVoicing } from '../music/track-voicing';
 import { decodeTrackInstrumentTone } from '../audio/instrument-tone';
+import { MAX_PHRASE_NOTES, MAX_PROJECT_TRACKS } from './project-limits';
 
 export function decodeTracks(value: unknown): CompositionTrack[] | undefined {
-  if (!Array.isArray(value) || value.length > 64) return undefined;
+  if (!Array.isArray(value) || value.length > MAX_PROJECT_TRACKS) return undefined;
   const tracks: CompositionTrack[] = [];
   const ids = new Set<string>();
   for (const raw of value) {
@@ -62,6 +63,11 @@ export function decodeTracks(value: unknown): CompositionTrack[] | undefined {
       }
     }
     if (!decoded) return undefined;
+    const slotPitch = (track as { drumSlotPitch?: number }).drumSlotPitch;
+    if (slotPitch !== undefined) {
+      if (decoded.role !== 'drums' || !Number.isInteger(slotPitch) || slotPitch < 0 || slotPitch > 127) return undefined;
+      decoded = { ...decoded, drumSlotPitch: slotPitch };
+    }
     if (track.instrumentTone !== undefined) {
       const instrumentTone = decodeTrackInstrumentTone(track.instrumentTone);
       if (instrumentTone === undefined || track.role === 'drums') return undefined;
@@ -125,7 +131,7 @@ export function decodeEditedPhrases(value: unknown): Partial<Record<ArrangedPart
 }
 
 export function isPhraseRangeEdits(value: unknown): value is readonly PhraseRangeEdit[] {
-  if (!Array.isArray(value) || value.length > 2048) return false;
+  if (!Array.isArray(value) || value.length > MAX_PHRASE_NOTES) return false;
   let count = 0;
   return value.every(raw => {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
@@ -136,13 +142,13 @@ export function isPhraseRangeEdits(value: unknown): value is readonly PhraseRang
       || edit.tailBeats !== undefined && (!Number.isFinite(edit.tailBeats) || edit.tailBeats <= 0 || edit.tailBeats > 64)
       || !isPhrase(edit.notes, 2112, -(edit.pickupBeats ?? 0))) return false;
     count += edit.notes.length;
-    return count <= 2048 && edit.notes.every(note => note.startBeat < edit.endBeat + (edit.tailBeats ?? 0)
+    return count <= MAX_PHRASE_NOTES && edit.notes.every(note => note.startBeat < edit.endBeat + (edit.tailBeats ?? 0)
       && (note.startBeat >= edit.startBeat || edit.pickupBeats !== undefined && note.startBeat < 0));
   });
 }
 
 export function isPhrase(value: unknown, maximumBeat = 132, minimumBeat = -4): value is readonly PhraseNote[] {
-  if (!Array.isArray(value) || value.length > 2048) {
+  if (!Array.isArray(value) || value.length > MAX_PHRASE_NOTES) {
     return false;
   }
   const ids = new Set<string>();

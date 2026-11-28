@@ -121,6 +121,10 @@ From `frontend/`, run `pnpm run test:playback` for transport/routing checks and 
 
 The app uses one persistent workspace with grouped Tracks, arrangement/score, contextual musical editors, a mixer popup and bottom transport. Melody uses the current block generator; all five roles support independent tracks, manual-note replacement, history, persistence and playback/MIDI output. Role totals support zero tracks, including an empty project.
 
+Use **Open…** to load a beat-based format 0 or 1 MIDI file as a project. The importer preserves note timing, velocities and instrument programs, and uses meter, tempo and markers to build the arrangement. It estimates track roles and harmony and stores the performance as editable section phrases. The project opens in a new tab by default and follows the existing replacement preference. The import status reports approximations such as skipped automation or material that exceeds project capacity.
+
+Imported drums are split by MIDI note number. The first 15 sounds get their own tracks and sounds 16 onward share the last track. Playback and General MIDI output retain the original pitches. Chromatic MIDI output uses one slot for the shared track.
+
 Follow [TRANSLATION_RULES.md](TRANSLATION_RULES.md) and the [workspace contracts](DAW_REDESIGN_PLAN.md). The [active backlog](CONTEXTUAL_CONTROLS_PLAN.md) and [remaining control inventory](CONTROL_PLACEMENT_MAP.md) describe unfinished translation work. Completed checkpoint narratives, Java parity evidence and superseded limitations live in [__work_history](__work_history/README.md).
 
 Angular ownership rules live in the [feature README](frontend/src/app/features/README.md) and [shared UI README](frontend/src/app/shared/README.md). Project codecs, command helpers, and the service commit boundary are mapped in the [project-state guide](frontend/src/app/core/project/README.md). Java fixture regeneration is documented in [the fixture guide](frontend/scripts/java/README.md).

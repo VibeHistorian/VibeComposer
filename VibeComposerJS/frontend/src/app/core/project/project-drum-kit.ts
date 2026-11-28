@@ -5,9 +5,14 @@ import { CLASSIC_DRUM_INSTRUMENTS, MAX_DRUM_SOUNDS, drumFamily, type DrumSlots }
 export function projectDrumPitches(project: Pick<CompositionProject, 'tracks' | 'arrangement' | 'editedPhrases'>, omitGeneratorIds: readonly string[] = []): number[] {
   const pitches = new Set<number>();
   const notes = (phrase: readonly { midi: number }[] | undefined) => phrase?.forEach(note => pitches.add(note.midi));
-  notes(project.editedPhrases.drums);
+  const firstDrum = project.tracks.find(track => track.role === 'drums');
+  if (firstDrum?.drumSlotPitch === undefined || firstDrum.editedPhrase === undefined) notes(project.editedPhrases.drums);
   for (const track of project.tracks) {
     if (track.role !== 'drums') continue;
+    if (track.drumSlotPitch !== undefined) {
+      pitches.add(track.drumSlotPitch);
+      continue;
+    }
     if (!omitGeneratorIds.includes(track.id)) pitches.add(track.generatorSettings.pitch);
     notes(track.editedPhrase);
     track.phraseEdits?.forEach(edit => notes(edit.notes));
@@ -59,6 +64,7 @@ export function reconcileDrumKit(project: CompositionProject, previous?: Composi
 }
 
 export function canSelectDrumPitch(project: CompositionProject, trackId: string, pitch: number): boolean {
+  if (project.tracks.some(track => track.id === trackId && track.role === 'drums' && track.drumSlotPitch !== undefined)) return true;
   return new Set([...projectDrumPitches(project, [trackId]), pitch]).size <= MAX_DRUM_SOUNDS;
 }
 

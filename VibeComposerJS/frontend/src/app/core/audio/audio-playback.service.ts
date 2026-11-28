@@ -178,7 +178,7 @@ export class AudioPlaybackService {
         if (this.midi.selectedOutput()) {
           const midiTrack = withDrumChannelPan(withMasterVolume(track, project.masterVolumePercent), drumChannelPan(project.tracks));
           release = this.midi.hold(midiTrack, note.midi, note.velocity,
-            track.role === 'drums' ? this.drumSlotsFor(project, [note.midi]) : undefined);
+            track.role === 'drums' ? this.drumSlotsFor(project, track.drumSlotPitch === undefined ? [note.midi] : []) : undefined);
           return;
         }
         await this.prepareInstrument(context);
@@ -233,7 +233,8 @@ export class AudioPlaybackService {
           if (pitches.has(note.midi)) continue;
           pitches.add(note.midi);
           this.midi.schedule(midiTrack, note.midi, note.velocity, performance.now() + 3, 0.3,
-            project && track.role === 'drums' ? this.drumSlotsFor(project, notes.map(note => note.midi)) : undefined);
+            project && track.role === 'drums'
+              ? this.drumSlotsFor(project, track.drumSlotPitch === undefined ? notes.map(note => note.midi) : []) : undefined);
         }
         return;
       }
@@ -425,7 +426,7 @@ export class AudioPlaybackService {
   setPhrasePreview(project: CompositionProject, preview: PlaybackPhrasePreview | null): void {
     if (this.phrasePreview === preview) return;
     try {
-      const pitches = preview?.notes.filter(note => project.tracks.some(track => track.id === note.trackId && track.role === 'drums')).map(note => note.midi) ?? [];
+      const pitches = this.draftDrumPitches(project, preview);
       if (pitches.length) resolvedDrumSlots(project, pitches);
     } catch (error) {
       this.playbackError.set(error instanceof Error ? error.message : 'Cannot preview these drum sounds.');
@@ -696,7 +697,8 @@ export class AudioPlaybackService {
       project.drumSlots,
       resolveProjectTimeline(project).tempoMap,
       resolveProjectTimeline(project).arrangementBounds.endBeat,
-      project.tracks.map((track) => [track.id, track.role, track.mix.program, track.midiChannel, track.voiceMode, track.glideMs]),
+      project.tracks.map((track) => [track.id, track.role, track.mix.program, track.midiChannel, track.voiceMode, track.glideMs,
+        track.role === 'drums' ? track.drumSlotPitch : undefined]),
       notes.map((note) => [note.trackId, note.role, note.startBeat, note.durationBeats, note.midi, note.velocity, note.pitchChanges, note.cutBeat]),
       [...glides],
     ]);
@@ -883,11 +885,15 @@ export class AudioPlaybackService {
     const cached = this.previewDrumSlots;
     if (cached?.project === project && cached.preview === this.phrasePreview
       && extraPitches.every(pitch => cached.slots[pitch] !== undefined)) return cached.slots;
-    const drumIds = new Set(project.tracks.filter(track => track.role === 'drums').map(track => track.id));
-    const pitches = this.phrasePreview?.notes.filter(note => drumIds.has(note.trackId)).map(note => note.midi) ?? [];
+    const pitches = this.draftDrumPitches(project, this.phrasePreview);
     const slots = resolvedDrumSlots(project, [...pitches, ...extraPitches]);
     this.previewDrumSlots = { project, preview: this.phrasePreview, slots };
     return slots;
+  }
+
+  private draftDrumPitches(project: CompositionProject, preview: PlaybackPhrasePreview | null): number[] {
+    const drumIds = new Set(project.tracks.filter(track => track.role === 'drums' && track.drumSlotPitch === undefined).map(track => track.id));
+    return preview?.notes.filter(note => drumIds.has(note.trackId)).map(note => note.midi) ?? [];
   }
 
   private playbackDiagnostics(): object {

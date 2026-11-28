@@ -2,9 +2,12 @@ import type { DrumSlots } from '../music/drum-instruments';
 import type { PhraseNote } from '../music/phrase-note';
 import { Dialog } from '@angular/cdk/dialog';
 import type { Injector } from '@angular/core';
-import { fitImportedMidi, type ImportedMidiTrack, type MidiScaleChoice } from '../music/midi-import-options';
+import { fitImportedMidi } from '../music/midi-import-options';
+import { MAX_MIDI_IMPORT_BYTES } from '../music/midi-import-limits';
 import type { ScaleMode } from '../music/scales';
+import type { MidiProjectImport } from '../project/midi-project-import';
 import { MidiImportDialogComponent, type MidiImportDialogData } from '../../features/midi-import/midi-import-dialog.component';
+import type { MidiImportRequest, MidiImportResponse, MidiImportResult } from './midi-import-protocol';
 
 export interface MidiDropOptions {
   readonly injector: Injector;
@@ -17,7 +20,8 @@ export interface MidiDropOptions {
 
 /** Parse off the UI thread, with cancellation when the editor closes or changes track. */
 export async function readMidiFile(buffer: ArrayBuffer, maximumBeats: number, maximumNotes: number, signal: AbortSignal, options: MidiDropOptions): Promise<PhraseNote[] | null> {
-  const { track, choices } = await readTrack(buffer, maximumNotes, signal, options);
+  const { transpose, root, mode, snap } = options;
+  const { track, choices } = await runMidiImport({ kind: 'phrase', buffer, maximumNotes, transpose, root, mode, snap }, signal);
   if (signal.aborted) return null;
   if (options.drumSlots) {
     const inverse = new Map(Object.entries(options.drumSlots).map(([pitch, slot]) => [slot, Number(pitch)]));
@@ -28,6 +32,11 @@ export async function readMidiFile(buffer: ArrayBuffer, maximumBeats: number, ma
   return showNoteInsertOptions(options.injector, signal, {
     track, phraseBeats: maximumBeats, choices, drumImport: options.drumSlots !== undefined,
   });
+}
+
+export async function readMidiProjectFile(file: File, signal: AbortSignal): Promise<MidiProjectImport> {
+  if (file.size > MAX_MIDI_IMPORT_BYTES) throw new Error('Choose a MIDI file up to 8 MB.');
+  return runMidiImport({ kind: 'project', buffer: await file.arrayBuffer(), filename: file.name }, signal);
 }
 
 export function showNoteInsertOptions(injector: Injector, signal: AbortSignal, data: MidiImportDialogData): Promise<PhraseNote[] | null> {
@@ -46,23 +55,25 @@ export function showNoteInsertOptions(injector: Injector, signal: AbortSignal, d
   });
 }
 
-type PreparedTrack = { track: ImportedMidiTrack; choices: MidiScaleChoice[] };
-
-function readTrack(buffer: ArrayBuffer, maximumNotes: number, signal: AbortSignal, options: MidiDropOptions): Promise<PreparedTrack> {
+function runMidiImport<R extends MidiImportRequest>(request: R, signal: AbortSignal): Promise<MidiImportResult<R>> {
   return new Promise((resolve, reject) => {
     if (signal.aborted) { reject(new Error('Import cancelled.')); return; }
     const worker = new Worker(new URL('./midi-import.worker', import.meta.url), { type: 'module' });
-    const finish = (error?: string, result: PreparedTrack = { track: { notes: [], durationBeats: 0 }, choices: [] }) => {
+    const finish = (response: MidiImportResponse<R>) => {
       clearTimeout(timeout);
       signal.removeEventListener('abort', abort);
       worker.terminate();
-      if (error) reject(new Error(error)); else resolve(result);
+      if ('error' in response) reject(new Error(response.error)); else resolve(response.result);
     };
-    const abort = () => finish('Import cancelled.');
-    const timeout = setTimeout(() => finish('This MIDI file took too long to read.'), 15000);
+    const abort = () => finish({ error: 'Import cancelled.' });
+    const timeout = setTimeout(() => finish({ error: 'This MIDI file took too long to read.' }), 15000);
     signal.addEventListener('abort', abort, { once: true });
-    worker.onmessage = ({ data }: MessageEvent<PreparedTrack & { error?: string }>) => finish(data.error, data);
-    worker.onerror = () => finish('Cannot read this MIDI file.');
-    worker.postMessage({ buffer, maximumNotes, transpose: options.transpose, root: options.root, mode: options.mode, snap: options.snap }, [buffer]);
+    worker.onmessage = ({ data }: MessageEvent<MidiImportResponse<R>>) => finish(data);
+    worker.onerror = () => finish({ error: 'Cannot read this MIDI file.' });
+    try {
+      worker.postMessage(request, [request.buffer]);
+    } catch {
+      finish({ error: 'Cannot read this MIDI file.' });
+    }
   });
 }

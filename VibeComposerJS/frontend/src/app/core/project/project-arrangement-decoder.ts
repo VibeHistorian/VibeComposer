@@ -12,9 +12,9 @@ import { decodePartPatch, resolvePartTrack, validVelocityRange } from '../music/
 import { validSectionHarmony } from '../music/section-context';
 import { isPhrase } from './project-track-decoder';
 import { validSectionVariations } from '../music/arrangement-variations';
+import { MAX_ARRANGEMENT_MEASURES, MAX_ARRANGEMENT_SECTIONS, MAX_LOCAL_PHRASE_END_BEAT, MAX_SECTION_MEASURES } from './project-limits';
 
-export const MAX_ARRANGEMENT_SECTIONS = 32;
-export const MAX_ARRANGEMENT_MEASURES = 128;
+export { MAX_ARRANGEMENT_MEASURES, MAX_ARRANGEMENT_SECTIONS } from './project-limits';
 
 export function decodeArrangement(value: unknown, tracks: readonly CompositionTrack[], projectSeed: bigint, sectionTypeChances: SectionTypeChanceSettings, random: () => number): ArrangementSection[] | undefined {
   if (!Array.isArray(value) || value.length < 1 || value.length > MAX_ARRANGEMENT_SECTIONS) {
@@ -45,7 +45,8 @@ export function decodeArrangement(value: unknown, tracks: readonly CompositionTr
     if (section.useMelodyHarmony !== undefined && typeof section.useMelodyHarmony !== 'boolean') return undefined;
     if (typeof section.id !== 'string' || section.id.length === 0 || section.id.length > 80 || ids.has(section.id)
         || !SECTION_TYPES.includes(sectionType)
-        || !Number.isInteger(section.measures) || (section.measures ?? 0) < 1 || (section.measures ?? 33) > 32
+        || section.measures === undefined || !Number.isInteger(section.measures)
+        || section.measures < 1 || section.measures > MAX_SECTION_MEASURES
         || !validSectionHarmony(section as ArrangementSection)
         || (chordDegrees !== undefined && (!Array.isArray(chordDegrees) || chordDegrees.length < 1 || chordDegrees.length > 32
           || chordDegrees.some((degree) => !Number.isInteger(degree) || degree < 1 || degree > 7)))
@@ -86,7 +87,7 @@ export function decodeArrangement(value: unknown, tracks: readonly CompositionTr
     if (section.trackPhrases !== undefined) {
       if (!section.trackPhrases || typeof section.trackPhrases !== 'object' || Array.isArray(section.trackPhrases)) return undefined;
       for (const [trackId, notes] of Object.entries(section.trackPhrases)) {
-        if (!trackIds.has(trackId) || !isPhrase(notes, 2112, -64)) return undefined;
+        if (!trackIds.has(trackId) || !isPhrase(notes, MAX_LOCAL_PHRASE_END_BEAT, -64)) return undefined;
         trackPhrases[trackId] = notes.map(note => ({ ...note }));
       }
     }

@@ -55,4 +55,6 @@ export type CompositionTrack =
   | (TrackBase & { readonly role: 'bass'; readonly generatorSettings: BassSettings })
   | (TrackBase & { readonly role: 'chords'; readonly generatorSettings: ChordSettings })
   | (TrackBase & { readonly role: 'arpeggio'; readonly generatorSettings: ArpeggioSettings })
-  | (TrackBase & { readonly role: 'drums'; readonly generatorSettings: DrumSettings });
+  | (TrackBase & { readonly role: 'drums'; readonly generatorSettings: DrumSettings;
+    /** When set, every pitch on the track uses this one slot in chromatic MIDI mode. */
+    readonly drumSlotPitch?: number });

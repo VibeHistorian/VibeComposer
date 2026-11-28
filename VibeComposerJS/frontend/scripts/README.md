@@ -49,6 +49,7 @@ Choose the functional commands and browser suites that match the changed behavio
 | Settings inheritance, contextual generation, seeded parity | `test:parts:scopes`, `test:parts:generation`, `test:generation` | `test:generation:browser`, `test:contextual:browser` |
 | Manual phrases, draft history, manual Mode preference | `test:parts:phrases`, `test:parts:preferences` | `test:manual:browser`, `test:score:browser` |
 | MIDI import, phrase drop and transpose | `test:midi-import`, `test:parts:phrases` | `test:phrase-import:browser` |
+| Open MIDI as a project | `test:midi-import` | `node --test scripts/midi-project-import-browser.test.cjs` |
 | Score geometry, notes, piano roll and drum editing | `test:score`, `test:selection` | `test:score:browser`, `test:phrase-import:browser` |
 | Note shapes and rendering cost | `test:score` | `node --test scripts/score-note-rendering-browser.test.cjs`, `test:score:browser`, `test:preferences:browser` |
 | Rhythm controls and pattern sequencer | `test:parts:scopes`, `test:parts:phrases` | `test:rhythm:browser`, `test:patterns:browser` |

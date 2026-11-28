@@ -188,7 +188,7 @@ test('phrase MIDI drop, clipboard, transpose and separate draft and project hist
       { key, bubbles: true, cancelable: true, ...modifiers }));
     const selected = count => [...document.querySelectorAll('.inspector-copy')].some(p => p.textContent.trim() === count + ' notes selected');
     const field = id => document.querySelector('#note-' + id)?.value;
-    const position = document.querySelector('[aria-label="Song position"]');
+    const position = await wait(() => document.querySelector('[aria-label="Song position"]'));
     const seekForward = count => { for (let i = 0; i < count; i++) key(position, 'ArrowRight'); };
     await open('bass');
     const initiallyEmpty = button('Paste notes').disabled;

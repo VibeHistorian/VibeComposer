@@ -22,6 +22,7 @@ import { validTrackVoicing, type TrackVoicing } from '../music/track-voicing';
 import { decodeProject, isProject, validateMelodyGrids } from './project-codec';
 import { formatProjectJson } from './project-json';
 import { encodeProjectStorage } from './project-storage';
+import { MAX_LOCAL_PHRASE_END_BEAT } from './project-limits';
 import { ProjectPersistence } from './project-persistence';
 import { WorkspaceStorage } from './workspace-storage';
 import { copyDefaultProject, DEFAULT_DRUM_SETTINGS, DEFAULT_PROJECT, DEFAULT_TRACKS } from './project-defaults';
@@ -60,6 +61,7 @@ import { baseGenerationHarmony } from '../music/project-harmony';
 import { layOutTrackPhrase, phraseForTrack, resolvedTrackPhrase } from '../music/phrase';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
+type ProjectOpenDestination = 'preference' | 'new-tab' | 'replace';
 interface ProjectTab {
   readonly id: string;
   readonly project: CompositionProject;
@@ -525,6 +527,7 @@ export class ProjectService {
         generatorSettings: copyPartSettings(source.generatorSettings),
         mix: { ...source.mix, muted: false, solo: false }, rerollLocked: false, instrumentLocked: false, editedPhrase: undefined, phraseEdits: undefined,
         phraseGlides: undefined,
+        ...(role === 'drums' ? { drumSlotPitch: undefined } : {}),
         ...(role === 'drums' && this.uiPreferences.drumRerollMode() === 'kit' ? {
           drumPan: undefined, parameterLocks: undefined, mix: { ...source.mix, muted: false, solo: false, panPercent: 0 },
         } : {}) } as CompositionTrack;
@@ -1076,13 +1079,17 @@ export class ProjectService {
     return before === this.state() ? 'unchanged' : 'changed';
   }
 
-  importProjectJson(json: string, destination: 'preference' | 'new-tab' | 'replace' = 'preference'): boolean {
-    let value: unknown;
+  importProjectJson(json: string, destination: ProjectOpenDestination = 'preference'): boolean {
+    return this.importProject(json, destination);
+  }
+
+  importProject(input: CompositionProject | string, destination: ProjectOpenDestination = 'preference'): boolean {
+    const source = typeof input === 'string' ? 'imported JSON' : 'imported project';
     try {
-      value = JSON.parse(json);
+      const value: unknown = typeof input === 'string' ? JSON.parse(input) : input;
       const project = decodeProject(value, this.sectionTypeSettings.chances(), Math.random);
       if (!project) {
-        this.warnProjectLoadFailure('imported JSON', value);
+        this.warnProjectLoadFailure(source, value);
         return false;
       }
       // Reject unusable musical states before creating or replacing a tab.
@@ -1097,7 +1104,7 @@ export class ProjectService {
       this.activateTab(tab);
       return true;
     } catch (error) {
-      console.warn('Could not load project from imported JSON.', error);
+      console.warn(`Could not load project from ${source}.`, error);
       return false;
     }
   }
@@ -1237,6 +1244,7 @@ export class ProjectService {
     let track = { ...source, id, name: `${role[0].toUpperCase()}${nextNumber}`, midiChannel: channel,
       mix: { ...source.mix, muted: false, solo: false },
       generatorSettings: copyPartSettings(role === 'drums' ? drumDefaults : source.generatorSettings),
+      ...(role === 'drums' ? { drumSlotPitch: undefined } : {}),
       rerollLocked: false,
       instrumentLocked: false,
       ...(kit ? { drumPan: undefined, parameterLocks: undefined, mix: { ...source.mix, muted: false, solo: false, panPercent: 0 } } : {}),
@@ -1297,6 +1305,7 @@ export class ProjectService {
     const duplicate = { ...source, id, name: `${source.name} copy`, midiChannel: channel,
       mix: { ...source.mix, muted: false, solo: false },
       generatorSettings: copyPartSettings(source.generatorSettings),
+      ...(source.role === 'drums' && options && !options.manualNotes ? { drumSlotPitch: undefined } : {}),
       editedPhrase: !options || options.manualNotes ? source.editedPhrase?.map((note) => ({ ...note })) : undefined,
       phraseEdits: !options || options.manualNotes ? source.phraseEdits?.map(edit => ({ ...edit, notes: edit.notes.map(note => ({ ...note })) })) : undefined,
       phraseGlides: !options || options.manualNotes ? source.phraseGlides : undefined } as CompositionTrack;
@@ -1393,7 +1402,8 @@ export class ProjectService {
 
   updateSectionTrackPhrase(sectionId: string, trackId: string, notes: readonly PhraseNote[]): boolean {
     const current = this.state();
-    if (!current.tracks.some(track => track.id === trackId) || !current.arrangement.some(section => section.id === sectionId) || !isPhrase(notes, 2112, -64)) return false;
+    if (!current.tracks.some(track => track.id === trackId) || !current.arrangement.some(section => section.id === sectionId)
+      || !isPhrase(notes, MAX_LOCAL_PHRASE_END_BEAT, -64)) return false;
     this.commit({ ...current, arrangement: current.arrangement.map(section => section.id === sectionId
       ? { ...section, trackPhrases: { ...section.trackPhrases, [trackId]: notes.map(note => ({ ...note })) } } : section) });
     return true;
@@ -1410,7 +1420,8 @@ export class ProjectService {
       || edits.some(edit => !validTarget(edit)
       || edit.range !== undefined && (edit.sectionId !== undefined || edit.notes === null
         || !isPhraseRangeEdits([{ ...edit.range, notes: edit.notes }]))
-      || edit.notes !== null && !edit.range && !isPhrase(edit.notes, edit.sectionId ? 2112 : undefined, edit.sectionId ? -64 : undefined))) return false;
+      || edit.notes !== null && !edit.range && !isPhrase(edit.notes, edit.sectionId ? MAX_LOCAL_PHRASE_END_BEAT : undefined,
+        edit.sectionId ? -64 : undefined))) return false;
     let tracks = [...current.tracks];
     let arrangement = [...current.arrangement];
     const editedPhrases = { ...current.editedPhrases };

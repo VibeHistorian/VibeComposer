@@ -33,6 +33,7 @@ export class AppComponent {
   constructor() {
     const destroyRef = inject(DestroyRef);
     destroyRef.onDestroy(installPointerActionFocus(inject(DOCUMENT)));
+    destroyRef.onDestroy(() => this.fileOpen?.abort());
     const host = inject<ElementRef<HTMLElement>>(ElementRef);
     afterNextRender(() => {
       const frame = host.nativeElement.querySelector<HTMLElement>('.app-frame')!;
@@ -45,6 +46,7 @@ export class AppComponent {
     });
   }
   readonly projectMessage = signal('');
+  readonly openingProject = signal(false);
   readonly hosted = inject(HostedContentService);
   readonly audioExport = inject(AudioExportService);
   readonly playback = inject(AudioPlaybackService);
@@ -59,6 +61,7 @@ export class AppComponent {
   readonly project = this.projects.project;
   private readonly dialogs = inject(Dialog);
   private readonly workspace = viewChild(WorkspaceCanvasComponent);
+  private fileOpen?: AbortController;
 
   private lastProjectTab = this.projects.projectActivation();
   private readonly projectTabEffect = effect(() => {
@@ -156,10 +159,31 @@ export class AppComponent {
     const input = event.currentTarget as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
-    if (!file) return;
+    if (!file || this.openingProject()) return;
 
+    const controller = new AbortController();
+    this.fileOpen = controller;
+    this.openingProject.set(true);
+    const activation = this.projects.projectActivation();
     try {
+      const isMidi = /\.(mid|midi)$/i.test(file.name)
+        || new TextDecoder().decode(await file.slice(0, 4).arrayBuffer()) === 'MThd';
+      if (controller.signal.aborted) return;
+      if (isMidi) {
+        this.projectMessage.set('Reading MIDI…');
+        const { readMidiProjectFile } = await import('./core/ui/midi-file-import');
+        const { project, warnings } = await readMidiProjectFile(file, controller.signal);
+        if (controller.signal.aborted) return;
+        // A tab switched during conversion should never be the target of a replacement.
+        const destination = activation === this.projects.projectActivation() ? 'preference' : 'new-tab';
+        const valid = this.projects.importProject(project, destination);
+        const tracks = project.tracks.length;
+        this.projectMessage.set(valid ? [`Loaded ${project.name} from MIDI (${tracks} ${tracks === 1 ? 'track' : 'tracks'}).`, ...warnings].join(' ')
+          : 'Could not open a project from that MIDI file.');
+        return;
+      }
       const contents = await file.text();
+      if (controller.signal.aborted) return;
       const translation = contents.trimStart().startsWith('<')
         ? translateJavaConfig(contents, { name: file.name.replace(/\.(xml-config|xml)$/i, '') }) : undefined;
       const valid = this.projects.importProjectJson(translation ? JSON.stringify(translation.project) : contents);
@@ -167,8 +191,12 @@ export class AppComponent {
       this.projectMessage.set(valid ? `Loaded ${this.project().name}.${translation?.diagnostics.length
         ? ` ${translation.diagnostics.length} translation notes (see console).` : ''}` : 'That project file is invalid or unsupported.');
     } catch (error) {
+      if (controller.signal.aborted) return;
       console.warn(`Could not read project file "${file.name}".`, error);
       this.projectMessage.set(error instanceof Error ? `Could not import: ${error.message}` : 'Could not read that project file.');
+    } finally {
+      this.fileOpen = undefined;
+      this.openingProject.set(false);
     }
   }
 }

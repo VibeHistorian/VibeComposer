@@ -1,4 +1,4 @@
-/** Maximum distinct percussion sounds and chromatic output slots per project. */
+/** Maximum independently mapped drum sounds in chromatic MIDI mode. */
 export const MAX_DRUM_SOUNDS = 16;
 
 /** Java InstUtils.DRUM_INST_NAMES: percussion note numbers, never GM programs. */
@@ -53,15 +53,15 @@ export function resolveDrumMapping(preference: DrumMappingPreference, externalOu
 }
 
 /** Java InstUtils.DRUM_INST_NUMBERS_SEMI maps the ordered drum pool to notes 36–51. */
-export function mapDrumPitch(pitch: number, mapping: DrumMapping, slots?: DrumSlots): number {
+export function mapDrumPitch(pitch: number, mapping: DrumMapping, slots?: DrumSlots, slotPitch = pitch): number {
   if (mapping === 'general-midi') return pitch;
   if (slots) {
-    const mapped = slots[String(pitch)];
-    if (mapped === undefined) throw new RangeError(`Drum ${pitch} has no project MIDI slot.`);
+    const mapped = slots[String(slotPitch)];
+    if (mapped === undefined) throw new RangeError(`Drum ${slotPitch} has no project MIDI slot.`);
     return mapped;
   }
-  const index = CLASSIC_DRUM_INSTRUMENTS.findIndex(instrument => instrument.midi === pitch);
-  return index < 0 ? pitch : 36 + index;
+  const index = CLASSIC_DRUM_INSTRUMENTS.findIndex(instrument => instrument.midi === slotPitch);
+  return index < 0 ? slotPitch : 36 + index;
 }
 
 export function drumInstrumentLabel(pitch: number, mapping: DrumMapping, slots?: DrumSlots): string {

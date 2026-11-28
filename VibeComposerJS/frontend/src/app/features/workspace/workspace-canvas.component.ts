@@ -203,7 +203,8 @@ export class WorkspaceCanvasComponent {
     return Object.fromEntries(project.tracks.filter(track => track.role === 'drums').map(track => {
       const retained = projectDrumPitches(project, [track.id]);
       return [track.id, this.drumInstruments.map(instrument => {
-        const slot = drumSelectionSlot(instrument.midi, track.generatorSettings.pitch, retained, slots);
+        const slot = track.drumSlotPitch === undefined
+          ? drumSelectionSlot(instrument.midi, track.generatorSettings.pitch, retained, slots) : slots[track.drumSlotPitch];
         const inPool = !this.preferences.limitInstrumentsToPool() || pool.includes(instrument.midi) || instrument.midi === track.generatorSettings.pitch;
         return { value: instrument.midi, label: this.midi.drumLabel(instrument.midi, slot === undefined ? slots : { [instrument.midi]: slot })
           + (slot === undefined ? ` · ${MAX_DRUM_SOUNDS} sounds in use` : !inPool ? ' · outside pool' : ''), disabled: slot === undefined || !inPool };
@@ -690,7 +691,8 @@ export class WorkspaceCanvasComponent {
   });
   readonly scoreTracks = computed(() => this.arrangedTracks().filter(track => this.editing()
     ? this.selectedPart() === 'drums' ? track.role === 'drums' : track.id === this.selectedTrackId() : this.scoreVisibleTrackIds().has(track.id))
-    .map(track => ({ ...track, trackOrder: this.tracksFor(track.role).findIndex(candidate => candidate.id === track.id) + 1, drumPitch: track.role === 'drums' ? track.generatorSettings.pitch : undefined })));
+    .map(track => ({ ...track, trackOrder: this.tracksFor(track.role).findIndex(candidate => candidate.id === track.id) + 1,
+      drumPitch: track.role === 'drums' ? track.drumSlotPitch ?? track.generatorSettings.pitch : undefined })));
   readonly canvasNotes = computed<ScoreNote[]>(() => {
     const editor = this.editor();
     if (!this.editing() || !editor) return this.scoreNotes().filter(note => this.editing()

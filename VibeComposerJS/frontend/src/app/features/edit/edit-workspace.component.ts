@@ -161,8 +161,13 @@ export class EditWorkspaceComponent {
   private drawnDrumTrackForPitch(midi: number): CompositionTrack | undefined {
     const selected = this.selectedTrack();
     if (selected.role !== 'drums') return undefined;
-    if (selected.generatorSettings.pitch === midi) return selected;
-    return this.editedTracks().find(track => track.role === 'drums' && track.generatorSettings.pitch === midi);
+    const pitchMatches = (track: CompositionTrack) => track.role === 'drums'
+      && (track.drumSlotPitch ?? track.generatorSettings.pitch) === midi;
+    if (pitchMatches(selected)) return selected;
+    const dedicated = this.editedTracks().find(pitchMatches);
+    if (dedicated) return dedicated;
+    const existing = this.notes().find(note => note.midi === midi);
+    return this.editedTracks().find(track => track.role === 'drums' && track.drumSlotPitch !== undefined && track.id === existing?.trackId);
   }
   readonly preferActionShortcut = (event: KeyboardEvent): boolean => this.canPasteNotes() && this.preferences.matchesShortcut('pasteNotes', event)
     || this.selectedNoteIds().length > 0
@@ -204,8 +209,9 @@ export class EditWorkspaceComponent {
   readonly cancelled = output<void>();
   readonly drumVoices = computed(() => {
     if (this.selectedPart() !== 'drums') return [];
-    return [...new Set([...this.editedTracks().flatMap(track => track.role === 'drums' ? [track.generatorSettings.pitch] : []), ...this.notes().map(note => note.midi)])]
-      .sort((left, right) => left - right).map(midi => ({ midi, label: this.midi.drumLabel(midi, this.project().drumSlots) }));
+    return [...new Set([...this.editedTracks().flatMap(track => track.role === 'drums'
+      ? [track.drumSlotPitch ?? track.generatorSettings.pitch] : []), ...this.notes().map(note => note.midi)])]
+      .sort((left, right) => left - right).map(midi => ({ midi, label: this.noteName(midi) }));
   });
   readonly selectedTrack = computed<CompositionTrack>(() => this.project().tracks.find((track) => track.id === this.workspaceUi.selectedTrackId())
     ?? this.project().tracks[0]);
@@ -215,7 +221,8 @@ export class EditWorkspaceComponent {
     equal: (left, right) => left.length === right.length && left.every((id, index) => id === right[index]),
   });
   readonly drumInputTracks = computed(() => this.selectedPart() === 'drums'
-    ? this.editedTracks().flatMap(track => track.role === 'drums' ? [{ trackId: track.id, midi: track.generatorSettings.pitch }] : [])
+    ? this.editedTracks().flatMap(track => track.role === 'drums'
+      ? [{ trackId: track.id, midi: track.drumSlotPitch ?? track.generatorSettings.pitch }] : [])
     : null);
   readonly selectedPart = computed<ArrangedPart>(() => this.selectedTrack().role);
   readonly tracks = computed(() => tracksInRoleOrder(this.project().tracks));
@@ -235,7 +242,11 @@ export class EditWorkspaceComponent {
     const tracks = this.editedTracks().map(track => ({ track,
       notes: notes.filter(note => note.trackId === track.id), glides: this.draftGlides()[track.id],
     }));
-    return { name, bytes: new Uint8Array(generatePhraseMidi(name, context.tempoBpm, tracks, this.phraseBeats(), this.midi.drumMapping(), this.preferences.midiPpq(), resolvedDrumSlots(project, tracks.filter(({ track }) => track.role === 'drums').flatMap(({ notes }) => notes.map(note => note.midi))))) };
+    const pitches = tracks.filter(({ track }) => track.role === 'drums' && track.drumSlotPitch === undefined)
+      .flatMap(({ notes }) => notes.map(note => note.midi));
+    const slots = resolvedDrumSlots(project, pitches);
+    return { name, bytes: new Uint8Array(generatePhraseMidi(name, context.tempoBpm, tracks, this.phraseBeats(),
+      this.midi.drumMapping(), this.preferences.midiPpq(), slots)) };
   }
 
   exportPhrase(): void {
@@ -664,7 +675,12 @@ export class EditWorkspaceComponent {
   }
 
   noteName(midi: number): string {
-    if (this.selectedPart() === 'drums') return this.midi.drumLabel(midi, this.project().drumSlots);
+    if (this.selectedPart() === 'drums') {
+      const track = this.drawnDrumTrackForPitch(midi);
+      const slots = this.project().drumSlots;
+      const slot = track?.role === 'drums' && track.drumSlotPitch !== undefined ? slots?.[track.drumSlotPitch] : undefined;
+      return this.midi.drumLabel(midi, slot === undefined ? slots : { [midi]: slot });
+    }
     const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
     return `${names[midi % 12]}${Math.floor(midi / 12) - 1}`;
   }
