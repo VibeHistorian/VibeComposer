@@ -222,8 +222,8 @@ export class CompactKnobComponent {
       && this.drag.allowedValues === this.allowedValues();
   }
 
-  cancelDrag(): void {
-    if (!this.drag) return;
+  cancelDrag(event?: PointerEvent): void {
+    if (!this.drag || (event && event.pointerId !== this.drag.pointerId)) return;
     this.drag = null; this.preview.set(null);
     this.valuePreview.emit(this.value());
   }

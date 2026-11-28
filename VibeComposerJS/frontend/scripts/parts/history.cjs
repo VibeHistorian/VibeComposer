@@ -775,6 +775,8 @@ test('knobs drag vertically, commit once, cancel safely, and scroll with stepped
   knob.moveDrag(event(25));
   assert.equal(knob.shownValue(), 100);
   assert.deepEqual(commits, []);
+  knob.cancelDrag(event(25, { pointerId: 2 }));
+  assert.equal(knob.shownValue(), 100, 'losing a second touch does not cancel the active drag');
   knob.finishDrag(event(25));
   assert.deepEqual(commits, [100]);
   knob.startDrag(event(100)); knob.moveDrag(event(175)); knob.cancelDrag();

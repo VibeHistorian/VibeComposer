@@ -12,11 +12,13 @@
     }
   }
   @if (caption()) { <output class="knob-caption">{{ caption() }}</output> }
+  <!-- Suppress the range input's native touch tracking while the pointer handlers own the drag. -->
   <input [id]="heading.controlId" type="range" [disabled]="disabled()" [min]="sliderMinimum()" [max]="sliderMaximum()" [step]="sliderStep()" [value]="sliderValue()"
     [attr.aria-label]="label()" [attr.aria-valuetext]="letter() ? letterValue() : mixed() && preview() === null ? 'Mixed' : accessibleValue()"
     [attr.aria-description]="description() || null"
     (pointerdown)="startDrag($event)" (pointermove)="moveDrag($event)" (pointerup)="finishDrag($event)"
-    (pointercancel)="cancelDrag()" (lostpointercapture)="cancelDrag()" (keydown.escape)="cancelDrag()"
+    (touchstart)="$event.preventDefault()"
+    (pointercancel)="cancelDrag($event)" (lostpointercapture)="cancelDrag($event)" (keydown.escape)="cancelDrag()"
     (input)="previewValue($event)" (change)="commitValue($event)" />
   @if ((!showLabel() || (mini() && shortLabel() === null)) && inheritance() !== 'global') {
     <vc-control-heading class="knob-heading-status" [label]="label()" [statusOnly]="true" [inheritance]="inheritance()"

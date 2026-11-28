@@ -5,6 +5,87 @@ const path = require('node:path');
 const test = require('node:test');
 const browser = findBrowser();
 
+test('touch knob release commits the displayed value once and cancellation restores it', { skip: !browser }, async () => {
+  const root = requireProductionBuild();
+  const server = createBrowserServer({ root, html: fs.readFileSync(path.join(root, 'index.html'), 'utf8') });
+  await listen(server);
+  const profile = fs.mkdtempSync(path.resolve(__dirname, '../.angular/touch-knob-browser-'));
+  const child = launchBrowser(browser, ['--headless', '--disable-gpu', '--no-first-run', '--disable-background-networking',
+    '--remote-debugging-port=0', '--window-size=1024,800', '--user-data-dir=' + profile,
+    'http://127.0.0.1:' + server.address().port + '/'], { stdio: ['ignore', 'ignore', 'pipe'] });
+  let socket, reject;
+  const failure = new Promise((_, fail) => { reject = fail; });
+  const watchdog = watchBrowser(child, reject, 30000);
+  try {
+    await Promise.race([failure, (async () => {
+      const connection = await connectToPage(child);
+      socket = connection.socket;
+      const { command } = connection;
+      const evaluate = async expression => {
+        const output = await command('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+        assert.equal(output.exceptionDetails, undefined, JSON.stringify(output));
+        return output.result.value;
+      };
+      await command('Emulation.setDeviceMetricsOverride', { width: 1024, height: 800, deviceScaleFactor: 2, mobile: false });
+      await command('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 2 });
+      const point = await evaluate(`(async () => {
+        for (let i = 0; i < 200; i++) {
+          const input = document.querySelector('input[aria-label="Tempo in beats per minute"]');
+          if (input && sessionStorage.getItem('vibecomposer.project.v12')) {
+            await document.fonts.ready;
+            const box = input.getBoundingClientRect();
+            return { x: Math.round(box.left + box.width * .75), y: Math.round(box.top + box.height / 2) };
+          }
+          await new Promise(resolve => setTimeout(resolve, 25));
+        }
+        throw new Error('Tempo knob did not render');
+      })()`);
+      const snapshot = () => evaluate(`(async () => {
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const input = document.querySelector('input[aria-label="Tempo in beats per minute"]');
+        return { shown: parseInt(input.getAttribute('aria-valuetext')), slider: Number(input.value),
+          saved: JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tempoBpm };
+      })()`);
+      const waitForSaved = value => evaluate(`(async () => {
+        for (let i = 0; i < 200; i++) {
+          if (JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tempoBpm === ${value}) return;
+          await new Promise(resolve => setTimeout(resolve, 25));
+        }
+        throw new Error('Tempo did not persist as ${value} BPM');
+      })()`);
+      const touch = (type, y) => command('Input.dispatchTouchEvent', { type,
+        touchPoints: y === undefined ? [] : [{ ...point, y, id: 1 }] });
+      const original = await snapshot();
+      await touch('touchStart', point.y);
+      await touch('touchMove', point.y + 12);
+      await touch('touchMove', point.y + 30);
+      const preview = await snapshot();
+      assert.equal(preview.saved, original.saved, 'touch drag previews without writing project state');
+      assert.equal(preview.shown, original.shown - 42, 'touch preview follows vertical travel');
+      await touch('touchEnd');
+      const released = await snapshot();
+      assert.equal(released.shown, preview.shown, 'release keeps the previewed value');
+      assert.equal(released.slider, preview.shown, 'the native range reflects the commit');
+      await waitForSaved(preview.shown);
+      assert.deepEqual(await snapshot(), { shown: preview.shown, slider: preview.shown, saved: preview.shown });
+
+      await touch('touchStart', point.y);
+      await touch('touchMove', point.y + 20);
+      assert.notEqual((await snapshot()).shown, preview.shown);
+      await touch('touchCancel');
+      assert.deepEqual(await snapshot(), { shown: preview.shown, slider: preview.shown, saved: preview.shown });
+      await touch('touchStart', point.y);
+      await touch('touchEnd');
+      assert.deepEqual(await snapshot(), { shown: preview.shown, slider: preview.shown, saved: preview.shown }, 'an off-center tap does not set an absolute value');
+      await evaluate(`document.querySelector('button[aria-label="Undo"]').click()`);
+      await waitForSaved(original.saved);
+      assert.deepEqual(await snapshot(), original, 'one undo restores the pre-drag value');
+    })()]);
+  } finally {
+    await closeBrowser({ child, server, socket, watchdog });
+  }
+});
+
 for (const width of [1440,780]) test(`contextual generation settings and visibility at ${width}px`, { skip: !browser }, async () => {
   const root = requireProductionBuild(), index = fs.readFileSync(path.join(root,'index.html'),'utf8');
   const script = `<script>(async () => {
