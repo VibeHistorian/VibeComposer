@@ -6,7 +6,7 @@ import type { TrackGenerationPolicies, InstrumentGenerationPolicy } from '../mus
 import type { ArrangementSection } from './arrangement.model';
 import type { CompositionTrack } from './track.model';
 
-export const PROJECT_SCHEMA_VERSION = 13;
+export const PROJECT_SCHEMA_VERSION = 14;
 
 export interface CompositionProject {
   readonly drumSlots?: import('../music/drum-instruments').DrumSlots;
